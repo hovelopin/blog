@@ -1,32 +1,24 @@
-import { notFound } from 'next/navigation'
-import { formatDate, getBlogPosts } from '../utils'
-import { baseUrl } from '@/app/sitemap'
-import { CustomMDX } from '@/components/mdx'
-
+import { notFound } from 'next/navigation';
+import { formatDate, getBlogPosts } from '../utils';
+import { baseUrl } from '@/app/sitemap';
+import { CustomMDX } from '@/components/mdx';
 
 export async function generateStaticParams() {
-  let posts = getBlogPosts()
+  let posts = getBlogPosts();
 
   return posts.map((post) => ({
-    slug: post.slug,
-  }))
+    slug: post.slug
+  }));
 }
 
 export function generateMetadata({ params }) {
-  let post = getBlogPosts().find((post) => post.slug === params.slug)
+  let post = getBlogPosts().find((post) => post.slug === params.slug);
   if (!post) {
-    return
+    return;
   }
 
-  let {
-    title,
-    publishedAt: publishedTime,
-    summary: description,
-    image,
-  } = post.metadata
-  let ogImage = image
-    ? image
-    : `${baseUrl}/og?title=${encodeURIComponent(title)}`
+  let { title, publishedAt: publishedTime, summary: description, image } = post.metadata;
+  let ogImage = image ? image : `${baseUrl}/og?title=${encodeURIComponent(title)}`;
 
   return {
     title,
@@ -39,24 +31,24 @@ export function generateMetadata({ params }) {
       url: `${baseUrl}/blog/${post.slug}`,
       images: [
         {
-          url: ogImage,
-        },
-      ],
+          url: ogImage
+        }
+      ]
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: [ogImage],
-    },
-  }
+      images: [ogImage]
+    }
+  };
 }
 
 export default function Blog({ params }) {
-  let post = getBlogPosts().find((post) => post.slug === params.slug)
+  let post = getBlogPosts().find((post) => post.slug === params.slug);
 
   if (!post) {
-    notFound()
+    notFound();
   }
 
   return (
@@ -78,22 +70,18 @@ export default function Blog({ params }) {
             url: `${baseUrl}/blog/${post.slug}`,
             author: {
               '@type': 'Person',
-              name: 'My Portfolio',
-            },
-          }),
+              name: 'My Portfolio'
+            }
+          })
         }}
       />
-      <h1 className="title font-semibold text-2xl tracking-tighter">
-        {post.metadata.title}
-      </h1>
-      <div className="flex justify-between items-center mt-2 mb-8 text-sm">
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          {formatDate(post.metadata.publishedAt)}
-        </p>
+      <h1 className="title text-2xl font-semibold tracking-tighter">{post.metadata.title}</h1>
+      <div className="mt-2 mb-8 flex items-center justify-between text-sm">
+        <p className="text-sm text-neutral-600">{formatDate(post.metadata.publishedAt)}</p>
       </div>
       <article className="prose">
         <CustomMDX source={post.content} />
       </article>
     </section>
-  )
+  );
 }

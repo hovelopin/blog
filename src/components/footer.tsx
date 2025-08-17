@@ -12,7 +12,37 @@ function ArrowIcon() {
 export default function Footer() {
   return (
     <footer className="mb-16">
-      <ul className="font-sm mt-8 flex flex-col space-y-2 space-x-0 text-neutral-600 md:flex-row md:space-y-0 md:space-x-4">
+      <ul className="font-sm mt-8 flex justify-center gap-6 space-y-2 space-x-0 text-neutral-600 md:flex-row md:space-y-0 md:space-x-4">
+        <li>
+          <a
+            className="flex items-center transition-all hover:text-neutral-800"
+            rel="noopener noreferrer"
+            target="_blank"
+            href="https://github.com/hovelopin">
+            <ArrowIcon />
+            <p className="ml-2 h-7">Github</p>
+          </a>
+        </li>
+        <li>
+          <a
+            className="flex items-center transition-all hover:text-neutral-800"
+            rel="noopener noreferrer"
+            target="_blank"
+            href="https://www.linkedin.com/in/hovelopin">
+            <ArrowIcon />
+            <p className="ml-2 h-7">LinkedIn</p>
+          </a>
+        </li>
+        <li>
+          <a
+            className="flex items-center transition-all hover:text-neutral-800"
+            rel="noopener noreferrer"
+            target="_blank"
+            href="mailto:kimhojin3714@naver.com">
+            <ArrowIcon />
+            <p className="ml-2 h-7">Email</p>
+          </a>
+        </li>
         <li>
           <a
             className="flex items-center transition-all hover:text-neutral-800"
@@ -20,31 +50,13 @@ export default function Footer() {
             target="_blank"
             href="/rss">
             <ArrowIcon />
-            <p className="ml-2 h-7">rss</p>
-          </a>
-        </li>
-        <li>
-          <a
-            className="flex items-center transition-all hover:text-neutral-800"
-            rel="noopener noreferrer"
-            target="_blank"
-            href="https://github.com/vercel/next.js">
-            <ArrowIcon />
-            <p className="ml-2 h-7">github</p>
-          </a>
-        </li>
-        <li>
-          <a
-            className="flex items-center transition-all hover:text-neutral-800"
-            rel="noopener noreferrer"
-            target="_blank"
-            href="https://vercel.com/templates/next.js/portfolio-starter-kit">
-            <ArrowIcon />
-            <p className="ml-2 h-7">view source</p>
+            <p className="ml-2 h-7">Rss</p>
           </a>
         </li>
       </ul>
-      <p className="mt-8 text-neutral-600">© {new Date().getFullYear()} MIT Licensed</p>
+      <p className="mt-8 flex justify-center text-neutral-600">
+        © {new Date().getFullYear()} harvey all rights reserved.
+      </p>
     </footer>
   );
 }

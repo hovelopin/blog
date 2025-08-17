@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { formatDate, getBlogPosts } from '../utils';
 import { baseUrl } from '@/app/sitemap';
 import { CustomMDX } from '@/components/mdx';
+import Utterances from '@/components/utterances';
 
 export async function generateStaticParams() {
   let posts = getBlogPosts();
@@ -11,8 +12,9 @@ export async function generateStaticParams() {
   }));
 }
 
-export function generateMetadata({ params }) {
-  let post = getBlogPosts().find((post) => post.slug === params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  let post = getBlogPosts().find((post) => post.slug === slug);
   if (!post) {
     return;
   }
@@ -44,8 +46,9 @@ export function generateMetadata({ params }) {
   };
 }
 
-export default function Blog({ params }) {
-  let post = getBlogPosts().find((post) => post.slug === params.slug);
+export default async function Blog({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  let post = getBlogPosts().find((post) => post.slug === slug);
 
   if (!post) {
     notFound();
@@ -82,6 +85,7 @@ export default function Blog({ params }) {
       <article className="prose">
         <CustomMDX source={post.content} />
       </article>
+      <Utterances />
     </section>
   );
 }

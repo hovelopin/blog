@@ -8,19 +8,23 @@ export default function Utterances() {
   const pathname = usePathname();
 
   useEffect(() => {
+    if (!utterancesRef.current) return;
+
+    // 기존 utterances 엘리먼트 제거
+    const utterancesElement = utterancesRef.current.querySelector('.utterances');
+    if (utterancesElement) {
+      utterancesElement.remove();
+    }
+
     const scriptElement = document.createElement('script');
     scriptElement.src = 'https://utteranc.es/client.js';
     scriptElement.async = true;
     scriptElement.crossOrigin = 'anonymous';
     scriptElement.setAttribute('repo', 'hovelopin/blog');
-    scriptElement.setAttribute('issue-term', 'og:title');
+    scriptElement.setAttribute('issue-term', 'pathname');
     scriptElement.setAttribute('theme', 'github-light');
 
-    utterancesRef.current?.appendChild(scriptElement);
-
-    return () => {
-      utterancesRef.current?.removeChild(scriptElement);
-    };
+    utterancesRef.current.appendChild(scriptElement);
   }, [pathname]);
 
   return <div ref={utterancesRef} className="mt-10" />;

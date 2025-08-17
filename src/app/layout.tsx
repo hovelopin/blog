@@ -40,7 +40,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={cn('bg-white text-black', GeistSans.variable, GeistMono.variable)}>
-      <body className="tab:mx-auto mx-4 mt-8 max-w-3xl antialiased">
+      <body className="tab:mx-auto mx-4 mt-4 max-w-3xl antialiased">
         <main className="mt-6 flex min-w-0 flex-auto flex-col px-2 md:px-0">
           <Navbar />
           {children}

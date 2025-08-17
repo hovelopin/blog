@@ -6,15 +6,18 @@ const navItems = {
   },
   '/log': {
     name: 'log'
+  },
+  '/timeline': {
+    name: 'timeline'
   }
 };
 
 export function Navbar() {
   return (
-    <aside className="mb-12 -ml-[8px] tracking-tight">
-      <div className="lg:sticky lg:top-20">
+    <aside className="sticky top-0 z-10 mb-8 -ml-[8px] bg-white tracking-tight">
+      <div>
         <nav
-          className="fade relative flex scroll-pr-6 flex-row items-start justify-between px-0 pb-0 md:relative md:overflow-auto"
+          className="fade relative flex h-[70px] scroll-pr-6 flex-row items-center justify-between px-0 pb-0 md:relative md:overflow-auto"
           id="nav">
           <div className="m-1 px-2 py-1 text-[24px] font-bold italic">
             <Link href="/">Harvey.</Link>

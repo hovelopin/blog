@@ -54,7 +54,7 @@ export default function Footer() {
           </a>
         </li>
       </ul>
-      <p className="mt-8 flex justify-center text-neutral-600">
+      <p className="mt-8 flex justify-center text-[12px] text-neutral-600">
         © {new Date().getFullYear()} harvey all rights reserved.
       </p>
     </footer>

@@ -38,25 +38,9 @@ export function HorizontalScroller({
       typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
     resizeObserver?.observe(el);
 
-    const onWheel = (e: WheelEvent) => {
-      if (e.deltaY === 0 || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
-      const max = el.scrollWidth - el.clientWidth;
-      if (max <= 0) return;
-      const next = el.scrollLeft + e.deltaY;
-      if (
-        (e.deltaY > 0 && el.scrollLeft < max) ||
-        (e.deltaY < 0 && el.scrollLeft > 0)
-      ) {
-        e.preventDefault();
-        el.scrollLeft = Math.max(0, Math.min(max, next));
-      }
-    };
-    el.addEventListener("wheel", onWheel, { passive: false });
-
     return () => {
       el.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
-      el.removeEventListener("wheel", onWheel);
       resizeObserver?.disconnect();
     };
   }, []);

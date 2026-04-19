@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { DiaryCard } from "@/components/diary-card";
+import { DiaryTimeline } from "@/components/diary-timeline";
 import { getAllDiaryEntries } from "@/lib/content";
 
 export const metadata: Metadata = {
@@ -32,16 +32,13 @@ export default async function DiaryPage() {
         </p>
       </header>
 
-      <div className="flex flex-col gap-4">
-        {entries.map((entry) => (
-          <DiaryCard key={entry.slug} entry={entry} />
-        ))}
-        {entries.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            아직 비어 있습니다. <code>content/diary</code>에 파일을 추가하세요.
-          </p>
-        )}
-      </div>
+      {entries.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          아직 비어 있습니다. <code>content/diary</code>에 파일을 추가하세요.
+        </p>
+      ) : (
+        <DiaryTimeline entries={entries} />
+      )}
     </div>
   );
 }

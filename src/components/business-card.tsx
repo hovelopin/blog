@@ -50,8 +50,6 @@ function CardFront() {
         "dark:shadow-[0_32px_70px_-22px_rgba(0,0,0,0.6),inset_0_0_0_1px_rgba(255,255,255,0.04)]",
       )}
     >
-      <RabbitMark />
-
       <div className="px-5 pt-5 sm:px-6 sm:pt-6">
         <AvatarFrame />
       </div>
@@ -59,17 +57,13 @@ function CardFront() {
       <div className="flex flex-1 gap-4 px-5 pb-5 pt-3 sm:px-6 sm:pb-6">
         <div className="flex-1 min-w-0">
           <h1 className="font-sans text-[22px] font-extrabold leading-none tracking-tight text-foreground sm:text-[24px]">
-            AI KIMHOJIN
+            KIMHOJIN
           </h1>
           <div className="mt-2 h-px w-full bg-foreground/80" />
 
           <dl className="mt-3.5 space-y-3">
-            <Field label="Born On Pika" value="APR 19, 2026" />
+            <Field label="Born In South Korea" value="MAY 31, 1996" />
             <Field label="Status" value="ALIVE" />
-            <Field
-              label="Find Me On"
-              value="PIKA.ME/U/HOJIN.CODES.PRO"
-            />
           </dl>
         </div>
 
@@ -89,21 +83,6 @@ function Field({ label, value }: { label: string; value: string }) {
         {value}
       </dd>
     </div>
-  );
-}
-
-function RabbitMark() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 40 40"
-      className="absolute right-4 top-4 h-5 w-5 text-foreground"
-    >
-      <path
-        fill="currentColor"
-        d="M10 32 C 8 24, 10 18, 14 16 L 12 8 Q 12 6, 14 6 Q 16 6, 17 10 L 18 14 Q 20 13, 22 14 L 23 10 Q 24 6, 26 6 Q 28 6, 28 8 L 26 16 C 30 18, 34 22, 34 28 C 34 32, 30 34, 24 34 L 16 34 C 12 34, 10 33, 10 32 Z M 28 24 Q 30 24, 30 26 Q 30 28, 28 28 Q 26 28, 26 26 Q 26 24, 28 24 Z"
-      />
-    </svg>
   );
 }
 
@@ -154,12 +133,11 @@ function Barcode() {
 }
 
 const EXPERIENCE = [
-  { company: "Polaris Office", role: "Frontend Engineer", period: "2024 — now" },
-  { company: "Previous Co.", role: "Software Engineer", period: "2022 — 2024" },
-  { company: "First Gig", role: "Intern", period: "2021" },
+  { company: "Polaris Office", role: "Frontend Engineer", period: "2024.11 — now" },
+  { company: "아이디에스앤트러스트", role: "Frontend Engineer", period: "2022.10 — 2024.10" },
 ];
 
-const STACK = ["react", "next.js", "typescript", "tailwind", "node"];
+const STACK = ["react", "next.js", "typescript", "tailwind"];
 
 function CardBack() {
   return (
@@ -214,7 +192,7 @@ function CardBack() {
           <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
             stack
           </p>
-          <div className="flex flex-wrap gap-1.5 font-mono text-[11px]">
+          <div className="flex gap-1.5 font-mono text-[11px]">
             {STACK.map((s) => (
               <span
                 key={s}
@@ -227,7 +205,7 @@ function CardBack() {
         </section>
 
         <footer className="flex items-center justify-between pt-4 font-mono text-[10px] text-muted-foreground">
-          <span>harvey.h.kim@polarisoffice.com</span>
+          <span>kimhojin3714@naver.com</span>
           <span className="text-muted-foreground/70">← flip</span>
         </footer>
       </div>

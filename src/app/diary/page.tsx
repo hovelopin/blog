@@ -27,9 +27,6 @@ export default async function DiaryPage() {
         <h1 className="mb-3 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           diary
         </h1>
-        <p className="text-[15px] leading-relaxed text-muted-foreground">
-          트윗 길이로 남기는 짧은 메모. 생각이 익으면 정식 글로 올라간다.
-        </p>
       </header>
 
       {entries.length === 0 ? (

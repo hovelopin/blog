@@ -30,9 +30,6 @@ export default async function BlogPage() {
         <h1 className="mb-3 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           blog
         </h1>
-        <p className="text-[15px] leading-relaxed text-muted-foreground">
-          하나의 주제를 끝까지 파고드는 긴 글. {posts.length}개의 글.
-        </p>
         {tags.length > 0 && (
           <div className="mt-5 flex flex-wrap items-center gap-1.5 font-mono text-xs">
             <span className="text-muted-foreground/70">tags:</span>

@@ -6,12 +6,14 @@ import {
   getAllPostSlugs,
   getPostBySlug,
   getRelatedPosts,
+  getSeriesContext,
 } from "@/lib/content";
 import { formatDate } from "@/lib/format";
 import { DynamicIslandTOC } from "@/components/dynamic-island-toc";
 import { PostContent } from "@/components/post-content";
 import { PostFooterNav } from "@/components/post-footer-nav";
 import { PostComments } from "@/components/post-comments";
+import { SeriesNav } from "@/components/series-nav";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -39,9 +41,10 @@ export default async function PostPage({ params }: PostPageProps) {
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 
-  const [{ prev, next }, related] = await Promise.all([
+  const [{ prev, next }, related, series] = await Promise.all([
     getAdjacentPosts(slug),
     getRelatedPosts(slug, post.tags),
+    getSeriesContext(slug),
   ]);
 
   return (
@@ -89,9 +92,16 @@ export default async function PostPage({ params }: PostPageProps) {
         )}
       </header>
 
+      {series && <SeriesNav context={series} />}
+
       <PostContent html={post.content} />
 
-      <PostFooterNav prev={prev} next={next} related={related} />
+      <PostFooterNav
+        prev={prev}
+        next={next}
+        related={related}
+        series={series}
+      />
 
       <PostComments slug={post.slug} title={post.title} />
 

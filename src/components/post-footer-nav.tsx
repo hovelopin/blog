@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import type { PostSummary } from "@/types/content";
+import type { PostSummary, SeriesContext } from "@/types/content";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -8,14 +8,17 @@ interface PostFooterNavProps {
   prev: PostSummary | null;
   next: PostSummary | null;
   related: PostSummary[];
+  series?: SeriesContext | null;
 }
 
 function AdjacentCard({
   post,
   direction,
+  label,
 }: {
   post: PostSummary;
   direction: "prev" | "next";
+  label?: string;
 }) {
   const isPrev = direction === "prev";
   return (
@@ -37,7 +40,7 @@ function AdjacentCard({
         ) : (
           <ArrowRight size={12} aria-hidden="true" />
         )}
-        {isPrev ? "previous" : "next"}
+        {label ?? (isPrev ? "previous" : "next")}
       </span>
       <span className="line-clamp-2 text-sm font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">
         {post.title}
@@ -49,9 +52,43 @@ function AdjacentCard({
   );
 }
 
-export function PostFooterNav({ prev, next, related }: PostFooterNavProps) {
+export function PostFooterNav({
+  prev,
+  next,
+  related,
+  series,
+}: PostFooterNavProps) {
+  const hasSeriesNav = series && (series.prev || series.next);
   return (
     <div className="mt-16 border-t border-border/60 pt-10">
+      {hasSeriesNav && (
+        <section className="mb-10">
+          <h2 className="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            # series · {series.series}
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {series.prev ? (
+              <AdjacentCard
+                post={series.prev}
+                direction="prev"
+                label="previous in series"
+              />
+            ) : (
+              <div aria-hidden="true" />
+            )}
+            {series.next ? (
+              <AdjacentCard
+                post={series.next}
+                direction="next"
+                label="next in series"
+              />
+            ) : (
+              <div aria-hidden="true" />
+            )}
+          </div>
+        </section>
+      )}
+
       {related.length > 0 && (
         <section className="mb-10">
           <h2 className="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">

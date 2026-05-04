@@ -7,6 +7,16 @@ export interface PostFrontmatter {
   cover?: string;
   coverAlt?: string;
   linkPreviews?: Record<string, string>;
+  series?: string;
+  seriesOrder?: number;
+}
+
+export interface SeriesContext {
+  series: string;
+  posts: PostSummary[];
+  currentIndex: number;
+  prev: PostSummary | null;
+  next: PostSummary | null;
 }
 
 export interface Heading {

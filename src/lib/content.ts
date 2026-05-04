@@ -18,6 +18,7 @@ import type {
   Post,
   PostFrontmatter,
   PostSummary,
+  SeriesContext,
 } from "@/types/content";
 
 const contentRoot = path.join(process.cwd(), "content");
@@ -125,6 +126,8 @@ export async function getAllPostSummaries(): Promise<PostSummary[]> {
         author: fm.author,
         cover: fm.cover,
         coverAlt: fm.coverAlt,
+        series: fm.series,
+        seriesOrder: fm.seriesOrder,
         readingTimeMinutes: Math.max(1, Math.round(stats.minutes)),
       } satisfies PostSummary;
     }),
@@ -154,6 +157,8 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     author: fm.author,
     cover: fm.cover,
     coverAlt: fm.coverAlt,
+    series: fm.series,
+    seriesOrder: fm.seriesOrder,
     readingTimeMinutes: Math.max(1, Math.round(stats.minutes)),
     content: html,
     headings,
@@ -183,6 +188,31 @@ export async function getAllTags(): Promise<
 export async function getPostsByTag(tag: string): Promise<PostSummary[]> {
   const posts = await getAllPostSummaries();
   return posts.filter((p) => (p.tags ?? []).includes(tag));
+}
+
+export async function getSeriesContext(
+  slug: string,
+): Promise<SeriesContext | null> {
+  const posts = await getAllPostSummaries();
+  const current = posts.find((p) => p.slug === slug);
+  if (!current?.series) return null;
+  const seriesPosts = posts
+    .filter((p) => p.series === current.series)
+    .sort((a, b) => {
+      const ao = a.seriesOrder ?? Number.MAX_SAFE_INTEGER;
+      const bo = b.seriesOrder ?? Number.MAX_SAFE_INTEGER;
+      if (ao !== bo) return ao - bo;
+      return a.date.localeCompare(b.date);
+    });
+  if (seriesPosts.length < 2) return null;
+  const currentIndex = seriesPosts.findIndex((p) => p.slug === slug);
+  return {
+    series: current.series,
+    posts: seriesPosts,
+    currentIndex,
+    prev: seriesPosts[currentIndex - 1] ?? null,
+    next: seriesPosts[currentIndex + 1] ?? null,
+  };
 }
 
 export async function getAdjacentPosts(

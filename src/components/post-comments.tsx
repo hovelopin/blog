@@ -7,6 +7,10 @@ interface PostCommentsProps {
   title: string;
 }
 
+function getGiscusTheme(): "light" | "dark" {
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+}
+
 export function PostComments({ slug, title }: PostCommentsProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -28,11 +32,27 @@ export function PostComments({ slug, title }: PostCommentsProps) {
     script.setAttribute("data-reactions-enabled", "1");
     script.setAttribute("data-emit-metadata", "0");
     script.setAttribute("data-input-position", "top");
-    script.setAttribute("data-theme", "preferred_color_scheme");
+    script.setAttribute("data-theme", getGiscusTheme());
     script.setAttribute("data-lang", "ko");
     host.appendChild(script);
 
+    const observer = new MutationObserver(() => {
+      const iframe = host.querySelector<HTMLIFrameElement>(
+        "iframe.giscus-frame",
+      );
+      if (!iframe?.contentWindow) return;
+      iframe.contentWindow.postMessage(
+        { giscus: { setConfig: { theme: getGiscusTheme() } } },
+        "https://giscus.app",
+      );
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
     return () => {
+      observer.disconnect();
       host.innerHTML = "";
     };
   }, [slug, title]);

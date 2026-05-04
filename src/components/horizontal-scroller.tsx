@@ -55,39 +55,37 @@ export function HorizontalScroller({
     <div className={cn("relative", className)}>
       <div
         ref={scrollRef}
-        className="no-scrollbar flex snap-x snap-mandatory gap-6 overflow-x-auto px-5 pb-6 pt-2 sm:px-6"
+        className="no-scrollbar flex snap-x snap-mandatory gap-6 overflow-x-auto px-5 pb-6 pt-2 scroll-pl-5 scroll-pr-5 sm:px-6 sm:scroll-pl-6 sm:scroll-pr-6"
       >
         {children}
       </div>
 
-      <button
-        type="button"
-        aria-label="Scroll left"
-        onClick={() => scrollBy(-1)}
-        className={cn(
-          "absolute left-2 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/85 text-muted-foreground shadow-md backdrop-blur-sm transition-all duration-200 sm:flex",
-          "h-9 w-9 hover:border-border hover:bg-background hover:text-foreground",
-          canLeft
-            ? "pointer-events-auto opacity-100"
-            : "pointer-events-none opacity-0",
-        )}
-      >
-        <ChevronLeft size={18} aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        aria-label="Scroll right"
-        onClick={() => scrollBy(1)}
-        className={cn(
-          "absolute right-2 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/85 text-muted-foreground shadow-md backdrop-blur-sm transition-all duration-200 sm:flex",
-          "h-9 w-9 hover:border-border hover:bg-background hover:text-foreground",
-          canRight
-            ? "pointer-events-auto opacity-100"
-            : "pointer-events-none opacity-0",
-        )}
-      >
-        <ChevronRight size={18} aria-hidden="true" />
-      </button>
+      {canLeft && (
+        <button
+          type="button"
+          aria-label="Scroll left"
+          onClick={() => scrollBy(-1)}
+          className={cn(
+            "absolute left-2 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/85 text-muted-foreground shadow-md backdrop-blur-sm transition-colors duration-200 sm:flex",
+            "h-9 w-9 hover:border-border hover:bg-background hover:text-foreground",
+          )}
+        >
+          <ChevronLeft size={18} aria-hidden="true" />
+        </button>
+      )}
+      {canRight && (
+        <button
+          type="button"
+          aria-label="Scroll right"
+          onClick={() => scrollBy(1)}
+          className={cn(
+            "absolute right-2 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/85 text-muted-foreground shadow-md backdrop-blur-sm transition-colors duration-200 sm:flex",
+            "h-9 w-9 hover:border-border hover:bg-background hover:text-foreground",
+          )}
+        >
+          <ChevronRight size={18} aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 ---
 title: "메모리 누수 해결을 위한 여정 - 서버사이드 편"
 description: "제한된 힙 메모리 환경에서 부하 테스트를 돌려 서버사이드 메모리 누수의 직접 원인을 찾아낸 과정 — 결국 한 컴포넌트의 gcTime이 범인이었다."
-date: "2026-05-06"
+date: "2025-11-03"
 tags: ["nextjs", "performance", "memory", "tanstack-query"]
 author: "hovelopin"
 series: "메모리 누수 해결을 위한 여정"

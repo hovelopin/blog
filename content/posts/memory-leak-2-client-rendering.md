@@ -1,7 +1,7 @@
 ---
 title: "메모리 누수 해결을 위한 여정 - 클라이언트 누수 확인 및 렌더링 로직 개선"
 description: "Chat Scroll 로직, Tanstack Query GC 시간, Header 리렌더링, react-slick 누수까지 — 프로덕션에서 발견된 클라이언트 메모리 누수 케이스 정리."
-date: "2026-05-06"
+date: "2025-10-27"
 tags: ["nextjs", "performance", "memory", "react"]
 author: "hovelopin"
 series: "메모리 누수 해결을 위한 여정"

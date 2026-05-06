@@ -1,7 +1,7 @@
 ---
 title: "메모리 누수 해결을 위한 여정 - 이미지 최적화 및 CDN 편"
 description: "Next.js 애플리케이션의 메모리 누수를 줄이기 위해 정적 리소스를 CDN으로 옮기고, Image 컴포넌트 캐시를 재구성한 과정."
-date: "2026-05-06"
+date: "2025-10-20"
 tags: ["nextjs", "performance", "cdn", "memory"]
 author: "hovelopin"
 series: "메모리 누수 해결을 위한 여정"

@@ -4,6 +4,8 @@ description: "Figma-MCP 프로토콜로 Figma 디자인을 Claude/Cursor/Windsur
 date: "2025-03-28"
 tags: ["ai", "claude", "figma", "mcp"]
 author: "hovelopin"
+cover: "/covers/claude-figma-mcp.png"
+coverAlt: "Claude와 Figma MCP 연동 썸네일"
 ---
 
 Figma-MCP 프로토콜을 활용해 Figma의 디자인 요소를 Claude, Cursor, Windsurf 같은 AI 도구로 자동화한다. 기본 동작은 Figma-MCP 서버를 띄우고 AI 도구와 연결한 뒤, 피그마 링크를 입력하면 디자인을 분석해 코드로 변환된 결과를 받는 흐름이다.

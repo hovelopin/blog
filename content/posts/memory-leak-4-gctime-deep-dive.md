@@ -1,11 +1,13 @@
 ---
 title: "메모리 누수 해결을 위한 여정 - gcTime 한 줄이 SSR을 죽인 진짜 이유"
 description: "3편에서 범인으로 지목된 gcTime: 24h. 그런데 정말 '캐시가 24시간 살아 있어서' 누수가 났을까? TanStack Query 소스 두 파일을 열어 SSR 분기의 실제 메커니즘을 따라간 기록."
-date: "2026-05-16"
+date: "2025-11-20"
 tags: ["nextjs", "performance", "memory", "tanstack-query", "ssr"]
 author: "hovelopin"
 series: "메모리 누수 해결을 위한 여정"
 seriesOrder: 4
+cover: "/covers/memory-leak-4-gctime-deep-dive.png"
+coverAlt: "메모리 누수 4편 — gcTime SSR 분석 썸네일"
 ---
 
 [3편](/posts/memory-leak-3-server-side)에서 메인 팝업 컴포넌트의 `gcTime: 24h` 한 줄이 서버 OOM의 직접 원인임을 확인하고 시리즈를 마무리했었다. 결론은 분명했지만, 글을 올린 뒤에도 한 가지 질문이 계속 남았다.

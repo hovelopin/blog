@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { useRef, useState, type CSSProperties } from "react";
 import type { PostSummary } from "@/types/content";
 import { formatDate } from "@/lib/format";
@@ -128,6 +129,39 @@ export function DynamicCard({ post, className }: DynamicCardProps) {
             mixBlendMode: "overlay",
           }}
         />
+
+        <div
+          aria-hidden={!hover}
+          className={cn(
+            "pointer-events-none absolute inset-0 overflow-hidden rounded-2xl transition-opacity duration-300",
+            hover ? "opacity-100" : "opacity-0",
+          )}
+        >
+          <PostCover
+            src={post.cover}
+            alt=""
+            seed={post.slug}
+            className="absolute inset-0 h-full w-full rounded-none border-0"
+            sizes="320px"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/15 to-black/80" />
+
+          {post.tags?.[0] && (
+            <span className="absolute left-4 top-4 rounded-full border border-white/60 bg-white/5 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
+              {post.tags[0]}
+            </span>
+          )}
+
+          <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-lg">
+            <ArrowUpRight className="h-5 w-5" strokeWidth={2.5} />
+          </span>
+
+          <div className="absolute inset-x-0 bottom-0 p-5">
+            <h3 className="line-clamp-2 text-base font-semibold leading-tight text-white">
+              {post.title}
+            </h3>
+          </div>
+        </div>
       </div>
     </Link>
   );

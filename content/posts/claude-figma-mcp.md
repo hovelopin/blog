@@ -115,17 +115,11 @@ Claude는 해당 링크를 분석해 다음과 같이 코드로 변환된 결과
 
 ![변환 결과 — 메인](/imports/claude-figma-mcp/image-005.png)
 
-![변환 결과 — 코드 1](/imports/claude-figma-mcp/image-012.png)
-
-![변환 결과 — 코드 2](/imports/claude-figma-mcp/image-013.png)
-
-![변환 결과 — 코드 3](/imports/claude-figma-mcp/image-009.png)
-
-![변환 결과 — 미리보기 1](/imports/claude-figma-mcp/image-007.png)
-
-![변환 결과 — 미리보기 2](/imports/claude-figma-mcp/image-010.png)
-
-![변환 결과 — 미리보기 3](/imports/claude-figma-mcp/image-004.png)
+| 피그마 예시 | 변환 디자인 |
+|---|---|
+| ![변환 결과 — 코드 1](/imports/claude-figma-mcp/image-012.png) | ![변환 결과 — 미리보기 1](/imports/claude-figma-mcp/image-007.png) |
+| ![변환 결과 — 코드 2](/imports/claude-figma-mcp/image-013.png) | ![변환 결과 — 미리보기 2](/imports/claude-figma-mcp/image-010.png) |
+| ![변환 결과 — 코드 3](/imports/claude-figma-mcp/image-009.png) | ![변환 결과 — 미리보기 3](/imports/claude-figma-mcp/image-004.png) |
 
 ## 마치며
 

@@ -9,6 +9,7 @@ export interface PostFrontmatter {
   linkPreviews?: Record<string, string>;
   series?: string;
   seriesOrder?: number;
+  draft?: boolean;
 }
 
 export interface SeriesContext {

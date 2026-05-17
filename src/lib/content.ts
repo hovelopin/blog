@@ -25,6 +25,12 @@ const contentRoot = path.join(process.cwd(), "content");
 const postsDir = path.join(contentRoot, "posts");
 const diaryDir = path.join(contentRoot, "diary");
 
+const showDrafts = process.env.NODE_ENV !== "production";
+
+function isPostVisible(fm: Pick<PostFrontmatter, "draft">): boolean {
+  return showDrafts || !fm.draft;
+}
+
 async function listMarkdownFiles(dir: string): Promise<string[]> {
   try {
     const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -111,11 +117,12 @@ async function renderPostMarkdown(
 
 export async function getAllPostSummaries(): Promise<PostSummary[]> {
   const files = await listMarkdownFiles(postsDir);
-  const summaries = await Promise.all(
-    files.map(async (filename) => {
+  const summaries: (PostSummary | null)[] = await Promise.all(
+    files.map(async (filename): Promise<PostSummary | null> => {
       const raw = await fs.readFile(path.join(postsDir, filename), "utf8");
       const { data, content } = matter(raw);
       const fm = data as PostFrontmatter;
+      if (!isPostVisible(fm)) return null;
       const stats = readingTime(content);
       return {
         slug: slugFromFilename(filename),
@@ -128,11 +135,14 @@ export async function getAllPostSummaries(): Promise<PostSummary[]> {
         coverAlt: fm.coverAlt,
         series: fm.series,
         seriesOrder: fm.seriesOrder,
+        draft: fm.draft,
         readingTimeMinutes: Math.max(1, Math.round(stats.minutes)),
       } satisfies PostSummary;
     }),
   );
-  return summaries.sort((a, b) => b.date.localeCompare(a.date));
+  return summaries
+    .filter((s): s is PostSummary => s !== null)
+    .sort((a, b) => b.date.localeCompare(a.date));
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
@@ -146,6 +156,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   }
   const { data, content } = matter(raw);
   const fm = data as PostFrontmatter;
+  if (!isPostVisible(fm)) return null;
   const stats = readingTime(content);
   const { html, headings } = await renderPostMarkdown(content, fm.linkPreviews);
   return {
@@ -159,6 +170,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     coverAlt: fm.coverAlt,
     series: fm.series,
     seriesOrder: fm.seriesOrder,
+    draft: fm.draft,
     readingTimeMinutes: Math.max(1, Math.round(stats.minutes)),
     content: html,
     headings,
@@ -166,8 +178,8 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 }
 
 export async function getAllPostSlugs(): Promise<string[]> {
-  const files = await listMarkdownFiles(postsDir);
-  return files.map(slugFromFilename);
+  const posts = await getAllPostSummaries();
+  return posts.map((p) => p.slug);
 }
 
 export async function getAllTags(): Promise<

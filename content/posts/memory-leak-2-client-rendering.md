@@ -6,6 +6,8 @@ tags: ["nextjs", "performance", "memory", "react"]
 author: "hovelopin"
 series: "메모리 누수 해결을 위한 여정"
 seriesOrder: 2
+cover: "/covers/memory-leak-2-client-rendering.png"
+coverAlt: "메모리 누수 2편 — 클라이언트 렌더링 개선 썸네일"
 ---
 
 [1편](/posts/memory-leak-1-image-cdn)에서 정적 리소스를 CDN으로 옮겨 서버측 부하를 덜었다면, 이번 편에서는 클라이언트에서 직접 발견된 누수 케이스 네 가지를 정리한다.

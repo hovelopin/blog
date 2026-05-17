@@ -4,6 +4,8 @@ description: "Grab의 Cursor Talk To Figma MCP로 임의의 웹페이지를 Figm
 date: "2025-11-17"
 tags: ["ai", "mcp", "cursor", "figma", "design"]
 author: "hovelopin"
+cover: "/covers/cursor-webpage-to-figma.jpg"
+coverAlt: "Cursor로 웹페이지를 Figma로 변환하기 썸네일"
 ---
 
 이번 글에서는 Cursor를 활용해 원하는 웹페이지를 Figma 디자인으로 옮기고 입맛에 맞게 커스터마이징하는 방법을 정리한다. Grab에서 만든 [Cursor Talk To Figma MCP](https://github.com/grab/cursor-talk-to-figma-mcp)를 사용한다.

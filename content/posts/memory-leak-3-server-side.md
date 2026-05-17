@@ -6,6 +6,8 @@ tags: ["nextjs", "performance", "memory", "tanstack-query"]
 author: "hovelopin"
 series: "메모리 누수 해결을 위한 여정"
 seriesOrder: 3
+cover: "/covers/memory-leak-3-server-side.png"
+coverAlt: "메모리 누수 3편 — 서버사이드 편 썸네일"
 ---
 
 [1편](/posts/memory-leak-1-image-cdn)에서 정적 리소스를 CDN으로 옮겨 서버 부하를 덜었고, [2편](/posts/memory-leak-2-client-rendering)에서 클라이언트측 누수 후보들을 정리했다. 그래도 운영 환경에서 메모리는 여전히 꾸준히 우상향하고 있었다. 이번 편에서는 **재현 환경을 만들고**, 그 안에서 실제 원인 한 점을 찾아낸 과정을 정리한다.

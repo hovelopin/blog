@@ -6,6 +6,8 @@ tags: ["nextjs", "performance", "cdn", "memory"]
 author: "hovelopin"
 series: "메모리 누수 해결을 위한 여정"
 seriesOrder: 1
+cover: "/covers/memory-leak-1-image-cdn.png"
+coverAlt: "메모리 누수 1편 — 이미지 최적화 및 CDN 썸네일"
 ---
 
 운영 중인 Next.js 애플리케이션에서 메모리 사용량이 꾸준히 증가하는 현상이 관측됐다. 1편에서는 정적 리소스를 CDN으로 이전하면서 서버측 부하를 덜고, 그 과정에서 Image 컴포넌트의 캐싱 동작을 어떻게 재정비했는지를 정리한다.

@@ -402,6 +402,26 @@
   font-family: var(--font-mono);
   font-size: 0.85em;
 }
+.diary-content strong {
+  font-weight: 600;
+  color: var(--foreground);
+}
+.diary-content em {
+  font-style: italic;
+  color: color-mix(in oklch, var(--foreground) 95%, transparent);
+}
+.diary-content mark {
+  background: linear-gradient(
+    to top,
+    color-mix(in oklch, var(--primary) 35%, transparent) 0,
+    color-mix(in oklch, var(--primary) 35%, transparent) 45%,
+    transparent 45%,
+    transparent 100%
+  );
+  color: inherit;
+  padding: 0 0.1rem;
+  border-radius: 1px;
+}
 
 .no-scrollbar {
   scrollbar-width: none;

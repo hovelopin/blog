@@ -44,6 +44,9 @@ dependencies:
   remark:
     specifier: ^15.0.1
     version: 15.0.1
+  remark-flexible-markers:
+    specifier: ^1.3.4
+    version: 1.3.4(unified@11.0.5)
   remark-gfm:
     specifier: ^4.0.1
     version: 4.0.1
@@ -5231,6 +5234,21 @@ packages:
       unified: 11.0.5
     dev: false
 
+  /remark-flexible-markers@1.3.4(unified@11.0.5):
+    resolution: {integrity: sha512-YDj9TSoDrmu4f76i3n62clewkGnFEFV1fwqwosyrU28AGPeB/NxJUYCen5D3P7rQaxgy4h5s/FEQEMkSgVEGnQ==}
+    peerDependencies:
+      unified: ^11
+    dependencies:
+      '@types/mdast': 4.0.4
+      unified: 11.0.5
+      unist-builder: 4.0.0
+      unist-util-find-after: 5.0.0
+      unist-util-find-all-after: 5.0.0
+      unist-util-find-all-before: 5.0.0
+      unist-util-find-between: 1.2.1
+      unist-util-visit: 5.1.0
+    dev: false
+
   /remark-gfm@4.0.1:
     resolution: {integrity: sha512-1quofZ2RQ9EWdeN34S79+KExV1764+wCUGop5CPL1WGdD0ocPpu91lzPGbwWMECpEpd42kJGQwzRfyov9j4yNg==}
     dependencies:
@@ -6074,6 +6092,40 @@ packages:
       is-plain-obj: 4.1.0
       trough: 2.2.0
       vfile: 6.0.3
+    dev: false
+
+  /unist-builder@4.0.0:
+    resolution: {integrity: sha512-wmRFnH+BLpZnTKpc5L7O67Kac89s9HMrtELpnNaE6TAobq5DTZZs5YaTQfAZBA9bFPECx2uVAPO31c+GVug8mg==}
+    dependencies:
+      '@types/unist': 3.0.3
+    dev: false
+
+  /unist-util-find-after@5.0.0:
+    resolution: {integrity: sha512-amQa0Ep2m6hE2g72AugUItjbuM8X8cGQnFoHk0pGfrFeT9GZhzN5SW8nRsiGKK7Aif4CrACPENkA6P/Lw6fHGQ==}
+    dependencies:
+      '@types/unist': 3.0.3
+      unist-util-is: 6.0.1
+    dev: false
+
+  /unist-util-find-all-after@5.0.0:
+    resolution: {integrity: sha512-nGmOYvTSdGcI4RvrUNfe0mOsqqbbJOtqCQsppsY9KZjmv3nwM3YRgNBwFPdZ8Y+iv9Z/2PDjR9u6u+uK62XTTg==}
+    dependencies:
+      '@types/unist': 3.0.3
+      unist-util-is: 6.0.1
+    dev: false
+
+  /unist-util-find-all-before@5.0.0:
+    resolution: {integrity: sha512-zir6a7GsXfdn4YAWR4F3hLNKZjTjLBJurdyquysvmX38xbftS1+qwvEhutxxHLq0Pp1tW5V1TDiuj+qluuOnKw==}
+    dependencies:
+      '@types/unist': 3.0.3
+      unist-util-is: 6.0.1
+    dev: false
+
+  /unist-util-find-between@1.2.1:
+    resolution: {integrity: sha512-40W6SCvWk8MO+OyAzM1Ap6nKawyM7klSapiKGZQAgyZNbyIFibKAjMk+fct9nC6GcIPRfthBh6udKYrggjnGhQ==}
+    dependencies:
+      '@types/unist': 3.0.3
+      unist-util-is: 6.0.1
     dev: false
 
   /unist-util-is@6.0.1:

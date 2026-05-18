@@ -5,6 +5,7 @@ import readingTime from "reading-time";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
+import remarkCjkFriendly from "remark-cjk-friendly";
 import remarkFlexibleMarkers from "remark-flexible-markers";
 import remarkRehype from "remark-rehype";
 import rehypePrettyCode from "rehype-pretty-code";
@@ -52,6 +53,7 @@ async function renderMarkdown(source: string): Promise<string> {
   const file = await unified()
     .use(remarkParse)
     .use(remarkGfm)
+    .use(remarkCjkFriendly)
     .use(remarkFlexibleMarkers)
     .use(remarkRehype)
     .use(rehypePrettyCode, {
@@ -104,6 +106,7 @@ async function renderPostMarkdown(
   const file = await unified()
     .use(remarkParse)
     .use(remarkGfm)
+    .use(remarkCjkFriendly)
     .use(remarkRehype)
     .use(rehypeSlug)
     .use(collectHeadingsPlugin(headings))

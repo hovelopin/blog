@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 760" font-family="-apple-system, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', sans-serif">
+  <defs>
+    <style>
+      .canvas-bg { fill: transparent; }
+      @media (prefers-color-scheme: dark) {
+        .canvas-bg { fill: #ffffff; }
+      }
+    </style>
+    <marker id="ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#059669"/>
+    </marker>
+    <marker id="fail" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626"/>
+    </marker>
+  </defs>
+  <rect class="canvas-bg" width="100%" height="100%"/>
+
+  <text x="500" y="38" text-anchor="middle" font-size="22" font-weight="700" fill="#111827">4-Gate 시스템 — 순서를 어기면 작업 실패</text>
+  <text x="500" y="62" text-anchor="middle" font-size="13" fill="#6b7280">노란색 게이트(3·4)가 가장 자주 실패하던 지점</text>
+
+  <!-- START -->
+  <ellipse cx="500" cy="100" rx="80" ry="22" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="500" y="106" text-anchor="middle" font-size="13" font-weight="700" fill="#3730a3">이슈 번호 입력</text>
+
+  <!-- arrow -->
+  <line x1="500" y1="122" x2="500" y2="148" stroke="#059669" stroke-width="2" marker-end="url(#ok)"/>
+
+  <!-- GATE 1 -->
+  <polygon points="500,148 640,200 500,252 360,200" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="500" y="195" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a8a">GATE 1</text>
+  <text x="500" y="213" text-anchor="middle" font-size="12" fill="#1e3a8a">본문(description) 조회 완료?</text>
+
+  <line x1="500" y1="252" x2="500" y2="278" stroke="#059669" stroke-width="2" marker-end="url(#ok)"/>
+
+  <!-- GATE 2 -->
+  <polygon points="500,278 640,330 500,382 360,330" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="500" y="325" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a8a">GATE 2</text>
+  <text x="500" y="343" text-anchor="middle" font-size="12" fill="#1e3a8a">모든 댓글 조회 완료?</text>
+
+  <line x1="500" y1="382" x2="500" y2="408" stroke="#059669" stroke-width="2" marker-end="url(#ok)"/>
+
+  <!-- GATE 3 (yellow - failure prone) -->
+  <polygon points="500,408 660,470 500,532 340,470" fill="#fef3c7" stroke="#f59e0b" stroke-width="3"/>
+  <text x="500" y="460" text-anchor="middle" font-size="13" font-weight="700" fill="#92400e">GATE 3</text>
+  <text x="500" y="480" text-anchor="middle" font-size="12" fill="#92400e">본문/댓글의 모든 Figma URL</text>
+  <text x="500" y="498" text-anchor="middle" font-size="12" fill="#92400e">get_figma_data 호출 완료?</text>
+
+  <!-- GATE 3 fail branch (left) -->
+  <line x1="340" y1="470" x2="180" y2="470" stroke="#dc2626" stroke-width="2" marker-end="url(#fail)"/>
+  <text x="260" y="460" text-anchor="middle" font-size="11" font-weight="700" fill="#dc2626">NO (텍스트만 보고)</text>
+  <rect x="40" y="445" width="155" height="56" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+  <text x="117" y="468" text-anchor="middle" font-size="12" font-weight="700" fill="#991b1b">시안과 어긋남</text>
+  <text x="117" y="488" text-anchor="middle" font-size="11" fill="#991b1b">재작업 발생</text>
+
+  <line x1="500" y1="532" x2="500" y2="560" stroke="#059669" stroke-width="2" marker-end="url(#ok)"/>
+
+  <!-- Plan & Code (combined) -->
+  <rect x="380" y="560" width="240" height="36" rx="8" fill="#e0e7ff" stroke="#6366f1"/>
+  <text x="500" y="583" text-anchor="middle" font-size="12" fill="#3730a3">변경 계획서 → 승인 → 코드 수정</text>
+
+  <line x1="500" y1="596" x2="500" y2="618" stroke="#059669" stroke-width="2" marker-end="url(#ok)"/>
+
+  <!-- Draft -->
+  <rect x="380" y="618" width="240" height="34" rx="8" fill="#e0e7ff" stroke="#6366f1"/>
+  <text x="500" y="640" text-anchor="middle" font-size="12" fill="#3730a3">댓글 초안 출력</text>
+
+  <line x1="500" y1="652" x2="500" y2="676" stroke="#059669" stroke-width="2" marker-end="url(#ok)"/>
+
+  <!-- GATE 4 (yellow - failure prone) -->
+  <polygon points="500,676 700,720 500,764 300,720" fill="#fef3c7" stroke="#f59e0b" stroke-width="3"/>
+  <text x="500" y="712" text-anchor="middle" font-size="13" font-weight="700" fill="#92400e">GATE 4</text>
+  <text x="500" y="730" text-anchor="middle" font-size="11" fill="#92400e">사용자 명시적 승인 받음?</text>
+  <text x="500" y="745" text-anchor="middle" font-size="11" fill="#92400e">+ 별도 턴인가?</text>
+
+  <!-- GATE 4 fail branch (right) -->
+  <line x1="700" y1="720" x2="850" y2="720" stroke="#dc2626" stroke-width="2" marker-end="url(#fail)"/>
+  <text x="775" y="710" text-anchor="middle" font-size="11" font-weight="700" fill="#dc2626">NO (같은 턴)</text>
+  <rect x="855" y="694" width="140" height="56" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+  <text x="925" y="717" text-anchor="middle" font-size="12" font-weight="700" fill="#991b1b">무검수 게시</text>
+  <text x="925" y="737" text-anchor="middle" font-size="11" fill="#991b1b">외부 잘못 보고</text>
+
+  <!-- Success (final) -->
+  <line x1="500" y1="764" x2="500" y2="780" stroke="#059669" stroke-width="2"/>
+  <rect x="350" y="780" width="300" height="0" fill="none"/>
+  <!-- (canvas limit: end here visually) -->
+
+  <!-- Legend -->
+  <g font-size="11">
+    <rect x="40" y="60" width="14" height="14" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="60" y="71" fill="#374151">통상 게이트</text>
+    <rect x="40" y="80" width="14" height="14" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+    <text x="60" y="91" fill="#374151">실패 빈번</text>
+    <rect x="40" y="100" width="14" height="14" fill="#fee2e2" stroke="#dc2626"/>
+    <text x="60" y="111" fill="#374151">실패 시 결과</text>
+  </g>
+</svg>

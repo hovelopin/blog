@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 880" font-family="-apple-system, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', sans-serif">
+  <defs>
+    <style>
+      .canvas-bg { fill: transparent; }
+      @media (prefers-color-scheme: dark) {
+        .canvas-bg { fill: #ffffff; }
+      }
+    </style>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f2937"/>
+    </marker>
+    <marker id="ay" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#d97706"/>
+    </marker>
+  </defs>
+  <rect class="canvas-bg" width="100%" height="100%"/>
+
+  <text x="500" y="38" text-anchor="middle" font-size="22" font-weight="700" fill="#111827">8단계 내부 워크플로</text>
+  <text x="500" y="62" text-anchor="middle" font-size="13" fill="#6b7280">파란색 = 수집/분석 · 노란색 = 사용자 승인 게이트 · 초록색 = 변경 · 보라색 = 완료</text>
+
+  <!-- Legend -->
+  <g font-size="11" fill="#374151">
+    <rect x="730" y="80" width="14" height="14" fill="#dbeafe" stroke="#3b82f6"/>
+    <text x="750" y="91">수집·분석</text>
+    <rect x="820" y="80" width="14" height="14" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+    <text x="840" y="91">사용자 승인</text>
+    <rect x="730" y="100" width="14" height="14" fill="#d1fae5" stroke="#10b981"/>
+    <text x="750" y="111">실제 변경</text>
+    <rect x="820" y="100" width="14" height="14" fill="#e9d5ff" stroke="#a855f7"/>
+    <text x="840" y="111">Jira 완료</text>
+  </g>
+
+  <!-- Step 1 -->
+  <rect x="350" y="130" width="300" height="56" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="500" y="155" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a">1. 이슈 정보 수집</text>
+  <text x="500" y="175" text-anchor="middle" font-size="11" fill="#1e3a8a">getJiraIssue (본문 + 모든 댓글)</text>
+
+  <line x1="500" y1="186" x2="500" y2="208" stroke="#1f2937" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- Step 2 -->
+  <rect x="350" y="208" width="300" height="56" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="500" y="233" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a">2. Figma 시안 fetch</text>
+  <text x="500" y="253" text-anchor="middle" font-size="11" fill="#1e3a8a">URL 발견 시 항상 · get_figma_data</text>
+
+  <line x1="500" y1="264" x2="500" y2="286" stroke="#1f2937" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- Step 3 -->
+  <rect x="350" y="286" width="300" height="56" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="500" y="311" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a">3. 코드베이스 탐색</text>
+  <text x="500" y="331" text-anchor="middle" font-size="11" fill="#1e3a8a">Grep · Glob 으로 변경 대상 파일 찾기</text>
+
+  <line x1="500" y1="342" x2="500" y2="364" stroke="#1f2937" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- Step 4 -->
+  <rect x="350" y="364" width="300" height="56" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="500" y="389" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a">4. 현재 상태 진단</text>
+  <text x="500" y="409" text-anchor="middle" font-size="11" fill="#1e3a8a">git status · diff · 이미 반영 여부 체크</text>
+
+  <line x1="500" y1="420" x2="500" y2="442" stroke="#1f2937" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- Step 5 - decision -->
+  <polygon points="500,442 680,490 500,538 320,490" fill="#fef3c7" stroke="#f59e0b" stroke-width="3"/>
+  <text x="500" y="483" text-anchor="middle" font-size="14" font-weight="700" fill="#92400e">5. 변경 계획 제시</text>
+  <text x="500" y="503" text-anchor="middle" font-size="11" fill="#92400e">사용자 승인?</text>
+
+  <!-- NO branch -->
+  <line x1="320" y1="490" x2="180" y2="490" stroke="#d97706" stroke-width="2" marker-end="url(#ay)"/>
+  <text x="250" y="480" text-anchor="middle" font-size="11" font-weight="700" fill="#d97706">No</text>
+  <rect x="40" y="468" width="140" height="44" rx="8" fill="#fef3c7" stroke="#f59e0b"/>
+  <text x="110" y="494" text-anchor="middle" font-size="12" fill="#92400e">계획 수정 후 재제시</text>
+
+  <line x1="500" y1="538" x2="500" y2="560" stroke="#1f2937" stroke-width="2" marker-end="url(#a)"/>
+  <text x="514" y="552" font-size="11" font-weight="700" fill="#059669">Yes</text>
+
+  <!-- Step 6 -->
+  <rect x="350" y="560" width="300" height="50" rx="10" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+  <text x="500" y="582" text-anchor="middle" font-size="14" font-weight="700" fill="#065f46">6. 코드 수정</text>
+  <text x="500" y="600" text-anchor="middle" font-size="11" fill="#065f46">Edit · Write (범위 외 리팩토링 금지)</text>
+
+  <line x1="500" y1="610" x2="500" y2="632" stroke="#1f2937" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- Step 7 -->
+  <rect x="350" y="632" width="300" height="50" rx="10" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+  <text x="500" y="654" text-anchor="middle" font-size="14" font-weight="700" fill="#065f46">7. 검증</text>
+  <text x="500" y="672" text-anchor="middle" font-size="11" fill="#065f46">lint · typecheck · dev server 안내</text>
+
+  <line x1="500" y1="682" x2="500" y2="704" stroke="#1f2937" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- Step 8 - decision -->
+  <polygon points="500,704 680,752 500,800 320,752" fill="#fef3c7" stroke="#f59e0b" stroke-width="3"/>
+  <text x="500" y="745" text-anchor="middle" font-size="14" font-weight="700" fill="#92400e">8. 댓글 초안 → 승인?</text>
+  <text x="500" y="763" text-anchor="middle" font-size="11" fill="#92400e">(별도 턴에서 게시)</text>
+
+  <!-- 8 NO loop -->
+  <path d="M 320 752 Q 220 752 220 720 Q 220 660 250 660" fill="none" stroke="#d97706" stroke-width="2" marker-end="url(#ay)"/>
+  <text x="170" y="710" font-size="11" font-weight="700" fill="#d97706">No → 수정 반영</text>
+
+  <!-- Final node -->
+  <line x1="500" y1="800" x2="500" y2="822" stroke="#1f2937" stroke-width="2" marker-end="url(#a)"/>
+  <text x="514" y="814" font-size="11" font-weight="700" fill="#059669">Yes</text>
+
+  <rect x="280" y="822" width="440" height="44" rx="10" fill="#e9d5ff" stroke="#a855f7" stroke-width="2"/>
+  <text x="500" y="850" text-anchor="middle" font-size="13" font-weight="700" fill="#6b21a8">댓글 게시 → 상태 전환(해결됨) → 최종 보고</text>
+</svg>

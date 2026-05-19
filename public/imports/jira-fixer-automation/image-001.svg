@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 720" font-family="-apple-system, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', sans-serif">
+  <defs>
+    <style>
+      .canvas-bg { fill: transparent; }
+      @media (prefers-color-scheme: dark) {
+        .canvas-bg { fill: #ffffff; }
+      }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280"/>
+    </marker>
+    <marker id="arrow-big" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+    </marker>
+  </defs>
+  <rect class="canvas-bg" width="100%" height="100%"/>
+
+  <!-- Title -->
+  <text x="500" y="35" text-anchor="middle" font-size="22" font-weight="700" fill="#111827">기존 프로세스 vs jira-fixer 도입 후</text>
+
+  <!-- LEFT COLUMN: Before -->
+  <rect x="40" y="65" width="380" height="630" rx="14" fill="#fafafa" stroke="#e5e7eb" stroke-width="1.5"/>
+  <text x="230" y="95" text-anchor="middle" font-size="16" font-weight="700" fill="#374151">기존 프로세스 (사람이 직접)</text>
+
+  <g font-size="13" fill="#111827">
+    <!-- 1 -->
+    <rect x="70" y="115" width="320" height="44" rx="8" fill="#f3f4f6" stroke="#d1d5db"/>
+    <text x="230" y="142" text-anchor="middle">1. Jira 이슈 본문 읽기</text>
+
+    <!-- 2 -->
+    <rect x="70" y="180" width="320" height="44" rx="8" fill="#f3f4f6" stroke="#d1d5db"/>
+    <text x="230" y="207" text-anchor="middle">2. 모든 댓글 훑기</text>
+
+    <!-- 3 -->
+    <rect x="70" y="245" width="320" height="44" rx="8" fill="#f3f4f6" stroke="#d1d5db"/>
+    <text x="230" y="272" text-anchor="middle">3. Figma 시안 확인 (새 탭)</text>
+
+    <!-- 4 (pain) -->
+    <rect x="70" y="310" width="320" height="44" rx="8" fill="#fee2e2" stroke="#f87171"/>
+    <text x="230" y="337" text-anchor="middle">4. 머릿속에서 요구사항 재정리</text>
+
+    <!-- 5 (pain) -->
+    <rect x="70" y="375" width="320" height="44" rx="8" fill="#fee2e2" stroke="#f87171"/>
+    <text x="230" y="402" text-anchor="middle">5. LLM 에 컨텍스트+요청 직접 전달</text>
+
+    <!-- 6 -->
+    <rect x="70" y="440" width="320" height="44" rx="8" fill="#f3f4f6" stroke="#d1d5db"/>
+    <text x="230" y="467" text-anchor="middle">6. 코드 적용</text>
+
+    <!-- 7 (pain) -->
+    <rect x="70" y="505" width="320" height="44" rx="8" fill="#fee2e2" stroke="#f87171"/>
+    <text x="230" y="532" text-anchor="middle">7. Jira 댓글 직접 작성</text>
+
+    <!-- 8 -->
+    <rect x="70" y="570" width="320" height="44" rx="8" fill="#f3f4f6" stroke="#d1d5db"/>
+    <text x="230" y="597" text-anchor="middle">8. 게시 + 상태 전환</text>
+  </g>
+
+  <!-- Arrows between steps (Before) -->
+  <g stroke="#9ca3af" stroke-width="1.5" fill="none" marker-end="url(#arrow)">
+    <line x1="230" y1="159" x2="230" y2="178"/>
+    <line x1="230" y1="224" x2="230" y2="243"/>
+    <line x1="230" y1="289" x2="230" y2="308"/>
+    <line x1="230" y1="354" x2="230" y2="373"/>
+    <line x1="230" y1="419" x2="230" y2="438"/>
+    <line x1="230" y1="484" x2="230" y2="503"/>
+    <line x1="230" y1="549" x2="230" y2="568"/>
+  </g>
+
+  <text x="230" y="660" text-anchor="middle" font-size="11" fill="#dc2626" font-weight="600">빨강 = 매번 반복되는 정형 노동</text>
+  <text x="230" y="678" text-anchor="middle" font-size="11" fill="#6b7280">총 8단계 · 사람 100%</text>
+
+  <!-- CENTER ARROW -->
+  <g>
+    <line x1="430" y1="380" x2="570" y2="380" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-big)"/>
+    <text x="500" y="368" text-anchor="middle" font-size="14" font-weight="700" fill="#2563eb">위임</text>
+    <text x="500" y="402" text-anchor="middle" font-size="11" fill="#2563eb">"agent 한테 맡기자"</text>
+  </g>
+
+  <!-- RIGHT COLUMN: After -->
+  <rect x="580" y="65" width="380" height="630" rx="14" fill="#fafafa" stroke="#e5e7eb" stroke-width="1.5"/>
+  <text x="770" y="95" text-anchor="middle" font-size="16" font-weight="700" fill="#374151">jira-fixer 도입 후</text>
+
+  <g font-size="13" fill="#111827">
+    <!-- 1: User input -->
+    <rect x="610" y="125" width="320" height="44" rx="8" fill="#dbeafe" stroke="#60a5fa"/>
+    <text x="770" y="152" text-anchor="middle" font-weight="600">사용자: 이슈 번호 한 줄</text>
+
+    <!-- 2: Auto -->
+    <rect x="610" y="200" width="320" height="64" rx="8" fill="#e0e7ff" stroke="#818cf8"/>
+    <text x="770" y="224" text-anchor="middle">agent 자동:</text>
+    <text x="770" y="245" text-anchor="middle" font-size="12">본문·댓글·Figma 시안 fetch + 코드 탐색</text>
+
+    <!-- 3: User -->
+    <rect x="610" y="295" width="320" height="44" rx="8" fill="#fef3c7" stroke="#fbbf24"/>
+    <text x="770" y="322" text-anchor="middle" font-weight="600">사용자: 변경 계획 승인</text>
+
+    <!-- 4: Auto -->
+    <rect x="610" y="370" width="320" height="44" rx="8" fill="#e0e7ff" stroke="#818cf8"/>
+    <text x="770" y="397" text-anchor="middle">agent 자동: 코드 수정 + 검증</text>
+
+    <!-- 5: User -->
+    <rect x="610" y="445" width="320" height="44" rx="8" fill="#fef3c7" stroke="#fbbf24"/>
+    <text x="770" y="472" text-anchor="middle" font-weight="600">사용자: 댓글 게시 승인</text>
+
+    <!-- 6: Auto -->
+    <rect x="610" y="520" width="320" height="64" rx="8" fill="#d1fae5" stroke="#34d399"/>
+    <text x="770" y="544" text-anchor="middle">agent 자동:</text>
+    <text x="770" y="565" text-anchor="middle" font-size="12">댓글 게시 + 상태 → 해결됨</text>
+  </g>
+
+  <g stroke="#9ca3af" stroke-width="1.5" fill="none" marker-end="url(#arrow)">
+    <line x1="770" y1="169" x2="770" y2="198"/>
+    <line x1="770" y1="264" x2="770" y2="293"/>
+    <line x1="770" y1="339" x2="770" y2="368"/>
+    <line x1="770" y1="414" x2="770" y2="443"/>
+    <line x1="770" y1="489" x2="770" y2="518"/>
+  </g>
+
+  <text x="770" y="630" text-anchor="middle" font-size="11" fill="#059669" font-weight="600">노랑 = 사용자 승인 2회만 개입</text>
+  <text x="770" y="648" text-anchor="middle" font-size="11" fill="#6366f1">보라/초록 = agent 자동 실행</text>
+  <text x="770" y="678" text-anchor="middle" font-size="11" fill="#6b7280">사람이 직접 하는 일: "OK" 2번</text>
+</svg>

@@ -27,10 +27,10 @@ const contentRoot = path.join(process.cwd(), "content");
 const postsDir = path.join(contentRoot, "posts");
 const diaryDir = path.join(contentRoot, "diary");
 
-const showDrafts = process.env.NODE_ENV !== "production";
-
+// draft 글은 환경(로컬/프로덕션)과 무관하게 목록·상세에서 항상 제외한다.
+// md 파일은 저장소에 그대로 두고, frontmatter의 draft 속성으로만 노출 여부를 제어한다.
 function isPostVisible(fm: Pick<PostFrontmatter, "draft">): boolean {
-  return showDrafts || !fm.draft;
+  return !fm.draft;
 }
 
 async function listMarkdownFiles(dir: string): Promise<string[]> {

@@ -6,6 +6,7 @@ tags: ["nextjs", "performance", "cdn", "memory"]
 author: "hovelopin"
 series: "메모리 누수 해결을 위한 여정"
 seriesOrder: 1
+draft: true
 cover: "/covers/memory-leak-1-image-cdn.png"
 coverAlt: "메모리 누수 1편 — 이미지 최적화 및 CDN 썸네일"
 ---

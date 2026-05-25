@@ -63,7 +63,7 @@ function CardFront() {
 
           <dl className="mt-3.5 space-y-3">
             <Field label="Born In South Korea" value="MAY 31, 1996" />
-            <Field label="Status" value="ALIVE" />
+            <Field label="Status" value="ACTIVE" />
           </dl>
         </div>
 

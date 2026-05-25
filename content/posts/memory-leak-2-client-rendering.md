@@ -6,6 +6,7 @@ tags: ["nextjs", "performance", "memory", "react"]
 author: "hovelopin"
 series: "메모리 누수 해결을 위한 여정"
 seriesOrder: 2
+draft: true
 cover: "/covers/memory-leak-2-client-rendering.png"
 coverAlt: "메모리 누수 2편 — 클라이언트 렌더링 개선 썸네일"
 ---

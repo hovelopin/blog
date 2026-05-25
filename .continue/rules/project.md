@@ -1,6 +1,10 @@
 <!-- AUTO-GENERATED from AGENTS.md — do not edit directly.
      Run `bash scripts/sync-agent-rules.sh` to regenerate. -->
 
+---
+description: Project conventions for AI Website Clone Template
+alwaysApply: true
+---
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 

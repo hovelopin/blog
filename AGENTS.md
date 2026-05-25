@@ -57,6 +57,16 @@ docs/
 scripts/            # Asset download scripts
 ```
 
+## 블로그 글 작성 규칙 (말투)
+
+`content/posts/`의 모든 블로그 글은 **"~합니다 / ~입니다 / ~됩니다"체(정중한 평서체)**로 통일한다. 기준 톤은 `content/posts/jira-fixer-automation.md`다.
+
+- 본문 문장 어미를 "~한다 / ~이다 / ~된다 / ~했다" 같은 plain 평서체로 끝내지 않는다.
+- 1인칭은 "나 / 내가 / 나는"이 아니라 "저 / 제가 / 저는"으로 쓴다.
+- 권유·제안은 "~하자"가 아니라 "~합시다 / ~해 봅시다"로 쓴다.
+- 불릿·표의 명사형 종결(예: "~ 처리", "~ 미등록")은 그대로 둬도 된다.
+- **변경 대상이 아닌 것**: 코드 블록 내부(코드 및 코드 주석), frontmatter의 `title`. frontmatter의 `description`이 완결된 문장이면 같은 말투를 따른다.
+
 ## MOST IMPORTANT NOTES
 - When launching Claude Code agent teams, ALWAYS have each teammate work in their own worktree branch and merge everyone's work at the end, resolving any merge conflicts smartly since you are basically serving the orchestrator role and have full context to our goals, work given, work achieved, and desired outcomes.
 - After editing `AGENTS.md`, run `bash scripts/sync-agent-rules.sh` to regenerate platform-specific instruction files.

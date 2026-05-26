@@ -1,12 +1,19 @@
 import type { DiaryEntry } from "@/types/content";
 import { formatDate, formatRelativeDate } from "@/lib/format";
+import { CopyLinkButton } from "@/components/copy-link-button";
 
 interface DiaryCardProps {
   entry: DiaryEntry;
   compact?: boolean;
+  /** 단일 글 페이지처럼 자기 자신을 가리키는 곳에서는 퍼머링크 아이콘을 숨긴다. */
+  hidePermalink?: boolean;
 }
 
-export function DiaryCard({ entry, compact = false }: DiaryCardProps) {
+export function DiaryCard({
+  entry,
+  compact = false,
+  hidePermalink = false,
+}: DiaryCardProps) {
   return (
     <article
       className={
@@ -24,6 +31,9 @@ export function DiaryCard({ entry, compact = false }: DiaryCardProps) {
             <span aria-hidden="true">·</span>
             <span className="text-primary/80">{entry.mood}</span>
           </>
+        )}
+        {!hidePermalink && (
+          <CopyLinkButton path={`/diary/${entry.slug}`} className="ml-auto" />
         )}
       </header>
       <div

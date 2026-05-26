@@ -67,9 +67,22 @@ scripts/            # Asset download scripts
 - 불릿·표의 명사형 종결(예: "~ 처리", "~ 미등록")은 그대로 둬도 된다.
 - **변경 대상이 아닌 것**: 코드 블록 내부(코드 및 코드 주석), frontmatter의 `title`. frontmatter의 `description`이 완결된 문장이면 같은 말투를 따른다.
 
+## 다이어리 작성 규칙 (`content/diary/`)
+
+다이어리는 블로그 글과 별개다. **개인 회고체(1인칭 "나" + 평서체 "~다/~했다")를 그대로 유지**한다 — 위 합니다체 규칙을 적용하지 않는다.
+
+**사용자가 다이어리 글 본문을 전달하면, 항상 강조 마커를 적절히 입혀서 저장한다.** 기존 글(`2026-04-13-new-employee.md` 등)의 톤·밀도를 기준으로 한다.
+
+- `==하이라이트==` — 글의 전환점/핵심 한두 문장에만 (remark-flexible-markers).
+- `**굵게**` — 강조하고 싶은 핵심 진술.
+- `*기울임*` — 잔잔한 회고/감정 문구.
+- `` `코드` `` — 기술 용어·도구/명령어 이름.
+- 과하게 칠하지 않는다. 5문단 기준 하이라이트 1~2 / 굵게 2~3 / 기울임 1~2 정도.
+- 원문 의미·표현은 보존하고 마커만 더한다. frontmatter는 `date`(필수) + `mood`(내용에 맞는 한 단어).
+- 파일명은 `YYYY-MM-DD-<영문-kebab-슬러그>.md`.
+
 ## MOST IMPORTANT NOTES
 - When launching Claude Code agent teams, ALWAYS have each teammate work in their own worktree branch and merge everyone's work at the end, resolving any merge conflicts smartly since you are basically serving the orchestrator role and have full context to our goals, work given, work achieved, and desired outcomes.
-- After editing `AGENTS.md`, run `bash scripts/sync-agent-rules.sh` to regenerate platform-specific instruction files.
 - After editing `.claude/skills/clone-website/SKILL.md`, run `node scripts/sync-skills.mjs` to regenerate the skill for all platforms.
 
 @docs/research/INSPECTION_GUIDE.md

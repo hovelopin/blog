@@ -267,21 +267,41 @@ export async function getRelatedPosts(
     .map((x) => x.post);
 }
 
+async function readDiaryFile(filename: string): Promise<DiaryEntry | null> {
+  const raw = await fs.readFile(path.join(diaryDir, filename), "utf8");
+  const { data, content } = matter(raw);
+  const fm = data as DiaryFrontmatter;
+  // 날짜가 없는(아직 작성 중인) 항목은 목록/링크에서 제외한다.
+  if (!fm.date) return null;
+  const html = await renderMarkdown(content);
+  return {
+    slug: slugFromFilename(filename),
+    date: fm.date,
+    mood: fm.mood,
+    content: html,
+  } satisfies DiaryEntry;
+}
+
 export async function getAllDiaryEntries(): Promise<DiaryEntry[]> {
   const files = await listMarkdownFiles(diaryDir);
-  const entries = await Promise.all(
-    files.map(async (filename) => {
-      const raw = await fs.readFile(path.join(diaryDir, filename), "utf8");
-      const { data, content } = matter(raw);
-      const fm = data as DiaryFrontmatter;
-      const html = await renderMarkdown(content);
-      return {
-        slug: slugFromFilename(filename),
-        date: fm.date,
-        mood: fm.mood,
-        content: html,
-      } satisfies DiaryEntry;
-    }),
+  const entries = (await Promise.all(files.map(readDiaryFile))).filter(
+    (e): e is DiaryEntry => e !== null,
   );
   return entries.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export async function getDiaryEntryBySlug(
+  slug: string,
+): Promise<DiaryEntry | null> {
+  try {
+    return await readDiaryFile(`${slug}.md`);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw err;
+  }
+}
+
+export async function getAllDiarySlugs(): Promise<string[]> {
+  const entries = await getAllDiaryEntries();
+  return entries.map((e) => e.slug);
 }

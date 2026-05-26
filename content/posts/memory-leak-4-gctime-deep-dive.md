@@ -64,11 +64,11 @@ FATAL ERROR: Ineffective mark-compacts near heap limit
 
 이 설명은 **클라이언트 관점에서는 맞습니다.** 그런데 우리가 본 OOM은 클라이언트가 아니라 SSR 서버에서 발생했고, 서버에서는 매 요청마다 새 `QueryClient`가 생성됩니다. "컴포넌트 unmount"라는 개념 자체가 적용되지 않습니다. 즉, 이전 글의 설명은 증상을 맞췄지만 **메커니즘을 잘못 짚었습니다.**
 
-이 점은 글을 본 동료가 한 줄로 정확히 지적해줬습니다.
+사실 이 지점에서 걸리는 게 하나 있었습니다. 제가 알기로 `gcTime`은 아무 값도 주지 않으면 기본이 5분이 아니라 Infinity였습니다.
 
-> "내가 알기로는 설정을 안 하면 `gcTime` 기본값이 Infinity 아니야?"
+> 설정을 안 하면 `gcTime` 기본값이 Infinity 아니던가?
 
-곧장 라이브러리 소스를 열었습니다.
+이 의문이 떠올라 곧장 라이브러리 소스를 열었습니다.
 
 ---
 
@@ -76,7 +76,7 @@ FATAL ERROR: Ineffective mark-compacts near heap limit
 
 ### 3.1 server default는 Infinity다
 
-[`@tanstack/query-core/src/removable.ts`](https://github.com/TanStack/query/blob/v5.90.6/packages/query-core/src/removable.ts) L23-29:
+[`@tanstack/query-core/src/removable.ts`](https://github.com/TanStack/query/blob/v5.90.3/packages/query-core/src/removable.ts) L23-29:
 
 ```ts
 protected updateGcTime(newGcTime: number | undefined): void {
@@ -105,7 +105,7 @@ protected scheduleGc(): void {
 }
 ```
 
-[`utils.ts`](https://github.com/TanStack/query/blob/v5.90.6/packages/query-core/src/utils.ts#L93-L95) L93-95:
+[`utils.ts`](https://github.com/TanStack/query/blob/v5.90.3/packages/query-core/src/utils.ts#L93-L95) L93-95:
 
 ```ts
 export function isValidTimeout(value: unknown): value is number {
@@ -247,8 +247,8 @@ function makeQueryClient() {
 ## 참고
 
 - [TanStack Query — Server Rendering & Hydration 공식 가이드](https://tanstack.com/query/latest/docs/framework/react/guides/ssr)
-- [`@tanstack/query-core/src/removable.ts` (v5.90.6)](https://github.com/TanStack/query/blob/v5.90.6/packages/query-core/src/removable.ts)
-- [`@tanstack/query-core/src/utils.ts` (v5.90.6)](https://github.com/TanStack/query/blob/v5.90.6/packages/query-core/src/utils.ts#L93-L95)
+- [`@tanstack/query-core/src/removable.ts` (v5.90.3)](https://github.com/TanStack/query/blob/v5.90.3/packages/query-core/src/removable.ts)
+- [`@tanstack/query-core/src/utils.ts` (v5.90.3)](https://github.com/TanStack/query/blob/v5.90.3/packages/query-core/src/utils.ts#L93-L95)
 - [TanStack/query #8136 — gcTime is not working with SSR](https://github.com/TanStack/query/issues/8136)
 - [TanStack/query Discussion #3284 — SSR and high memory consumption](https://github.com/TanStack/query/discussions/3284)
 - [TanStack/router #7402 — SSR memory leak under sustained load](https://github.com/tanstack/router/issues/7402)

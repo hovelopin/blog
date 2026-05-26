@@ -21,6 +21,7 @@ export async function generateMetadata({
   return {
     title: `#${decoded}`,
     description: `태그 '${decoded}'로 필터링된 글 모음.`,
+    alternates: { canonical: `/blog/tag/${tag}` },
   };
 }
 

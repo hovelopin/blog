@@ -9,11 +9,13 @@ import {
   getSeriesContext,
 } from "@/lib/content";
 import { formatDate } from "@/lib/format";
+import { AUTHOR, SITE_LANG, absoluteUrl } from "@/lib/site";
 import { DynamicIslandTOC } from "@/components/dynamic-island-toc";
 import { PostContent } from "@/components/post-content";
 import { PostFooterNav } from "@/components/post-footer-nav";
 import { PostComments } from "@/components/post-comments";
 import { SeriesNav } from "@/components/series-nav";
+import { JsonLd } from "@/components/json-ld";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -30,9 +32,31 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = await getPostBySlug(slug);
   if (!post) return {};
+  const url = `/posts/${slug}`;
+  const images = post.cover
+    ? [{ url: post.cover, alt: post.coverAlt ?? post.title }]
+    : undefined;
   return {
     title: post.title,
     description: post.description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      url,
+      title: post.title,
+      description: post.description,
+      publishedTime: post.date,
+      modifiedTime: post.date,
+      authors: [post.author ?? AUTHOR.name],
+      tags: post.tags,
+      images,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.description,
+      images: post.cover ? [post.cover] : undefined,
+    },
   };
 }
 
@@ -47,8 +71,46 @@ export default async function PostPage({ params }: PostPageProps) {
     getSeriesContext(slug),
   ]);
 
+  const postUrl = absoluteUrl(`/posts/${slug}`);
+  const blogPostingJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.description,
+    datePublished: post.date,
+    dateModified: post.date,
+    inLanguage: SITE_LANG,
+    author: {
+      "@type": "Person",
+      name: post.author ?? AUTHOR.name,
+      url: AUTHOR.url,
+    },
+    publisher: { "@type": "Person", name: AUTHOR.fullName, url: AUTHOR.url },
+    mainEntityOfPage: postUrl,
+    url: postUrl,
+    ...(post.cover ? { image: absoluteUrl(post.cover) } : {}),
+    ...(post.tags && post.tags.length > 0
+      ? { keywords: post.tags.join(", ") }
+      : {}),
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Blog",
+        item: absoluteUrl("/blog"),
+      },
+      { "@type": "ListItem", position: 3, name: post.title, item: postUrl },
+    ],
+  };
+
   return (
     <article className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-6 sm:py-16">
+      <JsonLd data={[blogPostingJsonLd, breadcrumbJsonLd]} />
       {post.headings.length > 0 && (
         <DynamicIslandTOC headings={post.headings} />
       )}

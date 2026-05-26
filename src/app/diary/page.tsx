@@ -6,6 +6,7 @@ import { getAllDiaryEntries } from "@/lib/content";
 export const metadata: Metadata = {
   title: "Diary",
   description: "짧은 메모들. 생각, 발견, 삽질의 기록.",
+  alternates: { canonical: "/diary" },
 };
 
 export default async function DiaryPage() {

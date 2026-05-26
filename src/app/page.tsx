@@ -1,9 +1,45 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BusinessCard } from "@/components/business-card";
 import { DynamicCard } from "@/components/dynamic-card";
 import { DiaryLog } from "@/components/diary-log";
 import { HorizontalScroller } from "@/components/horizontal-scroller";
+import { JsonLd } from "@/components/json-ld";
 import { getAllDiaryEntries, getAllPostSummaries } from "@/lib/content";
+import {
+  AUTHOR,
+  SITE_DESCRIPTION,
+  SITE_LANG,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/site";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: SITE_NAME,
+      description: SITE_DESCRIPTION,
+      inLanguage: SITE_LANG,
+      publisher: { "@id": `${SITE_URL}/#person` },
+    },
+    {
+      "@type": "Person",
+      "@id": `${SITE_URL}/#person`,
+      name: AUTHOR.fullName,
+      alternateName: AUTHOR.name,
+      url: SITE_URL,
+      sameAs: AUTHOR.sameAs,
+    },
+  ],
+};
 
 export default async function Home() {
   const [posts, diary] = await Promise.all([
@@ -15,6 +51,7 @@ export default async function Home() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-5 py-12 sm:px-6 sm:py-16">
+      <JsonLd data={websiteJsonLd} />
       <section className="mb-14 sm:mb-20">
         <BusinessCard />
       </section>

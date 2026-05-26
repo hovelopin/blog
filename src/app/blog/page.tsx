@@ -6,6 +6,7 @@ import { getAllPostSummaries, getAllTags } from "@/lib/content";
 export const metadata: Metadata = {
   title: "Blog",
   description: "개발과 관련된 긴 호흡의 글.",
+  alternates: { canonical: "/blog" },
 };
 
 export default async function BlogPage() {

@@ -1,10 +1,7 @@
 import { getAllPostSummaries } from "@/lib/content";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://hovelopin.dev";
-const SITE_TITLE = "hovelopin — dev log";
-const SITE_DESCRIPTION =
-  "개발하면서 배운 것, 만든 것, 삽질한 것을 기록하는 개인 개발 블로그.";
+const SITE_TITLE = SITE_NAME;
 
 function escape(s: string): string {
   return s

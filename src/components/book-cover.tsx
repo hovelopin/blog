@@ -73,6 +73,18 @@ export function BookCover({ book, size = "shelf", className }: BookCoverProps) {
           color: ink,
         }}
       >
+        {/* 실제 표지 이미지가 있으면 채운다 */}
+        {book.coverImage && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={book.coverImage}
+            alt={`${book.title} 표지`}
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
+        )}
+
         {/* 책등 접힘: 왼쪽 세로 음영 + 하이라이트 라인 */}
         <span
           aria-hidden="true"
@@ -88,38 +100,43 @@ export function BookCover({ book, size = "shelf", className }: BookCoverProps) {
           className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20"
         />
 
-        {/* 상단 키커: 첫 태그 또는 OPEN SOURCE */}
-        <p
-          className={cn(
-            "relative z-10 font-mono uppercase tracking-[0.18em] opacity-70",
-            hero ? "text-[10px]" : "text-[8px] sm:text-[9px]",
-          )}
-        >
-          {book.tags?.[0] ?? "open source"}
-        </p>
+        {/* 이미지 표지가 없을 때만 텍스트로 표지를 구성한다 */}
+        {!book.coverImage && (
+          <>
+            {/* 상단 키커: 첫 태그 또는 OPEN SOURCE */}
+            <p
+              className={cn(
+                "relative z-10 font-mono uppercase tracking-[0.18em] opacity-70",
+                hero ? "text-[10px]" : "text-[8px] sm:text-[9px]",
+              )}
+            >
+              {book.tags?.[0] ?? "open source"}
+            </p>
 
-        {/* 제목 */}
-        <h3
-          className={cn(
-            "relative z-10 mt-auto break-keep font-serif font-semibold leading-[1.1] tracking-tight",
-            hero ? "text-2xl" : "text-[15px] sm:text-lg",
-          )}
-        >
-          {book.title}
-        </h3>
+            {/* 제목 */}
+            <h3
+              className={cn(
+                "relative z-10 mt-auto break-keep font-serif font-semibold leading-[1.1] tracking-tight",
+                hero ? "text-2xl" : "text-[15px] sm:text-lg",
+              )}
+            >
+              {book.title}
+            </h3>
 
-        {/* 저자(repo) + 챕터 수 */}
-        <div
-          className={cn(
-            "relative z-10 mt-2 flex items-end justify-between gap-2 border-t border-white/20 pt-2 font-mono opacity-80",
-            hero ? "text-[10px]" : "text-[8px] sm:text-[9px]",
-          )}
-        >
-          <span className="truncate">{book.repo ?? "hovelopin"}</span>
-          <span className="shrink-0 tabular-nums">
-            {book.chapters.length}ch
-          </span>
-        </div>
+            {/* 저자(repo) + 챕터 수 */}
+            <div
+              className={cn(
+                "relative z-10 mt-2 flex items-end justify-between gap-2 border-t border-white/20 pt-2 font-mono opacity-80",
+                hero ? "text-[10px]" : "text-[8px] sm:text-[9px]",
+              )}
+            >
+              <span className="truncate">{book.repo ?? "hovelopin"}</span>
+              <span className="shrink-0 tabular-nums">
+                {book.chapters.length}ch
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

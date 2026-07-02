@@ -394,6 +394,8 @@ async function readBookSummary(bookSlug: string): Promise<BookSummary | null> {
     description: fm.description,
     date: fm.date,
     color: fm.color,
+    coverImage: fm.coverImage,
+    sourceUrl: fm.sourceUrl,
     tags: fm.tags,
     draft: fm.draft,
     chapters,

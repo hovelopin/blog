@@ -1,0 +1,23 @@
+---
+title: "Suspensive"
+repo: "toss/suspensive"
+description: "React Suspense를 실전에서 제대로 쓰기 위한 선언적 도구 모음. isLoading·isError 분기를 걷어내는 방법을 챕터로 읽습니다."
+date: "2026-07-01"
+color: "#18181b"
+sourceUrl: "https://suspensive.org/ko"
+tags: ["react", "suspense", "async"]
+---
+
+Suspensive는 "React Suspense를 위한 모든 것"을 표방하는 라이브러리입니다.
+로딩·에러·복구 상태를 컴포넌트마다 `isLoading`, `isError`로 분기하는 대신,
+선언적인 컴포넌트 경계로 밀어내 관심사를 분리합니다.
+
+이 책은 공식 문서(<https://suspensive.org/ko>)의 개념을 제 관점으로 요약한
+탐구 노트입니다. 정확한 API 시그니처와 최신 정보는 항상 공식 문서를 확인하세요.
+
+패키지는 크게 넷으로 나뉩니다.
+
+- **@suspensive/react** — `Suspense`, `ErrorBoundary`, `Delay`, `ClientOnly` 등 코어 프리미티브
+- **@suspensive/react-query** — TanStack Query를 선언적으로 감싸는 `SuspenseQuery` 계열
+- **@suspensive/jotai** — Jotai atom을 컴포넌트로 다루는 `Atom`, `AtomValue`, `SetAtom`
+- **@suspensive/codemods** — 메이저 버전 마이그레이션 자동화

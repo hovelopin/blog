@@ -94,13 +94,26 @@ export default async function BookPage({ params }: BookPageProps) {
               {book.repo} ↗
             </a>
           )}
-          <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">
+          <p className="mt-4 break-keep text-[15px] leading-relaxed text-muted-foreground">
             {book.description}
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-muted-foreground">
             <span>{book.chapters.length} chapters</span>
             <span aria-hidden="true">·</span>
             <time dateTime={book.date}>업데이트 {formatDate(book.date)}</time>
+            {book.sourceUrl && (
+              <>
+                <span aria-hidden="true">·</span>
+                <a
+                  href={book.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="text-primary/80 transition-colors hover:text-primary"
+                >
+                  공식 문서 ↗
+                </a>
+              </>
+            )}
           </div>
           {book.tags && book.tags.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2 font-mono text-xs">

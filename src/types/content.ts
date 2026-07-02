@@ -54,6 +54,13 @@ export interface BookFrontmatter {
   date: string;
   /** 표지 배경색(oklch/hex). 없으면 slug 해시로 자동 배정. */
   color?: string;
+  /**
+   * 실제 표지 이미지 경로/URL. 지정하면 자동 생성 표지 대신 이미지를 쓴다.
+   * (public/ 하위 로컬 경로 권장. 외부 URL은 깨질 수 있음)
+   */
+  coverImage?: string;
+  /** 원본 오픈소스/공식 문서 URL. 상세 페이지에 출처로 노출. */
+  sourceUrl?: string;
   tags?: string[];
   draft?: boolean;
 }

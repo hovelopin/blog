@@ -18,18 +18,6 @@ function Meta({ post }: { post: PostSummary }) {
       <time dateTime={post.date}>{formatDate(post.date)}</time>
       <span aria-hidden="true">·</span>
       <span>{post.readingTimeMinutes} min read</span>
-      {post.tags && post.tags.length > 0 && (
-        <>
-          <span aria-hidden="true">·</span>
-          <span className="flex flex-wrap gap-1.5">
-            {post.tags.map((tag) => (
-              <span key={tag} className="text-primary/80">
-                #{tag}
-              </span>
-            ))}
-          </span>
-        </>
-      )}
     </div>
   );
 }

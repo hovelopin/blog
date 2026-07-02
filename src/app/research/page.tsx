@@ -29,8 +29,8 @@ export default async function ResearchPage() {
         <h1 className="mb-3 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
           research
         </h1>
-        <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
-          오픈소스 코드베이스를 한 권의 책처럼 챕터로 나눠 읽고 정리한 탐구 노트입니다. 표지를 눌러 목차부터 펼쳐보세요.
+        <p className="max-w-2xl break-keep text-balance text-sm leading-relaxed text-muted-foreground">
+          오픈소스 코드베이스를 한 권의 책처럼 챕터로 나눠 읽는 탐구 노트입니다.
         </p>
       </header>
 

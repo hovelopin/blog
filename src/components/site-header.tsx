@@ -79,16 +79,17 @@ export function SiteHeader() {
         <Link
           href="/"
           aria-label="home"
-          className="group flex shrink-0 items-center gap-1 font-mono text-[13px] text-foreground transition-opacity hover:opacity-80 sm:text-sm"
+          title={`~/${promptPath}`}
+          className="group flex min-w-0 shrink items-center gap-1 font-mono text-[13px] text-foreground transition-opacity hover:opacity-80 sm:text-sm"
         >
-          <span className="text-muted-foreground">~/</span>
-          <span className="font-medium">hovelopin</span>
-          <span className="ml-0.5 hidden text-muted-foreground lg:inline">
+          <span className="shrink-0 text-muted-foreground">~/</span>
+          <span className="shrink-0 font-medium">hovelopin</span>
+          <span className="ml-0.5 hidden min-w-0 max-w-[160px] truncate text-muted-foreground lg:inline-block xl:max-w-[300px]">
             : {promptPath}
           </span>
           <span
             aria-hidden="true"
-            className="ml-0.5 inline-block h-[14px] w-[7px] translate-y-[1px] bg-primary/90 animate-[cursor-blink_1.1s_steps(1)_infinite] sm:h-[15px] sm:w-[8px]"
+            className="ml-0.5 inline-block h-[14px] w-[7px] shrink-0 translate-y-[1px] bg-primary/90 animate-[cursor-blink_1.1s_steps(1)_infinite] sm:h-[15px] sm:w-[8px]"
           />
         </Link>
 

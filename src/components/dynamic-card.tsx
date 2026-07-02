@@ -5,7 +5,6 @@ import { ArrowUpRight } from "lucide-react";
 import { useRef, useState, type CSSProperties } from "react";
 import type { PostSummary } from "@/types/content";
 import { formatDate } from "@/lib/format";
-import { PostCover } from "@/components/post-cover";
 import { cn } from "@/lib/utils";
 
 interface DynamicCardProps {
@@ -57,7 +56,7 @@ export function DynamicCard({ post, className }: DynamicCardProps) {
         ref={cardRef}
         style={vars}
         className={cn(
-          "relative flex h-[460px] w-full flex-col overflow-hidden rounded-2xl",
+          "relative flex h-[300px] w-full flex-col overflow-hidden rounded-2xl p-6",
           "border border-border bg-card",
           "shadow-[0_6px_20px_-8px_rgba(0,0,0,0.12),0_2px_6px_-2px_rgba(0,0,0,0.06)]",
           "dark:shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6),inset_0_0_0_1px_rgba(255,255,255,0.04)]",
@@ -67,32 +66,9 @@ export function DynamicCard({ post, className }: DynamicCardProps) {
             : "[transform:rotateX(0)_rotateY(0)_scale(1)]",
         )}
       >
-        <PostCover
-          src={post.cover}
-          alt={post.coverAlt ?? post.title}
-          seed={post.slug}
-          label={post.tags?.[0]}
-          className="aspect-[5/3] w-full flex-shrink-0 rounded-none border-0 border-b border-border/40"
-          sizes="320px"
-        />
-
-        <div className="flex flex-1 flex-col p-5">
-          <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] text-muted-foreground">
-            <time dateTime={post.date}>{formatDate(post.date)}</time>
-            <span aria-hidden="true">·</span>
-            <span>{post.readingTimeMinutes} min</span>
-          </div>
-
-          <h3 className="mb-2 line-clamp-2 text-base font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary">
-            {post.title}
-          </h3>
-
-          <p className="line-clamp-3 flex-1 text-[13px] leading-relaxed text-muted-foreground">
-            {post.description}
-          </p>
-
+        <div className="relative z-10 flex flex-1 flex-col">
           {post.tags && post.tags.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5 font-mono text-[10px]">
+            <div className="mb-4 flex flex-wrap gap-1.5 font-mono text-[10px]">
               {post.tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
@@ -103,6 +79,25 @@ export function DynamicCard({ post, className }: DynamicCardProps) {
               ))}
             </div>
           )}
+
+          <h3 className="mb-2 line-clamp-2 text-lg font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary">
+            {post.title}
+          </h3>
+
+          <p className="line-clamp-4 flex-1 text-[13px] leading-relaxed text-muted-foreground">
+            {post.description}
+          </p>
+
+          <div className="mt-4 flex items-center justify-between font-mono text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-x-2">
+              <time dateTime={post.date}>{formatDate(post.date)}</time>
+              <span aria-hidden="true">·</span>
+              <span>{post.readingTimeMinutes} min</span>
+            </span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
+              <ArrowUpRight className="h-4 w-4" strokeWidth={2.5} />
+            </span>
+          </div>
         </div>
 
         <div
@@ -113,7 +108,7 @@ export function DynamicCard({ post, className }: DynamicCardProps) {
           )}
           style={{
             background:
-              "radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.12), transparent 45%)",
+              "radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.10), transparent 45%)",
             mixBlendMode: "screen",
           }}
         />
@@ -121,7 +116,7 @@ export function DynamicCard({ post, className }: DynamicCardProps) {
           aria-hidden="true"
           className={cn(
             "pointer-events-none absolute inset-0 rounded-2xl transition-opacity duration-300",
-            hover ? "opacity-60" : "opacity-0",
+            hover ? "opacity-40" : "opacity-0",
           )}
           style={{
             background:
@@ -129,39 +124,6 @@ export function DynamicCard({ post, className }: DynamicCardProps) {
             mixBlendMode: "overlay",
           }}
         />
-
-        <div
-          aria-hidden={!hover}
-          className={cn(
-            "pointer-events-none absolute inset-0 overflow-hidden rounded-2xl transition-opacity duration-300",
-            hover ? "opacity-100" : "opacity-0",
-          )}
-        >
-          <PostCover
-            src={post.cover}
-            alt=""
-            seed={post.slug}
-            className="absolute inset-0 h-full w-full rounded-none border-0"
-            sizes="320px"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/15 to-black/80" />
-
-          {post.tags?.[0] && (
-            <span className="absolute left-4 top-4 rounded-full border border-white/60 bg-white/5 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-              {post.tags[0]}
-            </span>
-          )}
-
-          <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-lg">
-            <ArrowUpRight className="h-5 w-5" strokeWidth={2.5} />
-          </span>
-
-          <div className="absolute inset-x-0 bottom-0 p-5">
-            <h3 className="line-clamp-2 text-base font-semibold leading-tight text-white">
-              {post.title}
-            </h3>
-          </div>
-        </div>
       </div>
     </Link>
   );

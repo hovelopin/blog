@@ -21,10 +21,16 @@ const NAV_ITEMS: NavItem[] = [
     match: (p) => p === "/",
   },
   {
-    href: "/blog",
-    command: "cd ~/blog",
-    short: "blog",
-    match: (p) => p === "/blog" || p.startsWith("/posts"),
+    href: "/posts",
+    command: "cd ~/posts",
+    short: "posts",
+    match: (p) => p.startsWith("/posts"),
+  },
+  {
+    href: "/research",
+    command: "cd ~/research",
+    short: "research",
+    match: (p) => p.startsWith("/research"),
   },
   {
     href: "/diary",
@@ -36,11 +42,16 @@ const NAV_ITEMS: NavItem[] = [
 
 function promptPathFor(pathname: string): string {
   if (pathname === "/") return "~";
-  if (pathname === "/blog") return "~/blog";
+  if (pathname === "/posts") return "~/posts";
+  if (pathname === "/research") return "~/research";
   if (pathname === "/diary") return "~/diary";
   if (pathname.startsWith("/posts/")) {
     const slug = pathname.replace("/posts/", "");
-    return `~/blog/${slug}`;
+    return `~/posts/${slug}`;
+  }
+  if (pathname.startsWith("/research/")) {
+    const rest = pathname.replace("/research/", "");
+    return `~/research/${rest}`;
   }
   return pathname;
 }

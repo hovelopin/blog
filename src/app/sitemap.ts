@@ -1,16 +1,18 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import {
+  getAllBooks,
   getAllDiaryEntries,
   getAllPostSummaries,
   getAllTags,
 } from "@/lib/content";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [posts, diary, tags] = await Promise.all([
+  const [posts, diary, tags, books] = await Promise.all([
     getAllPostSummaries(),
     getAllDiaryEntries(),
     getAllTags(),
+    getAllBooks(),
   ]);
 
   const now = new Date();
@@ -23,10 +25,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
-      url: `${SITE_URL}/blog`,
+      url: `${SITE_URL}/posts`,
       lastModified: posts[0] ? new Date(posts[0].date) : now,
       changeFrequency: "weekly",
       priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/research`,
+      lastModified: books[0] ? new Date(books[0].date) : now,
+      changeFrequency: "weekly",
+      priority: 0.6,
     },
     {
       url: `${SITE_URL}/diary`,
@@ -51,11 +59,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const tagRoutes: MetadataRoute.Sitemap = tags.map((t) => ({
-    url: `${SITE_URL}/blog/tag/${encodeURIComponent(t.tag)}`,
+    url: `${SITE_URL}/posts/tag/${encodeURIComponent(t.tag)}`,
     lastModified: now,
     changeFrequency: "weekly",
     priority: 0.3,
   }));
 
-  return [...staticRoutes, ...postRoutes, ...diaryRoutes, ...tagRoutes];
+  const bookRoutes: MetadataRoute.Sitemap = books.map((b) => ({
+    url: `${SITE_URL}/research/${b.slug}`,
+    lastModified: new Date(b.date),
+    changeFrequency: "monthly",
+    priority: 0.5,
+  }));
+
+  const chapterRoutes: MetadataRoute.Sitemap = books.flatMap((b) =>
+    b.chapters.map((c) => ({
+      url: `${SITE_URL}/research/${b.slug}/${c.slug}`,
+      lastModified: new Date(b.date),
+      changeFrequency: "monthly",
+      priority: 0.4,
+    })),
+  );
+
+  return [
+    ...staticRoutes,
+    ...postRoutes,
+    ...diaryRoutes,
+    ...tagRoutes,
+    ...bookRoutes,
+    ...chapterRoutes,
+  ];
 }

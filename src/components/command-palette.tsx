@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Home,
+  Library,
   Newspaper,
   NotebookPen,
   Rss,
@@ -41,7 +42,7 @@ type Item =
       label: string;
       hint: string;
       href: string;
-      icon: "home" | "blog" | "diary" | "rss";
+      icon: "home" | "blog" | "research" | "diary" | "rss";
       keywords: string;
     }
   | {
@@ -79,9 +80,14 @@ function fuzzyScore(query: string, target: string): number {
   return score;
 }
 
-function IconFor({ name }: { name: "home" | "blog" | "diary" | "rss" }) {
+function IconFor({
+  name,
+}: {
+  name: "home" | "blog" | "research" | "diary" | "rss";
+}) {
   if (name === "home") return <Home size={14} aria-hidden="true" />;
   if (name === "blog") return <Newspaper size={14} aria-hidden="true" />;
+  if (name === "research") return <Library size={14} aria-hidden="true" />;
   if (name === "diary") return <NotebookPen size={14} aria-hidden="true" />;
   return <Rss size={14} aria-hidden="true" />;
 }
@@ -117,12 +123,21 @@ export function CommandPalette({ posts, tags }: CommandPaletteProps) {
       },
       {
         kind: "nav",
-        id: "nav:blog",
-        label: "Blog",
-        hint: "~/blog",
-        href: "/blog",
+        id: "nav:posts",
+        label: "Posts",
+        hint: "~/posts",
+        href: "/posts",
         icon: "blog",
-        keywords: "blog posts ls",
+        keywords: "blog posts ls articles",
+      },
+      {
+        kind: "nav",
+        id: "nav:research",
+        label: "Research",
+        hint: "~/research",
+        href: "/research",
+        icon: "research",
+        keywords: "research bookshelf books open source 오픈소스 탐구",
       },
       {
         kind: "nav",
@@ -166,7 +181,7 @@ export function CommandPalette({ posts, tags }: CommandPaletteProps) {
       id: `tag:${tag}`,
       label: `#${tag}`,
       hint: `${count} posts`,
-      href: `/blog/tag/${encodeURIComponent(tag)}`,
+      href: `/posts/tag/${encodeURIComponent(tag)}`,
       keywords: `tag ${tag}`,
     }));
     return [...nav, ...actions, ...postItems, ...tagItems];

@@ -14,6 +14,12 @@ import rehypeStringify from "rehype-stringify";
 import { visit } from "unist-util-visit";
 import type { Root, Element, Text } from "hast";
 import type {
+  Book,
+  BookFrontmatter,
+  BookSummary,
+  Chapter,
+  ChapterContext,
+  ChapterSummary,
   DiaryEntry,
   DiaryFrontmatter,
   Heading,
@@ -26,6 +32,7 @@ import type {
 const contentRoot = path.join(process.cwd(), "content");
 const postsDir = path.join(contentRoot, "posts");
 const diaryDir = path.join(contentRoot, "diary");
+const researchDir = path.join(contentRoot, "research");
 
 // draft 글은 환경(로컬/프로덕션)과 무관하게 목록·상세에서 항상 제외한다.
 // md 파일은 저장소에 그대로 두고, frontmatter의 draft 속성으로만 노출 여부를 제어한다.
@@ -304,4 +311,172 @@ export async function getDiaryEntryBySlug(
 export async function getAllDiarySlugs(): Promise<string[]> {
   const entries = await getAllDiaryEntries();
   return entries.map((e) => e.slug);
+}
+
+// ---------------------------------------------------------------------------
+// research(오픈소스 탐구) 책장
+// content/research/<book-slug>/book.md = 책 메타(표지) + 서문 본문
+// 같은 폴더의 NN-*.md = 챕터(파일명 앞 숫자로 정렬)
+// ---------------------------------------------------------------------------
+
+async function listBookDirs(): Promise<string[]> {
+  try {
+    const entries = await fs.readdir(researchDir, { withFileTypes: true });
+    return entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw err;
+  }
+}
+
+function chapterOrderFromFilename(filename: string): number {
+  const match = filename.match(/^(\d+)/);
+  return match ? Number.parseInt(match[1], 10) : Number.MAX_SAFE_INTEGER;
+}
+
+// "01-render-architecture.md" -> "제목 미지정" 대체용 사람이 읽을 문자열
+function titleFromChapterFilename(filename: string): string {
+  return slugFromFilename(filename)
+    .replace(/^\d+[-_]?/, "")
+    .replace(/[-_]+/g, " ")
+    .trim();
+}
+
+async function readBookChapters(
+  bookSlug: string,
+): Promise<{ filename: string; summary: ChapterSummary }[]> {
+  const dir = path.join(researchDir, bookSlug);
+  const files = (await listMarkdownFiles(dir)).filter(
+    (name) => name !== "book.md",
+  );
+  const chapters = await Promise.all(
+    files.map(async (filename) => {
+      const raw = await fs.readFile(path.join(dir, filename), "utf8");
+      const { data } = matter(raw);
+      const fm = data as { title?: string };
+      const slug = slugFromFilename(filename);
+      return {
+        filename,
+        summary: {
+          slug,
+          title: fm.title ?? titleFromChapterFilename(filename) ?? slug,
+          order: chapterOrderFromFilename(filename),
+        } satisfies ChapterSummary,
+      };
+    }),
+  );
+  return chapters.sort(
+    (a, b) =>
+      a.summary.order - b.summary.order ||
+      a.summary.slug.localeCompare(b.summary.slug),
+  );
+}
+
+async function readBookSummary(bookSlug: string): Promise<BookSummary | null> {
+  const bookPath = path.join(researchDir, bookSlug, "book.md");
+  let raw: string;
+  try {
+    raw = await fs.readFile(bookPath, "utf8");
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw err;
+  }
+  const { data } = matter(raw);
+  const fm = data as BookFrontmatter;
+  if (fm.draft) return null;
+  const chapters = (await readBookChapters(bookSlug)).map((c) => c.summary);
+  return {
+    slug: bookSlug,
+    title: fm.title,
+    repo: fm.repo,
+    description: fm.description,
+    date: fm.date,
+    color: fm.color,
+    tags: fm.tags,
+    draft: fm.draft,
+    chapters,
+  } satisfies BookSummary;
+}
+
+export async function getAllBooks(): Promise<BookSummary[]> {
+  const dirs = await listBookDirs();
+  const books = (await Promise.all(dirs.map(readBookSummary))).filter(
+    (b): b is BookSummary => b !== null,
+  );
+  return books.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export async function getAllBookSlugs(): Promise<string[]> {
+  const books = await getAllBooks();
+  return books.map((b) => b.slug);
+}
+
+export async function getBookBySlug(slug: string): Promise<Book | null> {
+  const summary = await readBookSummary(slug);
+  if (!summary) return null;
+  const bookPath = path.join(researchDir, slug, "book.md");
+  const raw = await fs.readFile(bookPath, "utf8");
+  const { content } = matter(raw);
+  const intro = content.trim() ? await renderMarkdown(content) : "";
+  return { ...summary, intro } satisfies Book;
+}
+
+export async function getAllChapterParams(): Promise<
+  { book: string; chapter: string }[]
+> {
+  const dirs = await listBookDirs();
+  const params = await Promise.all(
+    dirs.map(async (bookSlug) => {
+      const summary = await readBookSummary(bookSlug);
+      if (!summary) return [];
+      return summary.chapters.map((c) => ({
+        book: bookSlug,
+        chapter: c.slug,
+      }));
+    }),
+  );
+  return params.flat();
+}
+
+export async function getChapterContext(
+  bookSlug: string,
+  chapterSlug: string,
+): Promise<ChapterContext | null> {
+  const summary = await readBookSummary(bookSlug);
+  if (!summary) return null;
+  const index = summary.chapters.findIndex((c) => c.slug === chapterSlug);
+  if (index < 0) return null;
+
+  const filePath = path.join(researchDir, bookSlug, `${chapterSlug}.md`);
+  let raw: string;
+  try {
+    raw = await fs.readFile(filePath, "utf8");
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw err;
+  }
+  const { data, content } = matter(raw);
+  const fm = data as { title?: string };
+  const { html, headings } = await renderPostMarkdown(content);
+  const meta = summary.chapters[index];
+
+  const chapter: Chapter = {
+    bookSlug,
+    bookTitle: summary.title,
+    slug: chapterSlug,
+    title: fm.title ?? meta.title,
+    order: meta.order,
+    content: html,
+    headings,
+  };
+
+  return {
+    book: summary,
+    chapter,
+    prev: summary.chapters[index - 1] ?? null,
+    next: summary.chapters[index + 1] ?? null,
+    index,
+  } satisfies ChapterContext;
 }

@@ -4,12 +4,12 @@ import { PostCard } from "@/components/post-card";
 import { getAllPostSummaries, getAllTags } from "@/lib/content";
 
 export const metadata: Metadata = {
-  title: "Blog",
+  title: "Posts",
   description: "개발과 관련된 긴 호흡의 글.",
-  alternates: { canonical: "/blog" },
+  alternates: { canonical: "/posts" },
 };
 
-export default async function BlogPage() {
+export default async function PostsPage() {
   const [posts, tags] = await Promise.all([
     getAllPostSummaries(),
     getAllTags(),
@@ -26,10 +26,10 @@ export default async function BlogPage() {
 
       <header className="mb-10">
         <p className="mb-3 font-mono text-xs text-primary">
-          ~/hovelopin/blog $ ls -lah
+          ~/hovelopin/posts $ ls -lah
         </p>
-        <h1 className="mb-3 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-          blog
+        <h1 className="mb-3 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+          posts
         </h1>
         {tags.length > 0 && (
           <div className="mt-5 flex flex-wrap items-center gap-1.5 font-mono text-xs">
@@ -37,7 +37,7 @@ export default async function BlogPage() {
             {tags.map(({ tag, count }) => (
               <Link
                 key={tag}
-                href={`/blog/tag/${encodeURIComponent(tag)}`}
+                href={`/posts/tag/${encodeURIComponent(tag)}`}
                 className="group rounded-full border border-border bg-muted/40 px-2 py-0.5 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
               >
                 #{tag}
@@ -51,30 +51,13 @@ export default async function BlogPage() {
       </header>
 
       <div className="flex flex-col gap-5 sm:gap-6">
-        {posts.map((post, i) => {
-          const variant =
-            i % 4 === 0
-              ? "feature"
-              : i % 2 === 1
-                ? "image-left"
-                : "image-right";
-          const offset =
-            i === 0
-              ? ""
-              : i % 3 === 1
-                ? "sm:ml-5"
-                : i % 3 === 2
-                  ? "sm:mr-3"
-                  : "sm:ml-1";
-          return (
-            <PostCard
-              key={post.slug}
-              post={post}
-              variant={variant}
-              className={offset}
-            />
-          );
-        })}
+        {posts.map((post, i) => (
+          <PostCard
+            key={post.slug}
+            post={post}
+            variant={i === 0 ? "feature" : "default"}
+          />
+        ))}
         {posts.length === 0 && (
           <p className="text-sm text-muted-foreground">
             아직 글이 없습니다. <code>content/posts</code>에 마크다운 파일을

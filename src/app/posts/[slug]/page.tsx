@@ -101,8 +101,8 @@ export default async function PostPage({ params }: PostPageProps) {
       {
         "@type": "ListItem",
         position: 2,
-        name: "Blog",
-        item: absoluteUrl("/blog"),
+        name: "Posts",
+        item: absoluteUrl("/posts"),
       },
       { "@type": "ListItem", position: 3, name: post.title, item: postUrl },
     ],
@@ -144,7 +144,7 @@ export default async function PostPage({ params }: PostPageProps) {
             {post.tags.map((tag) => (
               <Link
                 key={tag}
-                href={`/blog/tag/${encodeURIComponent(tag)}`}
+                href={`/posts/tag/${encodeURIComponent(tag)}`}
                 className="rounded-full border border-border bg-muted/50 px-2.5 py-1 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
               >
                 #{tag}
@@ -169,7 +169,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
       <footer className="mt-12 border-t border-border/60 pt-8">
         <Link
-          href="/blog"
+          href="/posts"
           className="font-mono text-xs text-primary hover:underline"
         >
           ← 다른 글 보기

@@ -62,7 +62,7 @@ export default async function Home() {
             # recent posts
           </h2>
           <Link
-            href="/blog"
+            href="/posts"
             className="font-mono text-xs text-primary hover:underline"
           >
             see all ({posts.length}) →

@@ -1,5 +1,5 @@
 import type { DiaryEntry } from "@/types/content";
-import { formatDate, formatRelativeDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { CopyLinkButton } from "@/components/copy-link-button";
 
 interface DiaryCardProps {
@@ -23,9 +23,7 @@ export function DiaryCard({
       }
     >
       <header className="mb-2 flex items-center gap-2 font-mono text-xs text-muted-foreground">
-        <time dateTime={entry.date} title={formatDate(entry.date)}>
-          {formatRelativeDate(entry.date)}
-        </time>
+        <time dateTime={entry.date}>{formatDate(entry.date)}</time>
         {entry.mood && (
           <>
             <span aria-hidden="true">·</span>

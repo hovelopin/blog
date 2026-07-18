@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { DiaryEntry } from "@/types/content";
-import { formatDate, formatRelativeDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 
 interface DiaryLogProps {
   entries: DiaryEntry[];
@@ -64,10 +64,9 @@ export function DiaryLog({ entries }: DiaryLogProps) {
               </span>
               <time
                 dateTime={entry.date}
-                title={formatDate(entry.date)}
-                className="w-[4.5rem] shrink-0 text-muted-foreground"
+                className="w-[6.5rem] shrink-0 text-muted-foreground"
               >
-                {formatRelativeDate(entry.date)}
+                {formatDate(entry.date)}
               </time>
               <span className="truncate text-foreground/85">
                 {entry.mood && (

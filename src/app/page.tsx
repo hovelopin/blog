@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BusinessCard } from "@/components/business-card";
+import { BookCover } from "@/components/book-cover";
 import { DynamicCard } from "@/components/dynamic-card";
 import { DiaryLog } from "@/components/diary-log";
 import { HorizontalScroller } from "@/components/horizontal-scroller";
 import { JsonLd } from "@/components/json-ld";
-import { getAllDiaryEntries, getAllPostSummaries } from "@/lib/content";
+import {
+  getAllBooks,
+  getAllDiaryEntries,
+  getAllPostSummaries,
+} from "@/lib/content";
 import {
   AUTHOR,
   SITE_DESCRIPTION,
@@ -42,12 +47,14 @@ const websiteJsonLd = {
 };
 
 export default async function Home() {
-  const [posts, diary] = await Promise.all([
+  const [posts, diary, books] = await Promise.all([
     getAllPostSummaries(),
     getAllDiaryEntries(),
+    getAllBooks(),
   ]);
   const recentPosts = posts.slice(0, 3);
   const recentDiary = diary.slice(0, 3);
+  const recentBooks = books.slice(0, 6);
 
   return (
     <div className="mx-auto w-full max-w-3xl px-5 py-12 sm:px-6 sm:py-16">
@@ -85,6 +92,42 @@ export default async function Home() {
           </div>
         )}
       </section>
+
+      {recentBooks.length > 0 && (
+        <section className="mb-14 sm:mb-20">
+          <div className="mb-6 flex items-baseline justify-between">
+            <h2 className="font-mono text-sm text-muted-foreground">
+              # bookshelf
+            </h2>
+            <Link
+              href="/research"
+              className="font-mono text-xs text-primary hover:underline"
+            >
+              see all ({books.length}) →
+            </Link>
+          </div>
+          <div className="-mx-5 sm:-mx-6">
+            <HorizontalScroller step={172}>
+              {recentBooks.map((book) => (
+                <Link
+                  key={book.slug}
+                  href={`/research/${book.slug}`}
+                  className="group flex w-[150px] shrink-0 snap-start flex-col"
+                  aria-label={`${book.title} — ${book.description}`}
+                >
+                  <BookCover book={book} />
+                  <p className="mt-3 truncate text-[13px] font-medium tracking-tight text-foreground transition-colors group-hover:text-primary">
+                    {book.title}
+                  </p>
+                  <p className="mt-0.5 truncate font-mono text-[11px] text-muted-foreground">
+                    {book.repo ?? book.description}
+                  </p>
+                </Link>
+              ))}
+            </HorizontalScroller>
+          </div>
+        </section>
+      )}
 
       <section>
         <div className="mb-6 flex items-baseline justify-between">

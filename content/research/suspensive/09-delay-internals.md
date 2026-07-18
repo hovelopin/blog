@@ -1,0 +1,191 @@
+---
+title: "내부 뜯어보기 ⑤: Delay와 useTimeout의 최신 ref 패턴"
+---
+
+`Delay`는 65줄짜리지만, 그 안에 "스피너 깜빡임 방지"라는 UX 판단과 `useTimeout`의
+최신 ref 패턴이 함께 담겨 있다.
+
+- **소스**: `packages/react/src/Delay.tsx` (65줄)
+- **의존 부품**: `useTimeout`, `DelayDefaultPropsContext`, `SuspensiveError`
+
+## 한 문장 요약
+
+> children 렌더를 지정한 `ms`만큼 미루는 컴포넌트. 대표 용도는 로딩 스피너 깜빡임
+> 방지 — "로딩이 500ms 넘게 걸릴 때만 스피너 보여줘".
+
+## DelayProps — 유니온 타입
+
+```tsx
+export type DelayProps =
+  | {
+      // 변형 A: render prop 모드
+      ms?: number;
+      fallback?: never; // ← fallback 금지
+      children?: ({ isDelayed }: { isDelayed: boolean }) => ReactNode;
+    }
+  | {
+      // 변형 B: 일반 모드
+      ms?: number;
+      fallback?: ReactNode;
+      children?: ReactNode;
+    };
+```
+
+두 사용법은 서로 배타적이라 유니온으로 나눴다.
+
+- **변형 B(일반)**: `ms` 전엔 `fallback`, 후엔 `children`을 보여준다. 흔히 쓰는
+  방식이다.
+- **변형 A(render prop)**: `children`을 함수로 넘기면 `isDelayed` 값을 받아 직접
+  분기한다. 이땐 `fallback`이 의미 없으니 `fallback?: never`로 타입 레벨에서
+  금지한다.
+
+`fallback?: never`가 포인트다. 함수형 children을 쓰면서 fallback까지 주는
+잘못된 조합을 컴파일 단계에서 막는, 세심한 타입 설계다.
+
+## 본체 — 우선순위와 isDelayed의 진짜 의미
+
+```tsx
+const defaultProps = useContext(DelayDefaultPropsContext); // ← DefaultProps 소비
+const ms = props.ms ?? defaultProps.ms ?? 0; // 개별 > 전역 > 0
+
+const [isDelayed, setIsDelayed] = useState(ms <= 0);
+useTimeout(() => setIsDelayed(true), ms);
+```
+
+`Delay`는 [DefaultProps](/research/suspensive/07-default-props)의
+`DefaultPropsProvider`가 채우는 `DelayDefaultPropsContext`를 읽는 소비자다.
+우선순위는 `props.ms ?? defaultProps.ms ?? 0`, 즉 **개별 prop > Provider 기본값 >
+0**으로 일관된다.
+
+**`isDelayed` 이름에 주의**해야 한다. 이름만 보면 "지금 지연 중"으로 읽히는데
+정반대다.
+
+- `isDelayed === false` → 아직 기다리는 중 (fallback 보여줌)
+- `isDelayed === true` → **지연 시간이 다 지났음** (children 보여줌)
+
+말하자면 `isDelayed`는 "지연이 끝났나?"에 가깝다.
+
+`useState(ms <= 0)`도 영리하다. `ms`가 0이면 "지연 없음"이니 처음부터 `true`(children
+즉시 표시), `ms > 0`이면 `false`로 시작해 타이머를 기다린다. 조건문 없이 초기값
+하나로 "지연 0" 케이스를 깔끔하게 처리한다.
+
+### 세 갈래 return
+
+```tsx
+if (typeof props.children === "function") {
+  return <>{props.children({ isDelayed })}</>; // (A) render prop: 제어권을 넘김
+}
+if (isDelayed) {
+  return <>{props.children}</>; // (B) 지연 끝: children
+}
+if (props.fallback === undefined) {
+  return <>{defaultProps.fallback}</>; // (C-1) 개별 fallback 없으면 전역
+}
+return <>{props.fallback}</>; // (C-2) 개별 fallback
+```
+
+- (A) children이 함수면 `isDelayed`를 넘겨 사용자가 직접 렌더한다(커스텀 전환에
+  유용).
+- (B) 지연이 끝났으면 children.
+- (C) 아직이면 fallback — 여기서도 **개별 > 전역**(`Suspense`에서 본 `=== undefined`
+  삼항과 동일 철학).
+
+## useTimeout — 최신 ref 패턴 (제일 중요)
+
+이 파일에서 가장 배울 게 많은 부분이다.
+
+```tsx
+export const useTimeout = (fn: () => void, ms: number) => {
+  const fnRef = useRef(fn);
+  fnRef.current = fn; // 매 렌더마다 최신 fn을 ref에 저장
+  const fnPreserved = useCallback(() => fnRef.current(), []); // 안정적인 래퍼
+  useEffect(() => {
+    const id = setTimeout(fnPreserved, ms);
+    return () => clearTimeout(id); // 정리: 언마운트/ms 변경 시 타이머 취소
+  }, [fnPreserved, ms]);
+};
+```
+
+**문제 상황**: `Delay`는 `useTimeout(() => setIsDelayed(true), ms)`로 매 렌더마다
+새 화살표 함수를 넘긴다. 이 `fn`을 `useEffect` 의존성에 그대로 넣으면 렌더할
+때마다 `fn`의 신원이 바뀌어, 타이머가 매번 취소되고 다시 시작된다. 지연이 영원히
+완료되지 않는 버그다.
+
+**해결(3단 구조)**:
+
+1. `fnRef.current = fn` — 매 렌더마다 최신 함수를 ref에 담는다(ref는 리렌더를
+   일으키지 않음).
+2. `fnPreserved = useCallback(() => fnRef.current(), [])` — 의존성 `[]`라 신원이
+   절대 바뀌지 않는 안정적 래퍼다. 내부에선 항상 `fnRef.current`(=최신 fn)를
+   호출한다.
+3. `useEffect(..., [fnPreserved, ms])` — `fnPreserved`는 불변이니 실제로 `ms`가 바뀔
+   때만 타이머를 재설정한다.
+
+그래서 타이머는 `ms` 기준으로만 재설정되고, `fn` 내용은 늘 최신을 부른다.
+Dan Abramov의 유명한 "useInterval/최신 ref" 패턴과 같은 기법이다. `clearTimeout`
+정리로 언마운트 시 누수도 막는다.
+
+## Suspense와 함께 쓸 때 — 흔한 오해
+
+### 오해: "Delay가 Suspense에 타이머를 걸어 로딩을 통제한다"
+
+**아니다. `Delay`는 Suspense를 전혀 건드리지 않는다.** 로딩을 늦추지도,
+데이터를 기다리게 하지도 않는다. `Delay`가 하는 일은 오직 "내 children을 `ms`만큼
+늦게 보여준다"뿐이고, Suspense 없이 단독으로도 쓸 수 있다.
+
+Suspense와 함께 쓰는 건 배치의 문제다. `Delay`를 Suspense의 fallback 자리에
+넣는다.
+
+```tsx
+<Suspense fallback={<Delay ms={300}><Spinner /></Delay>}>
+  <AsyncComponent /> {/* 500ms 걸림 */}
+</Suspense>
+```
+
+여기서 `<Delay ms={300}>`의 구성은 이렇다.
+
+- **children** = `<Spinner/>` → 지연이 끝난 뒤 보여줄 것
+- **fallback** = 안 줌 → 지연 동안 보여줄 것 = 없음
+
+### 타임라인 (데이터 500ms, Delay 300ms)
+
+| 구간 | 화면 |
+| --- | --- |
+| 0 ~ 300ms | **아무것도 안 보임 (빈 화면)** |
+| 300 ~ 500ms | Spinner (200ms 동안) |
+| 500ms ~ | 실제 내용 |
+
+앞선 300ms 동안은 (Delay에 fallback을 따로 안 줬다면) 빈 화면이다. 코드로 보면
+`isDelayed`가 아직 `false`이고 `fallback`이 `undefined`라 빈 Fragment를 렌더하기
+때문이다.
+
+### 이게 의도된 동작 — 왜 빈 화면이 나은가
+
+"300ms 빈 화면"이 손해처럼 보이지만 대안이 더 나쁘다.
+
+- `Delay` 없이 스피너를 바로 띄우면, 로딩이 짧을 때 스피너가 번쩍하고 사라져 눈에
+  거슬린다(깜빡임).
+- `Delay ms={300}`이면, 스피너가 300ms 넘게 걸릴 때만, 그것도 300ms 이후에만
+  등장한다.
+
+사람 눈엔 "짧은 빈 화면"이 "번쩍이는 스피너"보다 자연스럽다. "어차피 금방 끝날
+로딩이면 스피너를 아예 안 보여주고 잠깐 비워두는 게 낫다"는 UX 판단이다.
+
+방향을 바로잡으면 이렇다.
+
+- ❌ Delay가 Suspense에 타이머를 걸어 로딩을 통제한다
+- ✅ **로딩 시간과 Delay의 타이머가 경쟁한다.** fallback의 수명 = 로딩 시간이라,
+  로딩이 `ms`보다 빠르면 타이머가 터지기 전에 fallback째로 언마운트되어 스피너가
+  안 뜬다.
+
+빈 화면이 싫으면 `Delay`에 자기 fallback을 주면 된다. `<Delay ms={300}
+fallback={<Skeleton/>}>`이면 0~300ms엔 Skeleton, 300ms 후엔 children이 나온다.
+
+## 설계 철학 3줄 요약
+
+1. **유니온 타입 + `fallback: never`**로 "일반 모드 / render-prop 모드"의 잘못된
+   혼용을 타입에서 차단한다.
+2. `DefaultProps` 소비 + **개별 > 전역 > 0** 우선순위 + `Object.assign`/`.with` —
+   라이브러리 전반의 일관된 패턴을 재사용한다.
+3. 진짜 로직은 `useTimeout`의 **최신 ref 패턴**에 응축된다. `ms`에만 반응하고
+   최신 콜백을 부르게 해, 지연 타이머가 렌더마다 리셋되는 버그를 원천 차단한다.

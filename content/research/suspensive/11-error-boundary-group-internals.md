@@ -1,0 +1,161 @@
+---
+title: "내부 뜯어보기 ⑦: ErrorBoundaryGroup은 숫자 하나를 방송한다"
+---
+
+`ErrorBoundaryGroup`은 100줄이지만 새 로직을 거의 만들지 않는다. 앞 장의
+`ErrorBoundary`가 이미 가진 `resetKeys` 복구 기능에 "공유 숫자"를 얹었을 뿐이다.
+이 영리한 재사용을 살펴본다.
+
+- **소스**: `packages/react/src/ErrorBoundaryGroup.tsx` (100줄)
+- **의존 부품**: `useIsChanged`(→`usePrevious`), `increase`, `SuspensiveError`
+- **함께 export**: `useErrorBoundaryGroup`, `ErrorBoundaryGroup.Consumer`
+
+## 한 문장 요약
+
+> 흩어진 여러 `ErrorBoundary`를 묶어 한 번에 리셋하게 해주는 래퍼. "다시 시도"
+> 버튼 하나로 그룹 안 모든 에러 경계를 복구한다.
+
+핵심 아이디어는 단 하나, **`resetKey`(숫자)를 context로 방송**하는 것이다.
+
+## 핵심 메커니즘 — resetKey 방송
+
+이 컴포넌트의 전부는 "숫자 하나(`resetKey`)를 context로 방송하는 것"이다.
+
+```tsx
+const [resetKey, reset] = useReducer(increase, 0);
+// ...
+const value = useMemo(() => ({ reset, resetKey }), [resetKey]);
+return (
+  <ErrorBoundaryGroupContext.Provider value={value}>
+    {children}
+  </ErrorBoundaryGroupContext.Provider>
+);
+```
+
+[ErrorBoundary](/research/suspensive/10-error-boundary-internals) 층 5에서 봤던
+그 줄이 바로 소비자다.
+
+```tsx
+// ErrorBoundary 안
+const group = useContext(ErrorBoundaryGroupContext) ?? { resetKey: 0 };
+// ...
+resetKeys={[group.resetKey, ...(resetKeys || [])]}   // ← 그룹 resetKey를 자기 resetKeys 맨 앞에 병합
+```
+
+이렇게 루프가 완성된다.
+
+```text
+ErrorBoundaryGroup: resetKey를 context로 방송 (생산자)
+        │
+        ▼
+각 ErrorBoundary: group.resetKey를 자기 resetKeys에 합침 (소비자)
+        │
+reset() 호출 → resetKey +1 → 모든 자식 ErrorBoundary의 resetKeys가 바뀜 → 전부 자동 리셋 ✅
+```
+
+즉 `ErrorBoundaryGroup`은 새 로직을 거의 안 만들고 `ErrorBoundary`가 이미 가진
+`resetKeys` 자동 복구 기능에 "공유 숫자"를 얹었을 뿐이다.
+
+## useReducer(increase, 0) — reset이 곧 "증가 버튼"
+
+```tsx
+const [resetKey, reset] = useReducer(increase, 0); // increase = (prev) => prev + 1
+```
+
+`useReducer`의 두 번째 반환값은 원래 `dispatch`인데, 이걸 `reset`이라고 이름
+붙였다.
+
+- `reset()` 호출 → dispatch 발생 → reducer `increase(prev) => prev + 1` 실행 →
+  resetKey가 +1
+- action 페이로드가 필요 없어 `reset()`처럼 인자 없이 부른다(reducer가 인자를
+  무시하고 증가만 함).
+
+**왜 boolean 토글이 아니라 증가하는 숫자일까?** `resetKeys`는 `Object.is`로
+"이전과 다른가"를 비교한다(`hasResetKeysChanged`). 단조 증가하는 숫자는 매번
+무조건 새 값이라 변화가 100% 감지된다. 토글도 되지만 카운터가 더 안전하고
+깔끔하다.
+
+`useMemo(() => ({ reset, resetKey }), [resetKey])`로 context 값을 메모이즈해,
+`resetKey`가 안 바뀌면 소비자들이 불필요하게 리렌더되지 않게 한다(`reset`은
+useReducer dispatch라 신원이 항상 안정적).
+
+## 중첩 그룹 + blockOutside — 부모가 리셋되면 자식도
+
+그룹 안에 또 그룹을 넣을 수 있다. 이때 "부모 그룹이 리셋되면 자식 그룹도 같이
+리셋될까?"라는 물음이 생긴다.
+
+```tsx
+const parentGroup = useContext(ErrorBoundaryGroupContext); // 나를 감싼 부모 그룹
+const isParentGroupResetKeyChanged = useIsChanged(parentGroup?.resetKey); // 부모 resetKey가 바뀌었나?
+
+useEffect(() => {
+  if (!blockOutside && isParentGroupResetKeyChanged) {
+    reset(); // 부모가 리셋됐고 blockOutside가 아니면 → 나도 리셋
+  }
+}, [isParentGroupResetKeyChanged, blockOutside]);
+```
+
+- 기본(`blockOutside=false`): 부모 그룹이 리셋되면 자식 그룹도 연쇄(cascade)
+  리셋된다. 부모 하나 리셋으로 전체가 복구된다.
+- `blockOutside={true}`: 이 그룹을 부모의 리셋으로부터 격리해 내부 경계들을
+  외부 그룹 리셋에서 보호한다.
+
+### useIsChanged — "이전 렌더와 값이 달라졌나"
+
+```tsx
+export const useIsChanged = (value) => usePrevious(value) !== value;
+
+export const usePrevious = (value) => {
+  const ref = useRef(value);
+  useEffect(() => {
+    ref.current = value;
+  }, [value]); // 렌더 "후"에 갱신
+  return ref.current; // 렌더 "중"엔 이전 값을 반환
+};
+```
+
+`usePrevious`는 ref를 렌더 후(useEffect)에 갱신하므로 렌더 도중엔 직전 값을 들고
+있다. 그래서 `usePrevious(x) !== x`는 "이번 렌더에서 x가 바뀌었나?"가 된다.
+이걸로 부모 resetKey의 변화를 감지해 cascade를 트리거한다.
+
+## useErrorBoundaryGroup / Consumer — 자식에서 리셋 트리거
+
+```tsx
+export const useErrorBoundaryGroup = () => {
+  const group = useContext(ErrorBoundaryGroupContext);
+  SuspensiveError.assert(group != null, ...); // 반드시 그룹 안에서 써야 함
+  return useMemo(() => ({ reset: group.reset }), [group.reset]);
+};
+```
+
+그룹 안 어디서든 `useErrorBoundaryGroup().reset()`으로 그룹 전체를 리셋할 수
+있다. `ErrorBoundaryGroup.Consumer`는 같은 걸 render-prop으로 제공한다.
+`SuspensiveError.assert`로 "그룹 밖에서 쓰면 에러"를 런타임에 강제한다 —
+`ErrorBoundary`의 훅들과 같은 안전장치다.
+
+`ErrorBoundaryGroup`도 [Object.assign 패턴](/research/suspensive/05-object-assign-pattern)으로
+`displayName`, `with`, `Consumer`를 부착한다. `ErrorBoundaryGroupContext.displayName`은
+개발 모드에서만 설정한다(프로덕션 미세 최적화).
+
+## 전체 그림
+
+```text
+<ErrorBoundaryGroup>                        ← resetKey(숫자) 관리 + context로 방송
+   ├ useReducer(increase, 0) → reset()=resetKey+1
+   ├ (부모 그룹 있으면) 부모 resetKey 변화 감지 → cascade 리셋 (blockOutside면 차단)
+   │
+   ├─ <ErrorBoundary/>  ─┐
+   ├─ <ErrorBoundary/>   ├─ 각자 group.resetKey를 resetKeys에 병합
+   └─ useErrorBoundaryGroup().reset()  ← 버튼이 호출
+              │
+       reset() → resetKey +1 → 모든 자식 ErrorBoundary 리셋
+```
+
+## 설계 철학 3줄 요약
+
+1. **새 로직 최소화** — `ErrorBoundary`가 이미 가진 `resetKeys` 복구에 "공유
+   숫자(resetKey)"를 방송해 얹었을 뿐이다.
+2. `useReducer(increase, 0)`로 **`reset` = 카운터 증가 dispatch** — 단조 증가라 변화
+   감지가 100% 확실하다.
+3. 중첩 시 `useIsChanged`로 부모 resetKey 변화를 감지해 **cascade 리셋**,
+   `blockOutside`로 격리를 선택한다.

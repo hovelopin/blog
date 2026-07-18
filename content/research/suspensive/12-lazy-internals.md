@@ -1,0 +1,224 @@
+---
+title: "내부 뜯어보기 ⑧: lazy가 React.lazy에 더한 것 — 프리로드와 reloadOnError"
+---
+
+Suspensive의 `lazy`는 `React.lazy`를 감싸면서 프리로드(`.load()`), 콜백,
+그리고 "배포 후 옛 청크 404" 같은 실전 문제를 푸는 `reloadOnError`를 얹는다.
+
+- **소스**: `packages/react/src/lazy.ts`
+- **의존 부품**: `React.lazy`(originalLazy), `noop`
+- **함께 export**: `createLazy`(팩토리), `reloadOnError`(청크 실패 시 새로고침 옵션)
+
+## 기반 복습 — React.lazy가 원래 하는 일
+
+```tsx
+const Component = React.lazy(() => import("./Component"));
+```
+
+- **코드 스플리팅**: `import('./Component')`를 만나면 번들러가 그 컴포넌트를 별도
+  청크(chunk) 파일로 쪼갠다. 앱 첫 로드 때 안 받고, `<Component/>`가 처음 렌더될
+  때 네트워크로 받아온다.
+- 받아오는 동안 컴포넌트는 suspend되고, 가까운 `<Suspense>`의 fallback이 대신
+  뜬다.
+- **제약**: 로더는 반드시 `{ default: 컴포넌트 }`를 resolve해야 한다. 즉 default
+  export가 필수다.
+
+suspensive의 `lazy`도 이 제약은 그대로다(타입이 `() => Promise<{ default: T
+}>`). 따라서 named export 지원은 없다.
+
+## suspensive lazy가 더한 것
+
+| 기능 | 설명 |
+| --- | --- |
+| `onSuccess` / `onError` 콜백 | 청크 로딩 성공·실패 시 훅 걸기 |
+| `.load()` 프리로드 | 렌더 전에 청크를 미리 받아두기 (hover 프리로드 등) |
+| `createLazy(기본옵션)` 팩토리 | 여러 lazy에 공통 옵션을 한 번에 |
+| `reloadOnError` | 청크 로드 실패 시 페이지 자동 새로고침 (배포 후 옛 청크 404 대응) |
+
+## LazyOptions — 콜백 두 개
+
+```tsx
+interface LazyOptions {
+  onSuccess?: ({ load }: { load: () => Promise<void> }) => void;
+  onError?: ({
+    error,
+    load,
+  }: {
+    error: unknown;
+    load: () => Promise<void>;
+  }) => undefined;
+}
+```
+
+로딩이 성공하거나 실패했을 때 부르는 콜백이다. 둘 다 인자로 `load`(다시 로드하는
+함수)를 받는다. 실패했을 때 재시도하라고 넘기는 것이고, `onError`는 이 `load`로
+`reloadOnError`를 구현한다.
+
+## createLazy — 커링(curried) 팩토리
+
+```tsx
+export const createLazy =
+  (defaultOptions: LazyOptions) => // ← 1단계: 기본 옵션을 받고
+  <T extends ComponentType<any>>( // ← 2단계: 실제 lazy를 만드는 함수를 반환
+    load: () => Promise<{ default: T }>,
+    options?: LazyOptions,
+  ) => { ... };
+```
+
+두 번 호출되는 함수다. `createLazy(기본옵션)`을 부르면 함수가 나오고, 그 함수에
+`(load, 개별옵션)`을 넘기면 lazy 컴포넌트가 나온다.
+
+**왜 커링했을까?** "기본 옵션을 한 번 정해두고, 여러 lazy 컴포넌트가 그걸
+공유"하게 하려는 팩토리 패턴이다.
+
+```tsx
+// 기본 옵션(에러 나면 새로고침)을 박은 나만의 lazy를 만들고
+const lazy = createLazy(reloadOnError({ retry: 1 }));
+// 그 lazy로 만든 모든 컴포넌트가 자동으로 그 옵션을 공유
+const A = lazy(() => import("./A"));
+const B = lazy(() => import("./B"));
+```
+
+### 콜백 합성 — 개별 먼저, 기본 나중
+
+```tsx
+const composedOnSuccess = ({ load }) => {
+  options?.onSuccess?.({ load }); // 개별 옵션 먼저
+  defaultOptions.onSuccess?.({ load }); // 기본 옵션 나중
+};
+```
+
+개별 lazy에 준 콜백을 먼저, `createLazy`에 준 기본 콜백을 나중에 실행한다. `?.`로
+없으면 건너뛴다. `onError`도 같은 구조다.
+
+### 핵심 — Object.assign(React.lazy(...), { load })
+
+```tsx
+const loadNoReturn = () => load().then(noop);
+return Object.assign(
+  originalLazy(() =>
+    load().then(
+      (loaded) => {
+        composedOnSuccess({ load: loadNoReturn });
+        return loaded;
+      }, // 성공: 콜백 후 그대로 반환
+      (error) => {
+        composedOnError({ error, load: loadNoReturn });
+        throw error;
+      }, // 실패: 콜백 후 다시 throw
+    ),
+  ),
+  { load: loadNoReturn },
+);
+```
+
+두 가지가 중요하다.
+
+**① [Object.assign 패턴](/research/suspensive/05-object-assign-pattern)이 또
+나온다.** 첫 인자는 `React.lazy(...)`가 만든 lazy 컴포넌트, 두 번째 인자는 거기에
+붙일 `.load` 메서드다. 그래서 결과물은 "컴포넌트이면서 `.load()`도 가진" 객체가
+된다.
+
+**② React.lazy에 넘기는 로더 안에서 성공·실패를 가로챈다.**
+
+- **성공** → `composedOnSuccess`를 부른 뒤 `loaded`(= `{ default }`)를 그대로
+  반환해야 한다. 안 그러면 React.lazy가 컴포넌트를 못 찾는다.
+- **실패** → `composedOnError`를 부른 뒤 반드시 `throw error`로 다시 던진다. 안
+  던지면 React.lazy가 "로딩 성공"으로 오해해 깨진다.
+
+콜백은 곁다리로 실행하되 원래 흐름(성공값 반환 / 에러 전파)은 그대로 보존하는 게
+핵심이다.
+
+`export const lazy = createLazy({})` — 기본 옵션이 빈 객체인 버전이 우리가 그냥
+`import { lazy }`로 쓰는 것이다. `createLazy`의 특수 케이스다.
+
+## .load() 프리로드 원리
+
+```tsx
+const loadNoReturn = () => load().then(noop);
+```
+
+- 원래 `load`는 `() => import('./X')`다. 이걸 호출하면 청크 네트워크 요청이
+  시작되고, 한 번 받은 청크는 브라우저·번들러가 캐시한다.
+- `.load()`(=`loadNoReturn`)를 미리 부르면, 나중에 컴포넌트를 실제로 렌더할 때 이미
+  받아둔 청크를 즉시 써서 fallback 없이 바로 뜬다.
+- 예를 들어 `onMouseEnter={() => void LazyBox.load()}`처럼 버튼에 마우스만 올려도
+  미리 받아두는 hover 프리로드를 만들 수 있다.
+
+**왜 `then(noop)`으로 결과를 버릴까?** `import()`의 결과(모듈 객체)는 프리로드엔
+필요 없다. "로딩이 끝났다"는 신호만 있으면 되니, 결과를 `noop`으로 버리고
+`Promise<void>`로 단순화한다. 타입이 `load: () => Promise<void>`인 이유다.
+
+## reloadOnError — 실전 문제를 푸는 옵션
+
+아주 현실적인 문제를 해결한다.
+
+**문제 상황**: 사용자가 사이트를 켜둔 채로 있는데, 그 사이 새 버전이 배포된다. 새
+배포는 청크 파일명 해시가 바뀐다(`Component-a1b2.js` → `Component-c3d4.js`).
+사용자가 이제 lazy 컴포넌트를 열면, 브라우저는 옛 파일명을 요청 → 404 → 화면이
+깨진다.
+
+**해결**: 로드 실패(`onError`) 시 페이지를 새로고침한다. 새로고침하면 새
+`index.html`을 받고, 거기서 가리키는 새 청크 경로로 정상 로드된다.
+
+```tsx
+onError: ({ error, load }) => {
+  options.onError?.({ error, load });
+
+  const storageKey = load.toString(); // 로더 함수 소스코드를 키로 (컴포넌트별 구분)
+  let currentRetryCount = 0;
+  // sessionStorage에서 지금까지 재시도 횟수를 읽어옴
+  // ...
+  const shouldRetry =
+    retry === true || (typeof retry === "number" && currentRetryCount < retry);
+  if (!shouldRetry) return; // 재시도 한도 초과 → 멈춤
+  if (typeof retry === "number")
+    reloadStorage.setItem(storageKey, String(currentRetryCount + 1));
+  const timeoutId = setTimeout(() => reloadFunction(timeoutId), delayValue); // 지연 후 새로고침
+};
+```
+
+**가장 영리한 부분 — 왜 `sessionStorage`에 카운트를 저장할까?**
+
+새로고침은 페이지를 통째로 리셋한다. 메모리 변수로 "몇 번 재시도했는지" 세면
+새로고침 순간 다 날아가 무한 새로고침 루프에 빠진다. 그래서 새로고침을 넘어
+살아남는 `sessionStorage`에 카운트를 저장한다.
+
+- `storageKey = load.toString()` — 로더 함수의 소스 문자열을 키로 써서 컴포넌트마다
+  카운트를 따로 관리한다.
+- 재시도할 때마다 카운트 +1 저장 → 새로고침 후에도 이어서 센다.
+- `onSuccess`에서 `removeItem` → 성공하면 카운트를 지워 다음을 위해 리셋한다.
+- `currentRetryCount < retry`가 거짓이면(`retry`번 다 썼으면) `return`으로 루프를
+  막는다.
+
+```tsx
+onSuccess: ({ load }) => {
+  options.onSuccess?.({ load });
+  reloadStorage.removeItem(load.toString()); // 성공 → 재시도 카운트 리셋
+};
+```
+
+`storage`/`reload`를 주입 가능하게 한 것(기본은 `window.sessionStorage` /
+`window.location.reload`)은 테스트나 비브라우저 환경을 위한 배려다.
+
+## 전체 그림
+
+```text
+createLazy(기본옵션)  ──(커링)──►  (load, 개별옵션) => lazy 컴포넌트
+        │                                    │
+        │                                    ├─ React.lazy(로더) : 성공→콜백 후 반환 / 실패→콜백 후 rethrow
+        │                                    └─ Object.assign(..., { load }) : .load() 프리로드 메서드 부착
+        │
+        ├─ lazy = createLazy({})                       ← 기본 옵션 없는 버전
+        └─ createLazy(reloadOnError({ retry }))         ← 청크 실패 시 자동 새로고침 버전
+                                   └ sessionStorage로 재시도 횟수 보존 → 무한 루프 방지
+```
+
+## 설계 철학 3줄 요약
+
+1. **커링 팩토리**(`createLazy`)로 "기본 옵션을 한 번 정하고 여러 lazy가 공유"를
+   가능하게 한다.
+2. React.lazy를 감싸되 **성공값 반환·에러 전파라는 원래 계약은 그대로 보존**하고
+   콜백만 곁다리로 끼운다. `.load`는 또 그 `Object.assign` 패턴이다.
+3. `reloadOnError`는 **"배포 후 옛 청크 404"**라는 실전 문제를, `sessionStorage`로
+   재시도 횟수를 관리해 무한 새로고침 없이 해결한다.

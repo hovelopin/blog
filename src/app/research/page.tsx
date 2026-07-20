@@ -5,8 +5,7 @@ import { getAllBooks } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "Research",
-  description:
-    "오픈소스 코드를 한 권의 책처럼 파고들며 정리한 탐구 노트 책장.",
+  description: "책을 읽거나 오픈소스를 탐구하며 정리한 노트.",
   alternates: { canonical: "/research" },
 };
 
@@ -30,7 +29,7 @@ export default async function ResearchPage() {
           research
         </h1>
         <p className="max-w-2xl break-keep text-balance text-sm leading-relaxed text-muted-foreground">
-          오픈소스 코드베이스를 한 권의 책처럼 챕터로 나눠 읽는 탐구 노트입니다.
+          책을 읽거나 오픈소스를 탐구하며 정리한 노트입니다.
         </p>
       </header>
 

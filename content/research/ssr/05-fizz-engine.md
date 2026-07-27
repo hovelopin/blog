@@ -1,0 +1,168 @@
+---
+title: "Fizz Engine ( 서버 스트리밍 렌더러 )"
+---
+
+Fizz는 React 서버 사이드 렌더링 엔진의 이름이다. 우리가 앞서 봤던
+`renderToPipeableStream`, `renderToReadableStream`, `prerender*`, `resume*`이 Fizz 엔진
+위에서 돌아간다.
+
+## React의 3대 엔진 코드네임
+
+![SSR 렌더링 흐름](/images/research/ssr/01-fizz.png)
+
+| 코드네임 | 역할 | 관련 API |
+| --- | --- | --- |
+| **Fiber** | 클라이언트 재조정(reconciler) — 화면을 그리고 업데이트 | `createRoot`, `hydrateRoot` |
+| **Fizz** | **서버 렌더러 — HTML을 스트리밍으로 생성** | `renderToPipeableStream`, `renderToReadableStream`, `prerender*` |
+| **Flight** | React Server Components 직렬화 | RSC (서버 컴포넌트) |
+
+> 즉 서버에서 HTML을 만드는 건 **Fizz**, 브라우저에서 그 HTML을 살리는(hydration) 건
+> **Fiber**다. SSR 한 사이클은 Fizz → (네트워크) → Fiber로 이어진다.
+
+## 왜 Fizz가 등장했나
+
+Fizz 이전의 서버 렌더러(`renderToString` 계열)는 한계가 뚜렷했다.
+
+- **동기 블로킹**: 트리 전체를 한 번에 문자열로 만들어야 해서 다 끝나기 전엔 첫
+  바이트가 안 나갔다 → TTFB 나쁨
+- **서버 Suspense 미지원**: 컴포넌트가 중단(suspend)되면 기다려주지 못하고 fallback으로
+  확정
+- **블로킹**: 동기 함수라 렌더링 중에 이벤트 루프를 놓지 않는다.
+
+React 18에서 이걸 새로 설계한 게 Fizz다. 핵심 목표는 **스트리밍 SSR**과 **서버 Suspense
+지원**이었다.
+
+## Fizz의 핵심 개념
+
+### 1. 셸(Shell)과 경계(Boundary)
+
+![SSR 렌더링 흐름](/images/research/ssr/02-fizz.png)
+
+Fizz는 트리를 통짜로 보지 않고 `<Suspense>`를 기준으로 **셸**과 **경계**로 나눈다.
+
+- **셸(shell)**: `<Suspense>` 바깥의, 즉시 렌더 가능한 부분. 준비되면 **가장 먼저**
+  내보낸다. (`onShellReady` 시점)
+- **경계(boundary)**: `<Suspense>` 안의, 데이터를 기다려야 하는 부분. 준비될 때까지
+  fallback으로 두었다가 나중에 실제 내용으로 채운다.
+
+### 2. 세그먼트(Segment)와 태스크(Task)
+
+Fizz는 렌더 작업을 **세그먼트/태스크**라는 단위로 쪼갠다. 각 Suspense 경계는 별도의 작업
+단위가 되어 **서로 독립적으로** 완료된다. 그래서 하나가 느려도 나머지는 먼저 나간다.
+
+### 3. 순서에 상관없는 스트리밍 (out-of-order)
+
+경계들은 **준비되는 순서대로** 스트림에 실린다. 먼저 fallback이 자리를 잡고 있다가
+데이터가 풀린 경계부터 실제 HTML이 도착한다. 도착 순서가 화면 순서와 달라도 된다.
+
+이때 HTML에는 경계를 표시하는 주석 마커와 자리표시자가 들어간다:
+
+- `<!--$-->` … `<!--/$-->` : Suspense 경계의 시작/끝 마커
+- `<!--$?-->` : 아직 fallback 상태인 (보류된) 경계
+- `<template>` + 인라인 `$RC(...)` 스크립트 : 나중에 도착한 실제 내용을 fallback 자리로
+  **바꿔치기**하는 초소형 런타임
+
+> 그래서 브라우저는 JS 프레임워크 없이도 Fizz가 심어둔 이 작은 스크립트만으로 fallback을
+> 실제 내용으로 교체한다.
+
+### 4. 선택적 hydration (Selective Hydration)
+
+Fizz가 경계별로 HTML을 쪼개 보내기 때문에, 클라이언트(Fiber)도 **경계 단위로, 순서에
+상관없이** hydration할 수 있다. 사용자가 클릭한 부분을 **우선적으로** hydration하는 것도
+가능하다. 스트리밍 SSR과 선택적 hydration은 이렇게 Fizz ↔ Fiber 협업으로 완성된다.
+
+### 5. 백프레셔 (Backpressure)
+
+Fizz는 호스트 플랫폼의 스트림에 맞춰 데이터를 내보낸다. 소비자(네트워크/응답)가 느리면
+그만큼 생산도 늦춰 메모리 폭증을 막는다. 통짜 문자열을 메모리에 다 들고 있던 legacy
+방식과 여기서 갈린다.
+
+## Fizz의 구조
+
+2018년 Fizz Renderer(<https://github.com/react/react/pull/14144>) 초기 구현 로직을 한번
+살펴보자.
+
+![SSR 렌더링 흐름](/images/research/ssr/02-fizz.png)
+
+```javascript
+// packages/react-stream/src/ReactFizzStreamer.js  (2018.11)
+
+import {
+  scheduleWork, beginWriting, writeChunk,
+  completeWriting, flushBuffered, close,
+} from './ReactFizzHostConfig';
+import {formatChunk} from './ReactFizzFormatConfig';
+import {REACT_ELEMENT_TYPE} from 'shared/ReactSymbols';
+
+type OpaqueRequest = {
+  destination: Destination,
+  children: ReactNodeList,
+  completedChunks: Array<Uint8Array>,
+  flowing: boolean,
+};
+
+export function createRequest(children, destination): OpaqueRequest {
+  return {destination, children, completedChunks: [], flowing: false};
+}
+
+function performWork(request: OpaqueRequest): void {
+  let element = (request.children: any);
+  request.children = null;
+  if (element && element.$$typeof !== REACT_ELEMENT_TYPE) {
+    return;
+  }
+  let type = element.type;
+  let props = element.props;
+  if (typeof type !== 'string') {
+    return;
+  }
+  request.completedChunks.push(formatChunk(type, props));
+  if (request.flowing) {
+    flushCompletedChunks(request);
+  }
+  flushBuffered(request.destination);
+}
+
+function flushCompletedChunks(request: OpaqueRequest) {
+  let destination = request.destination;
+  let chunks = request.completedChunks;
+  request.completedChunks = [];
+
+  beginWriting(destination);
+  try {
+    for (let i = 0; i < chunks.length; i++) {
+      writeChunk(destination, chunks[i]);
+    }
+  } finally {
+    completeWriting(destination);
+  }
+  close(destination);
+}
+
+export function startWork(request: OpaqueRequest): void {
+  request.flowing = true;
+  scheduleWork(() => performWork(request));
+}
+
+export function startFlowing(request: OpaqueRequest, desiredBytes: number): void {
+  request.flowing = false;
+  flushCompletedChunks(request);
+}
+```
+
+- createRequest : destination(목적지), children(어떤 요소), completedChunks(완성된 chunks
+  배열), flowing(push/pull) 객체를 만든다.
+- startWork : flowing=true로 켜고 scheduleWork에 performWork를 예약한다.
+- performWork : 실제 렌더링을 맡는다. `request.children`을 꺼내 `null`로 비우고
+  엘리먼트인지·host 타입인지 확인한 뒤 `formatChunk(type, props)`로 바이트 조각 하나를
+  만들어 `completedChunks`에 넣는다. `flowing`이 켜져 있으면 바로 flush한다.
+- flushCompletedChunks : `performWork`가 JSX를 문자열로 만들고 바이트로 바꿔
+  `completedChunks`에 쌓으면 `flushCompletedChunks`가 그걸 `destination`으로 내보낸다. 그
+  바이트가 HTTP 응답에 실려 브라우저로 간다.
+- startFlowing : 소비자(Stream)의 버퍼에 여유가 생겼을 때 호출된다. flowing = false로
+  바꾸고 `flushCompletedChunks`를 부른다.
+
+참고 자료
+
+- <https://saengmotmi.netlify.app/react/fizz-flight/>
+- <https://github.com/react/react/pull/14144>

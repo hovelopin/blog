@@ -4,6 +4,8 @@ description: "i18next의 enableSelector 옵션을 설정하면 번역 키를 함
 date: "2026-09-03"
 tags: ["i18next", "react", "typescript", "proxy", "i18n"]
 author: "hovelopin"
+cover: "/covers/i18next-selector-runtime-axolotl.png"
+coverAlt: "아홀로틀 엔지니어가 selector 경로를 런타임 번역 key로 변환하는 장치를 조작하는 일러스트"
 series: "i18next 타입 안전성 탐구"
 seriesOrder: 2
 ---

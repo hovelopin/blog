@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { DiaryEntry } from "@/types/content";
 import { DiaryCard } from "@/components/diary-card";
+import { formatMonth } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 interface DiaryTimelineProps {
@@ -18,11 +19,6 @@ function groupByMonth(entries: DiaryEntry[]): Array<[string, DiaryEntry[]]> {
     else groups.set(key, [entry]);
   }
   return Array.from(groups.entries());
-}
-
-function formatMonthLabel(ym: string): string {
-  const [y, m] = ym.split("-");
-  return `${y}.${m}`;
 }
 
 interface ChipProps {
@@ -92,7 +88,7 @@ export function DiaryTimeline({ entries }: DiaryTimelineProps) {
         groups.map(([ym, items]) => (
           <section key={ym} className="mb-10 last:mb-0">
             <h2 className="sticky top-0 z-10 -mx-5 mb-4 border-b border-border/50 bg-background/85 px-5 py-2 font-mono text-xs text-muted-foreground backdrop-blur sm:-mx-6 sm:px-6">
-              <span className="text-foreground">{formatMonthLabel(ym)}</span>
+              <span className="text-foreground">{formatMonth(ym)}</span>
               <span className="ml-2 text-primary/70">({items.length})</span>
             </h2>
             <ol className="relative border-l border-border/60 pl-6">

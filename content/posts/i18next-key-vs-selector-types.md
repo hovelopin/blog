@@ -4,6 +4,8 @@ description: "t('pages.notFound.title')과 t($ => $.pages.notFound.title)은 같
 date: "2026-09-07"
 tags: ["i18next", "typescript", "react", "i18n", "dx"]
 author: "hovelopin"
+cover: "/covers/i18next-key-vs-selector-types-turtle.png"
+coverAlt: "거북이 지도 제작자가 문자열 key 경로와 selector 타입 경로를 비교하는 일러스트"
 series: "i18next 타입 안전성 탐구"
 seriesOrder: 3
 ---

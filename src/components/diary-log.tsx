@@ -64,7 +64,9 @@ export function DiaryLog({ entries }: DiaryLogProps) {
               </span>
               <time
                 dateTime={entry.date}
-                className="w-[6.5rem] shrink-0 text-muted-foreground"
+                // 행마다 grid 가 따로라 날짜 열은 고정 폭으로만 줄을 맞출 수 있다.
+                // 가장 긴 "Jan 28, 2026"(13px mono 기준 94px)이 들어가도록 6.25rem.
+                className="w-[6.25rem] shrink-0 whitespace-nowrap text-muted-foreground"
               >
                 {formatDate(entry.date)}
               </time>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PostCard } from "@/components/post-card";
+import { TagList } from "@/components/tag-list";
 import { getAllPostSummaries, getAllTags } from "@/lib/content";
 
 export const metadata: Metadata = {
@@ -31,31 +32,16 @@ export default async function PostsPage() {
         <h1 className="mb-3 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
           posts
         </h1>
-        {tags.length > 0 && (
-          <div className="mt-5 flex flex-wrap items-center gap-1.5 font-mono text-xs">
-            <span className="text-muted-foreground/70">tags:</span>
-            {tags.map(({ tag, count }) => (
-              <Link
-                key={tag}
-                href={`/posts/tag/${encodeURIComponent(tag)}`}
-                className="group rounded-full border border-border bg-muted/40 px-2 py-0.5 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
-              >
-                #{tag}
-                <span className="ml-1 text-muted-foreground/60 group-hover:text-primary/70">
-                  {count}
-                </span>
-              </Link>
-            ))}
-          </div>
-        )}
+        <TagList tags={tags} />
       </header>
 
-      <div className="flex flex-col gap-5 sm:gap-6">
+      <div className="flex flex-col gap-4">
         {posts.map((post, i) => (
           <PostCard
             key={post.slug}
             post={post}
             variant={i === 0 ? "feature" : "default"}
+            className={i === 0 ? "mb-2" : undefined}
           />
         ))}
         {posts.length === 0 && (

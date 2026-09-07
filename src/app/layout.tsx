@@ -16,7 +16,8 @@ import {
 } from "@/lib/site";
 // Pretendard 는 유니코드 구간별로 쪼갠 subset 을 쓴다.
 // 방문자는 실제로 화면에 나온 글자가 속한 조각만 내려받는다.
-import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
+// 폰트 파일은 npm 패키지가 아니라 public/fonts/pretendard 에 직접 넣어 두고 참조한다.
+import "./pretendard.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -95,6 +96,14 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* 본문 폰트는 통짜 variable woff2 한 개라, 스타일 계산을 기다리지 않고 미리 받게 한다. */}
+        <link
+          rel="preload"
+          href="/fonts/pretendard/PretendardVariable.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">

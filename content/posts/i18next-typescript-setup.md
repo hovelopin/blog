@@ -4,6 +4,8 @@ description: "문자열로 작성한 번역 key는 코드만 봐서는 존재 �
 date: "2026-09-01"
 tags: ["i18next", "typescript", "react", "i18n", "dx"]
 author: "hovelopin"
+cover: "/covers/i18next-typescript-setup-owl.png"
+coverAlt: "올빼미 사서가 번역 카드에 TypeScript 타입 체크를 붙여 정리하는 일러스트"
 series: "i18next 타입 안전성 탐구"
 seriesOrder: 1
 ---

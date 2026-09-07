@@ -52,12 +52,13 @@ export default async function TagPage({ params }: TagPageProps) {
         </p>
       </header>
 
-      <div className="flex flex-col gap-5 sm:gap-6">
+      <div className="flex flex-col gap-4">
         {posts.map((post, i) => (
           <PostCard
             key={post.slug}
             post={post}
             variant={i === 0 ? "feature" : "default"}
+            className={i === 0 ? "mb-2" : undefined}
           />
         ))}
       </div>

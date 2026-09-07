@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BusinessCard } from "@/components/business-card";
 import { BookCover } from "@/components/book-cover";
-import { DynamicCard } from "@/components/dynamic-card";
+import { PostCard } from "@/components/post-card";
 import { DiaryLog } from "@/components/diary-log";
 import { HorizontalScroller } from "@/components/horizontal-scroller";
 import { JsonLd } from "@/components/json-ld";
@@ -81,14 +81,17 @@ export default async function Home() {
             추가하세요.
           </p>
         ) : (
-          <div className="-mx-5 sm:-mx-6">
-            <HorizontalScroller>
-              {recentPosts.map((post) => (
-                <div key={post.slug} className="shrink-0 snap-start">
-                  <DynamicCard post={post} />
-                </div>
-              ))}
-            </HorizontalScroller>
+          // 최신 글 하나를 왼쪽에 크게 두고, 그다음 두 편을 오른쪽에 쌓는 배치.
+          // 좁아지면 한 줄로 펴고(오른쪽 두 장은 나란히), 더 좁아지면 전부 세로로 쌓인다.
+          <div className="grid gap-4 md:grid-cols-[3fr_2fr]">
+            <PostCard post={recentPosts[0]} variant="bento" />
+            {recentPosts.length > 1 && (
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
+                {recentPosts.slice(1).map((post) => (
+                  <PostCard key={post.slug} post={post} variant="compact" />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </section>

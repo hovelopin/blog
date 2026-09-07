@@ -33,6 +33,21 @@ const contentRoot = path.join(process.cwd(), "content");
 const postsDir = path.join(contentRoot, "posts");
 const diaryDir = path.join(contentRoot, "diary");
 const researchDir = path.join(contentRoot, "research");
+const publicDir = path.join(process.cwd(), "public");
+
+// frontmatter 의 cover 가 public/ 아래 실제로 없는 파일을 가리키는 경우가 있다.
+// 그대로 넘기면 목록에서 깨진 이미지가 뜨므로, 파일이 없으면 없는 셈 친다.
+// (외부 URL 은 확인할 수 없으니 그대로 통과)
+async function resolveCover(cover?: string): Promise<string | undefined> {
+  if (!cover) return undefined;
+  if (!cover.startsWith("/")) return cover;
+  try {
+    await fs.access(path.join(publicDir, cover.slice(1)));
+    return cover;
+  } catch {
+    return undefined;
+  }
+}
 
 // draft 글은 환경(로컬/프로덕션)과 무관하게 목록·상세에서 항상 제외한다.
 // md 파일은 저장소에 그대로 두고, frontmatter의 draft 속성으로만 노출 여부를 제어한다.
@@ -149,7 +164,7 @@ export async function getAllPostSummaries(): Promise<PostSummary[]> {
         date: fm.date,
         tags: fm.tags,
         author: fm.author,
-        cover: fm.cover,
+        cover: await resolveCover(fm.cover),
         coverAlt: fm.coverAlt,
         series: fm.series,
         seriesOrder: fm.seriesOrder,
@@ -184,7 +199,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     date: fm.date,
     tags: fm.tags,
     author: fm.author,
-    cover: fm.cover,
+    cover: await resolveCover(fm.cover),
     coverAlt: fm.coverAlt,
     series: fm.series,
     seriesOrder: fm.seriesOrder,

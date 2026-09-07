@@ -66,6 +66,9 @@ async function renderMarkdown(source: string): Promise<string> {
     .use(rehypePrettyCode, {
       theme: "github-dark-dimmed",
       keepBackground: false,
+      // 언어를 적지 않은 블록도 figure 로 감싸지게 해서
+      // js/ts 블록과 툴바·테두리 구조를 똑같이 맞춘다.
+      defaultLang: "plaintext",
     })
     .use(rehypeStringify)
     .process(source);
@@ -121,6 +124,9 @@ async function renderPostMarkdown(
     .use(rehypePrettyCode, {
       theme: "github-dark-dimmed",
       keepBackground: false,
+      // 언어를 적지 않은 블록도 figure 로 감싸지게 해서
+      // js/ts 블록과 툴바·테두리 구조를 똑같이 맞춘다.
+      defaultLang: "plaintext",
     })
     .use(rehypeStringify)
     .process(source);

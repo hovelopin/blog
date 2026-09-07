@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">i18next key 관리 방식의 변화</title>
+  <desc id="desc">i18n Ally 설정에 의존하던 번역 key 관리가 i18next TypeScript 타입 등록으로 옮겨가는 흐름</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0f172a" flood-opacity="0.16" />
+    </filter>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="10" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L12,7 L2,12 Z" fill="#64748b" />
+    </marker>
+  </defs>
+  <rect width="1200" height="620" fill="#f8fafc" />
+  <text x="600" y="62" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="34" font-weight="800" fill="#0f172a">문자열 key 관리가 타입 정보로 이동하는 과정</text>
+  <text x="600" y="101" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="18" fill="#475569">에디터 설정에 의존하던 자동완성을 프로젝트의 TypeScript 계약으로 옮긴다</text>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="170" width="300" height="270" rx="28" fill="#ffffff" />
+    <text x="220" y="218" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="22" font-weight="800" fill="#0f172a">1. 문자열 key</text>
+    <text x="220" y="264" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="20" fill="#334155">t('pages.home.title')</text>
+    <text x="220" y="314" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="17" fill="#64748b">코드만 보면 key 존재 여부를</text>
+    <text x="220" y="342" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="17" fill="#64748b">바로 알기 어렵다</text>
+    <rect x="118" y="372" width="204" height="42" rx="21" fill="#fee2e2" />
+    <text x="220" y="399" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="16" font-weight="700" fill="#b91c1c">런타임에서 발견</text>
+  </g>
+
+  <path d="M395 305 H505" stroke="#64748b" stroke-width="4" fill="none" marker-end="url(#arrow)" />
+
+  <g filter="url(#shadow)">
+    <rect x="520" y="170" width="300" height="270" rx="28" fill="#ffffff" />
+    <text x="670" y="218" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="22" font-weight="800" fill="#0f172a">2. i18n Ally</text>
+    <text x="670" y="264" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="18" fill="#334155">에디터가 locale 파일을 읽고</text>
+    <text x="670" y="292" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="18" fill="#334155">자동완성을 도와준다</text>
+    <text x="670" y="342" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="17" fill="#64748b">프로젝트마다 설정과 경로가</text>
+    <text x="670" y="370" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="17" fill="#64748b">달라지면 관리 비용이 생긴다</text>
+  </g>
+
+  <path d="M845 305 H955" stroke="#64748b" stroke-width="4" fill="none" marker-end="url(#arrow)" />
+
+  <g filter="url(#shadow)">
+    <rect x="970" y="170" width="160" height="270" rx="28" fill="#0f172a" />
+    <text x="1050" y="218" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="21" font-weight="800" fill="#ffffff">3. 타입 등록</text>
+    <text x="1050" y="264" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="15" fill="#cbd5e1">CustomTypeOptions</text>
+    <text x="1050" y="318" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="16" fill="#e2e8f0">key 자동완성</text>
+    <text x="1050" y="348" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="16" fill="#e2e8f0">삭제 key 검출</text>
+    <text x="1050" y="378" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="16" fill="#e2e8f0">보간 변수 검사</text>
+  </g>
+
+  <rect x="250" y="500" width="700" height="56" rx="28" fill="#e0f2fe" />
+  <text x="600" y="535" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="18" font-weight="700" fill="#075985">자동완성을 에디터 플러그인의 편의 기능에서 코드베이스의 타입 계약으로 끌어올린다</text>
+</svg>

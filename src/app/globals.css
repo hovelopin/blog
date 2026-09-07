@@ -351,6 +351,18 @@
   border-radius: var(--radius);
   border: 1px solid var(--border);
 }
+/* 클릭하면 라이트박스로 확대된다(PostContent 에서 role="button" 을 붙인 이미지). */
+.prose-blog img[role="button"] {
+  cursor: zoom-in;
+  transition: border-color 150ms ease;
+}
+.prose-blog img[role="button"]:hover {
+  border-color: color-mix(in oklch, var(--foreground) 35%, transparent);
+}
+.prose-blog img[role="button"]:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
 .prose-blog table {
   margin: 1.5rem 0;
   width: 100%;

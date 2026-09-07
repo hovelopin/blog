@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { ImageLightbox, type LightboxImage } from "@/components/image-lightbox";
 
 interface PostContentProps {
   html: string;
@@ -20,7 +21,9 @@ function enhanceCodeBlocks(root: HTMLElement): () => void {
     if (pre.dataset.enhanced === "1") return;
     pre.dataset.enhanced = "1";
     const code = pre.querySelector("code");
-    const lang = code?.getAttribute("data-language") ?? "";
+    const rawLang = code?.getAttribute("data-language") ?? "";
+    // 언어를 적지 않은 블록은 plaintext 로 처리되지만 라벨은 code 로 보여준다.
+    const lang = rawLang === "plaintext" ? "" : rawLang;
     const fig = pre.closest("figure[data-rehype-pretty-code-figure]");
     const hostForToolbar = fig ?? pre;
 
@@ -75,15 +78,87 @@ function enhanceCodeBlocks(root: HTMLElement): () => void {
   return () => disposers.forEach((d) => d());
 }
 
+/**
+ * 본문 이미지를 클릭하면 라이트박스로 열 수 있게 만든다.
+ * 링크로 감싼 이미지는 링크 이동이 우선이므로 제외한다.
+ */
+function collectZoomableImages(root: HTMLElement): HTMLImageElement[] {
+  const imgs = Array.from(root.querySelectorAll<HTMLImageElement>("img")).filter(
+    (img) => !img.closest("a"),
+  );
+  imgs.forEach((img, i) => {
+    img.dataset.zoomIndex = String(i);
+    img.setAttribute("role", "button");
+    img.setAttribute("tabindex", "0");
+    img.setAttribute("aria-label", `${img.alt || "이미지"} 확대해서 보기`);
+  });
+  return imgs;
+}
+
 export function PostContent({ html, className }: PostContentProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+  const lastTriggerRef = useRef<HTMLElement | null>(null);
+  // 라이트박스는 이미지를 누른 시점에만 목록을 만들어 연다.
+  // (effect 안에서 setState 를 하면 같은 커밋의 나머지 effect 가 함께 멈춘다)
+  const [lightbox, setLightbox] = useState<{
+    images: LightboxImage[];
+    index: number;
+  } | null>(null);
 
   useEffect(() => {
     const root = containerRef.current;
     if (!root) return;
     return enhanceCodeBlocks(root);
+  }, [html]);
+
+  useEffect(() => {
+    const root = containerRef.current;
+    if (!root) return;
+
+    const imgs = collectZoomableImages(root);
+
+    const indexOf = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLImageElement)) return null;
+      const raw = target.dataset.zoomIndex;
+      return raw === undefined ? null : Number(raw);
+    };
+
+    const openAt = (img: HTMLElement, index: number) => {
+      lastTriggerRef.current = img;
+      setLightbox({
+        images: imgs.map((el) => ({ src: el.currentSrc || el.src, alt: el.alt })),
+        index,
+      });
+    };
+
+    const onClick = (e: MouseEvent) => {
+      const idx = indexOf(e.target);
+      if (idx === null) return;
+      openAt(e.target as HTMLElement, idx);
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const idx = indexOf(e.target);
+      if (idx === null) return;
+      e.preventDefault();
+      openAt(e.target as HTMLElement, idx);
+    };
+
+    root.addEventListener("click", onClick);
+    root.addEventListener("keydown", onKeyDown);
+    return () => {
+      root.removeEventListener("click", onClick);
+      root.removeEventListener("keydown", onKeyDown);
+      imgs.forEach((img) => {
+        delete img.dataset.zoomIndex;
+        img.removeAttribute("role");
+        img.removeAttribute("tabindex");
+        img.removeAttribute("aria-label");
+      });
+    };
   }, [html]);
 
   useEffect(() => {
@@ -222,6 +297,19 @@ export function PostContent({ html, className }: PostContentProps) {
           decoding="async"
         />
       </div>
+
+      <ImageLightbox
+        images={lightbox?.images ?? []}
+        index={lightbox?.index ?? null}
+        onIndexChange={(index) =>
+          setLightbox((prev) => (prev ? { ...prev, index } : prev))
+        }
+        onClose={() => {
+          setLightbox(null);
+          // 라이트박스를 닫으면 눌렀던 이미지로 포커스를 돌려준다.
+          lastTriggerRef.current?.focus();
+        }}
+      />
     </>
   );
 }

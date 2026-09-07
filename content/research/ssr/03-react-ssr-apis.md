@@ -30,7 +30,7 @@ title: "SSR을 위한 리액트 API 살펴보기"
 const html = renderToString(<App todos={todos} />)
 ```
 
-renderToString은 React 트리를 HTML 문자열로 렌더링한다.
+renderToString을 호출하면 React 트리가 HTML 문자열 하나로 떨어진다.
 
 **특징**
 
@@ -112,14 +112,14 @@ renderToString은 React 트리를 HTML 문자열로 렌더링한다.
 const html = renderToStaticMarkup(<App todos={todos} />)
 ```
 
-renderToStaticMarkup은 React 트리를 hydration용 마커가 없는 순수 HTML 문자열로
-렌더링한다.
+renderToStaticMarkup은 React 트리에서 hydration용 마커를 뺀 순수 HTML 문자열을 만들어
+낸다.
 
 **특징**
 
-- hydration을 하지 않을 정적 콘텐츠 전용이다. 이메일 템플릿, 정적 사이트 생성처럼
+- hydration을 할 일이 없는 정적 콘텐츠가 대상이다. 이메일 템플릿, 정적 사이트 생성처럼
   JS 없이 HTML만 있으면 되는 결과물에 쓴다.
-- renderToString처럼 동기 함수이고, 반환되는 순간 HTML이 완성돼 있다. 렌더가 전부
+- renderToString처럼 동기 함수다. 반환되는 순간 HTML이 완성돼 있다. 렌더가 전부
   끝나야 첫 바이트가 나가는 것도 동일하다.
 - renderToString과 마찬가지로 HTML만 반환하므로 이벤트 핸들러는 전부 제거되어
   반환된다.
@@ -128,7 +128,7 @@ renderToStaticMarkup은 React 트리를 hydration용 마커가 없는 순수 HTM
 
 renderToString과의 결정적 차이는 React가 hydration을 위해 심는 부가 정보(`<!-- -->`
 텍스트 경계 마커, `<!--$-->` 같은 Suspense 경계 마커 등)를 전부 빼고 깨끗한 HTML만
-낸다는 점이다. 그래서 출력이 더 가볍지만, 이 마크업에 hydrateRoot를 붙이면 안 된다.
+낸다는 점이다. 덕분에 출력이 더 가볍다. 다만 이 마크업에 hydrateRoot를 붙이면 안 된다.
 (<https://ko.react.dev/reference/react-dom/server/renderToStaticMarkup#caveats>) 경계
 정보가 없어 React가 트리를 다시 붙일 때 어긋나거나 경고를 낸다.
 
@@ -141,7 +141,7 @@ function Todos() {
 ```
 
 여기서 `{"할"}`, `{"일"}`은 리터럴이지만 JSX에서 별개의 표현식 자식 2개로 들어간다.
-즉 `<li>`의 children이 `["할", "일"]` — 인접한 텍스트 노드가 2개인 경우다. 브라우저는
+`<li>`의 children이 `["할", "일"]` — 인접한 텍스트 노드가 2개인 경우다. 브라우저는
 연속된 텍스트를 하나로 합쳐버리므로, hydration 때 이 둘의 경계를 복원하려면 표시가
 필요하다. 이 조건에서 두 API의 결과물에 차이가 발생한다.
 
@@ -151,7 +151,7 @@ function Todos() {
 | `renderToStaticMarkup(<Todos />)` | `<ul><li>할일</li></ul>` |
 
 renderToString은 hydration 때 `{"할"}`과 `{"일"}`의 경계를 맞추려고 `<!-- -->`를 끼워
-넣지만, renderToStaticMarkup은 hydration을 안 하므로 그 마커를 빼고 순수한 할일만
+넣지만 renderToStaticMarkup은 hydration을 안 하므로 그 마커를 빼고 순수한 할일만
 낸다.
 
 ---
@@ -165,7 +165,7 @@ const { pipe , abort } = renderToPipeableStream(<App todos={todos} />, options)
 renderToPipeableStream은 React 트리를 Node.js 스트림으로 흘려보내며 렌더링한다.
 React 19에서 제거된 renderToNodeStream의 대체자다.
 
-**특징**
+**동작 방식**
 
 - pipe는 HTML을 제공된 쓰기 가능한 Node.js 스트림으로 출력한다. 스트리밍을
   활성화하려면 onShellReady에서, 클로러와 정적 생성을 사용하려면 onAllReady에서
@@ -177,13 +177,13 @@ React 19에서 제거된 renderToNodeStream의 대체자다.
   반환한다. pipe는 준비된 결과를 스트림으로 내보내는 함수, abort는 렌더링을 중단하는
   함수다. 실제 출력은 함수 호출이 아니라 콜백을 통해 시작된다.
 - 셸(shell)을 먼저 보내고 나머지를 이어 보낸다. `<Suspense>` 바깥의 정적인 부분(셸)이
-  준비되면 그것부터 즉시 전송하고, Suspense 경계 안의 데이터가 준비되는 대로 나머지를
-  스트림으로 이어 붙인다. 그래서 렌더가 전부 끝나기를 기다리는 renderToString과 달리
+  준비되면 그것부터 즉시 전송한다. Suspense 경계 안의 데이터가 준비되는 대로 나머지를
+  스트림으로 이어 붙인다. 렌더가 전부 끝나기를 기다리는 renderToString과 달리
   첫 바이트가 훨씬 빨리 나가 TTFB가 좋다.
   (<https://developer.mozilla.org/ko/docs/Glossary/Time_to_first_byte>)
-- Suspense를 서버에서 지원한다. renderToString이 하지 못했던, 컴포넌트가
-  중단(suspend)됐을 때 서버에서 Promise가 풀리기를 기다렸다가 실제 내용을 스트림에
-  이어 보내는 동작이 가능하다. 먼저 fallback을 내보내고, 데이터가 준비되면 인라인
+- Suspense를 서버에서 지원한다. renderToString은 이걸 못 했다. 컴포넌트가
+  중단(suspend)되면 서버에서 Promise가 풀리기를 기다렸다가 실제 내용을 스트림에
+  이어 보낸다. 먼저 fallback을 내보낸다. 데이터가 준비되면 인라인
   스크립트로 그 자리를 실제 내용으로 바꿔치기한다.
 
 ### 루트가 Fragment면 스트리밍이 동작하지 않는다.
@@ -203,7 +203,7 @@ return (
 ### 원인 — React 19의 preamble 단계
 
 React 19부터 `<html>/<head>/<body>`를 컴포넌트 트리 안에서 렌더할 수 있게 됐다.
-그래서 Fizz는 이 태그들을 어디로 hoisting할지, 즉 문서 서두(**preamble**)를 먼저
+Fizz는 이 태그들을 어디로 hoisting할지, 다시 말해 문서 서두(**preamble**)를 먼저
 확정해야 한다.
 
 ```javascript
@@ -214,9 +214,9 @@ task.formatContext.insertionMode < HTML_MODE
 ```
 
 루트가 Fragment면 React 입장에선 아직 "문서 밖"(`insertionMode < HTML_MODE`)이다.
-그래서 **아직 안 풀린 Suspense 경계가 나중에** `<head>`**나** `<body>`**를 렌더할지도
-모른다**고 가정하고 preamble 추적을 켠다. 그 결과 pending 경계가 하나라도 남아 있는 한
-`preparePreamble`이 `completedPreambleSegments`를 채우지 못하고, flush 함수는 초입에서
+그래서 아직 안 풀린 Suspense 경계가 나중에 `<head>`나 `<body>`를 렌더할지도
+모른다고 가정하고 preamble 추적을 켠다. 그 결과 pending 경계가 하나라도 남아 있는 한
+`preparePreamble`이 `completedPreambleSegments`를 채우지 못하고 flush 함수는 초입에서
 그냥 빠져나간다.
 
 ```javascript
@@ -314,7 +314,7 @@ function App() {
 
 동작 순서는 아래와 같다.
 
-1. `<h1>My App</h1>`까지가 셸이다. 이게 준비되면 onShellReady가 호출되고, pipe(res)로
+1. `<h1>My App</h1>`까지가 셸이다. 이게 준비되면 onShellReady가 호출되고 pipe(res)로
    즉시 브라우저에 전송된다. 사용자는 로딩중…과 함께 헤더를 바로 본다. ( TTFB 좋음 )
 2. `<Comments />`의 데이터가 준비되면 React가 나머지 HTML을 같은 스트림에 이어서 보내
    로딩 중… 자리를 실제 내용으로 바꾼다.
@@ -332,27 +332,27 @@ const stream = await renderToReadableStream(<App />, options)
 ```
 
 renderToReadableStream은 React 트리를 Web 표준 스트림(ReadableStream)으로 렌더링한다.
-renderToPipeableStream과 하는 일(스트리밍 SSR)은 같지만, Node 스트림이 아니라 Web
+renderToPipeableStream과 하는 일(스트리밍 SSR)은 같지만 Node 스트림이 아니라 Web
 Streams 표준을 쓴다는 점이 다르다.
 
 **특징**
 
 - Web 표준 스트림 환경 전용이다. Deno, Cloudflare Workers, Vercel Edge 같은 엣지
   런타임과 최신 브라우저를 위한 API다. Node.js 서버에서는 renderToPipeableStream을
-  쓰는 게 기본이다. (Node에서도 변환해 쓸 수는 있다 — 아래 참고)
+  쓰는 게 기본이다. (Node에서도 변환해 쓸 수는 있다. 아래 참고)
 - 반환값이 Promise다. renderToPipeableStream이 `{ pipe, abort }`를 동기로 반환하고
   콜백(onShellReady)으로 시점을 잡았던 것과 달리, 이쪽은 `Promise<ReadableStream>`을
-  반환하는 async 함수다. 그래서 await로 다룬다.
-- await가 풀리는 순간 = 셸이 준비된 시점이다. 즉 `await renderToReadableStream(...)`이
+  반환하는 async 함수다. await로 다룬다.
+- await가 풀리는 순간 = 셸이 준비된 시점이다. `await renderToReadableStream(...)`이
   resolve되는 타이밍이 renderToPipeableStream의 onShellReady와 같다. 콜백 대신 await 뒤
   코드가 그 역할을 한다.
 - 셸을 먼저 보내고 나머지를 이어 보낸다. 스트리밍 개념은 renderToPipeableStream과
-  동일하다. 셸부터 즉시 나가므로 TTFB가 좋고, `<Suspense>` 안의 데이터가 준비되면
+  동일하다. 셸부터 즉시 나가므로 TTFB가 좋고 `<Suspense>` 안의 데이터가 준비되면
   스트림으로 이어붙는다. 서버 Suspense도 지원한다.
 - 전체 완성본이 필요하면 stream.allReady를 기다린다. 반환된 스트림에는 allReady라는
-  Promise가 달려 있다. pipeable의 onAllReady에 대응하며, 크롤러/정적 생성처럼 모든
+  Promise가 달려 있다. pipeable의 onAllReady에 대응하며 크롤러/정적 생성처럼 모든
   Suspense 내용까지 다 필요할 때 `await stream.allReady`로 기다린다.
-- 에러 처리. 스트리밍 도중 에러는 onError 옵션으로 로깅하고, 셸 렌더 자체가 실패하면
+- 에러 처리. 스트리밍 도중 에러는 onError 옵션으로 로깅한다. 셸 렌더 자체가 실패하면
   await가 reject되므로 try/catch로 잡는다. (콜백 onShellError 대신 예외로 온다.)
 
 **가장 기본적인 형태 (엣지/Deno 스타일)**
@@ -398,28 +398,28 @@ const { prelude } = await prerenderToNodeStream(<App />, options)
 ```
 
 prerenderToNodeStream은 트리를 완전히 다 렌더한 정적 HTML을 Node 스트림으로 만들어
-준다. 정적 사이트 생성(SSG)·프리렌더링을 위한 API이며, React 19에서 제거된
+준다. 정적 사이트 생성(SSG)·프리렌더링을 위한 API이며 React 19에서 제거된
 renderToStaticNodeStream의 대체재다.
 
 **특징** (<https://ko.react.dev/reference/react-dom/static/prerenderToNodeStream>)
 
 - Node.js 환경 전용이다. 결과를 Node 스트림(prelude)으로 준다. Web 표준 스트림
   환경(엣지/Deno)에서는 짝꿍인 prerender(react-dom/static)를 쓴다.
-- 반환값은 Promise이고, await하면 이미 전부 완성돼 있다. renderToReadableStream은 셸이
-  준비된 순간(onShellReady 타이밍)에 resolve됐지만, 이쪽은 모든 `<Suspense>` 내용까지
+- 반환값은 Promise다. await하면 이미 전부 완성돼 있다. renderToReadableStream은 셸이
+  준비된 순간(onShellReady 타이밍)에 resolve됐지만 이쪽은 모든 `<Suspense>` 내용까지
   전부 렌더가 끝난 뒤에 resolve된다. 즉 renderToPipeableStream의 onAllReady에 해당하는
   시점 하나만 있다. await가 풀렸을 땐 prelude 안에 완성된 문서 전체가 들어있다.
-- "흘려보내는 스트림"이 아니라 "완성본을 담은 스트림"이다. 이름에 stream이 들어가지만,
+- "흘려보내는 스트림"이 아니라 "완성본을 담은 스트림"이다. 이름에 stream이 들어가지만
   renderToPipeableStream처럼 셸을 먼저 보내고 나중에 이어붙이는 점진적 스트리밍이
   아니다. 데이터가 준비되기를 다 기다렸다가, 완성된 HTML을 스트림 형태로 내보낼 뿐이다.
-  그래서 사용자에게 실시간으로 흘려보내 TTFB를 줄이는 용도가 아니라, 빌드 타임에 정적
+  사용자에게 실시간으로 흘려보내 TTFB를 줄이는 용도가 아니라, 빌드 타임에 정적
   파일을 만들어 CDN에 올리는 용도다.
-- 서버 Suspense를 지원한다. renderToStaticMarkup이 하지 못했던, Suspense 데이터를
-  서버에서 기다렸다가 실제 내용으로 채우는 동작이 된다. 프리렌더는 어차피 전부
+- 서버 Suspense를 지원한다. renderToStaticMarkup은 여기까지 못 갔다. 이쪽은 Suspense
+  데이터를 서버에서 기다렸다가 실제 내용으로 채운다. 프리렌더는 어차피 전부
   기다리므로 fallback이 아니라 완성된 내용이 나온다.
 - 결과 HTML은 hydration이 가능하다. renderToStaticMarkup이 경계 마커를 다 빼서
   hydration을 못 했던 것과 달리, prerender는 hydration에 필요한 마커를 포함한다. 그래서
-  "정적으로 생성해 두고, 클라이언트에서 살려내는(hydrate)" 흐름에 쓸 수 있다.
+  "정적으로 생성해 두고 클라이언트에서 살려내는(hydrate)" 흐름에 쓸 수 있다.
 
 **가장 기본적인 형태 (빌드 타임 SSG)**
 
@@ -451,7 +451,7 @@ const stream = await resumeToPipeableStream(<App />, postponed, options)
 ```
 
 파셜 렌더링은 단일 메서드가 아니라 2단계 쌍이다. "정적으로 미리 렌더할 수 있는 부분은
-빌드 타임에 뽑아두고, 요청마다 달라지는 부분만 나중에 이어서 렌더"하는 방식이다. 한
+빌드 타임에 뽑아두고 요청마다 달라지는 부분만 나중에 이어서 렌더"하는 방식이다. 한
 페이지 안에서 정적 + 동적을 섞는다고 해서 partial이다.
 (<https://ko.react.dev/reference/react-dom/server/resumeToPipeableStream>)
 
@@ -469,25 +469,25 @@ const stream = await resumeToPipeableStream(<App />, postponed, options)
 
 **동작 흐름**
 
-1. 빌드 타임 — prerender
+1. 빌드 타임 (prerender)
    정적으로 만들 수 있는 데까지 렌더한다. 요청 데이터에 의존해 지금 렌더할 수 없는
    경계를 만나면 에러를 내거나 기다리지 않고 그 자리를 "보류(postpone)" 하고 넘어간다.
    결과로 두 가지를 돌려준다:
 
-    1. prelude — 완성된 정적 셸 HTML (구멍은 뚫린 채). CDN에 배포한다.
-    2. postponed — 어디를 보류했는지 적힌 직렬화된 상태. 나중에 이어 렌더할 때 쓴다.
+    1. prelude는 완성된 정적 셸 HTML이다 (구멍은 뚫린 채). CDN에 배포한다.
+    2. postponed는 어디를 보류했는지 적힌 직렬화된 상태다. 나중에 이어 렌더할 때 쓴다.
 
-2. 요청 타임 — resume / resumeToPipeableStream
+2. 요청 타임 (resume / resumeToPipeableStream)
    CDN이 정적 prelude를 즉시 응답한다(TTFB 최고). 그 뒤 서버는 postponed 상태를 받아
    보류했던 구멍만 요청별 데이터로 렌더해서 스트림으로 이어 붙인다. 이미 렌더된 정적
-   부분은 다시 렌더하지 않는다 — 딱 멈췄던 지점부터 재개(resume)한다.
+   부분은 다시 렌더하지 않는다. 딱 멈췄던 지점부터 재개(resume)한다.
 
-**특징**
+**각 단계가 하는 일**
 
 - prerender가 `{ prelude, postponed }`를 반환한다. 앞서 본 prerenderToNodeStream(prelude만)과
-  달리, 보류 상태(postponed)가 하나 더 나온다. 보류된 게 없으면 postponed는 null이고 —
+  달리, 보류 상태(postponed)가 하나 더 나온다. 보류된 게 없으면 postponed는 null이다.
   그럼 그냥 완전 정적 페이지다.
-- resume 계열은 "이어서 렌더"만 한다. 처음부터 렌더하지 않고, postponed 상태가 가리키는
+- resume 계열은 "이어서 렌더"만 한다. 처음부터 렌더하지 않고 postponed 상태가 가리키는
   구멍만 채운다. 스트림 타입에 따라 나뉜다.
 
 | **API** | **패키지** | **결과** |
@@ -504,8 +504,8 @@ const stream = await resumeToPipeableStream(<App />, postponed, options)
 
 경계를 보류시키는 트리거는 unstable_postpone인데, 이 stable 빌드(19.2.8)에서는 react가
 이걸 public export로 노출하지 않는다. (방금 확인: `'unstable_postpone' in require('react')`
-→ false.) 즉 prerender/resume 인프라는 다 들어있지만, 보류를 직접 트리거하는 API는 아직
-**프레임워크용(experimental)**으로 열려 있다. 그래서 지금 이걸 소비하는 대표 주자가
+→ false.) 즉 prerender/resume 인프라는 다 들어있지만 보류를 직접 트리거하는 API는 아직
+**프레임워크용(experimental)**으로 열려 있다. 지금 이걸 소비하는 대표 주자가
 **Next.js의 Partial Prerendering(PPR)**이다. 앱 코드에서 unstable_postpone을 직접
 호출하기보다는, 프레임워크가 `<Suspense>` 경계를 보고 알아서 prerender/resume을
 오케스트레이션하는 형태로 쓴다.
@@ -530,7 +530,7 @@ async function handleRequest(req, res) {
 }
 ```
 
-`<App />` 안에서 사용자별 데이터를 쓰는 부분은 `<Suspense>`로 감싸 두고, 그 경계가 build
+`<App />` 안에서 사용자별 데이터를 쓰는 부분은 `<Suspense>`로 감싸 두면 그 경계가 build
 단계에선 보류(구멍) → request 단계에서 채워진다.
 
 **SSR vs SSG vs PPR API 정리**

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Geist, JetBrains_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { BackToTop } from "@/components/back-to-top";
@@ -15,17 +14,10 @@ import {
   SITE_SHORT_NAME,
   SITE_URL,
 } from "@/lib/site";
+// Pretendard 는 유니코드 구간별로 쪼갠 subset 을 쓴다.
+// 방문자는 실제로 화면에 나온 글자가 속한 조각만 내려받는다.
+import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -99,7 +91,7 @@ export default async function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${geistSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className="h-full antialiased"
       suppressHydrationWarning
     >
       <head>

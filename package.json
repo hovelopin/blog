@@ -1,25 +1,22 @@
 {
-  "name": "ai-website-clone-template",
+  "name": "hojin-blog",
   "version": "0.3.1",
   "private": true,
-  "description": "Clone any website into a clean, modern Next.js codebase using AI coding agents",
-  "author": "JCodesMore",
+  "description": "Personal blog built with Next.js — posts, research notes, and diary written in Markdown",
+  "author": "hovelopin",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/JCodesMore/ai-website-cloner-template.git"
+    "url": "https://github.com/hovelopin/blog.git"
   },
-  "homepage": "https://github.com/JCodesMore/ai-website-cloner-template",
+  "homepage": "https://github.com/hovelopin/blog",
   "bugs": {
-    "url": "https://github.com/JCodesMore/ai-website-cloner-template/issues"
+    "url": "https://github.com/hovelopin/blog/issues"
   },
   "keywords": [
-    "claude-code",
-    "website-clone",
-    "reverse-engineering",
+    "blog",
     "nextjs",
-    "ai",
-    "template",
+    "markdown",
     "tailwindcss",
     "shadcn-ui"
   ],

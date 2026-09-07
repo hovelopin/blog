@@ -4,24 +4,29 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-# Website Reverse-Engineer Template
+# 개인 블로그 (hojin-blog)
 
 ## What This Is
-A reusable template for reverse-engineering any website into a clean, modern Next.js codebase using AI coding agents. The Next.js + shadcn/ui + Tailwind v4 base is pre-scaffolded — just run `/clone-website <url1> [<url2> ...]`.
+Next.js 기반 개인 블로그. 글은 `content/` 아래 마크다운으로 관리하고, 빌드 시 정적 페이지로 렌더링한다.
+- `content/posts/` — 기술 블로그 글
+- `content/research/` — 시리즈 단위 심화 리서치 (`ssr`, `suspensive`, `frontend-interview`)
+- `content/diary/` — 개인 회고 다이어리
 
 ## Tech Stack
 - **Framework:** Next.js 16 (App Router, React 19, TypeScript strict)
-- **UI:** shadcn/ui (Radix primitives, Tailwind CSS v4, `cn()` utility)
-- **Icons:** Lucide React (default — will be replaced/supplemented by extracted SVGs)
-- **Styling:** Tailwind CSS v4 with oklch design tokens
+- **UI:** shadcn/ui (Base UI primitives, Tailwind CSS v4, `cn()` utility)
+- **Icons:** Lucide React
+- **Content:** Markdown + gray-matter, remark/rehype 파이프라인, Shiki 코드 하이라이팅
+- **Package manager:** pnpm
 - **Deployment:** Vercel
 
 ## Commands
-- `npm run dev` — Start dev server
-- `npm run build` — Production build
-- `npm run lint` — ESLint check
-- `npm run typecheck` — TypeScript check
-- `npm run check` — Run lint + typecheck + build
+- `pnpm dev` — 개발 서버
+- `pnpm build` — 프로덕션 빌드
+- `pnpm lint` — ESLint 검사
+- `pnpm typecheck` — TypeScript 검사
+- `pnpm check` — lint + typecheck + build
+- `pnpm import:docx <file>` — docx 원고를 마크다운으로 변환
 
 ## Code Style
 - TypeScript strict mode, no `any`
@@ -30,31 +35,28 @@ A reusable template for reverse-engineering any website into a clean, modern Nex
 - 2-space indentation
 - Responsive: mobile-first
 
-## Design Principles
-- **Pixel-perfect emulation** — match the target's spacing, colors, typography exactly
-- **No personal aesthetic changes during emulation phase** — match 1:1 first, customize later
-- **Real content** — use actual text and assets from the target site, not placeholders
-- **Beauty-first** — every pixel matters
-
 ## Project Structure
 ```
 src/
-  app/              # Next.js routes
-  components/       # React components
+  app/              # Next.js 라우트 (posts, research, diary, rss.xml, llms.txt, sitemap, robots)
+  components/       # React 컴포넌트
     ui/             # shadcn/ui primitives
-    icons.tsx       # Extracted SVG icons as React components
   lib/
-    utils.ts        # cn() utility (shadcn)
-  types/            # TypeScript interfaces
-  hooks/            # Custom React hooks
+    content.ts      # 마크다운 로딩/파싱
+    site.ts         # 사이트 메타데이터
+    utils.ts        # cn() utility
+  types/            # TypeScript 인터페이스
+  hooks/            # 커스텀 훅
+content/
+  posts/            # 기술 글
+  research/         # 리서치 시리즈
+  diary/            # 다이어리
 public/
-  images/           # Downloaded images from target site
-  videos/           # Downloaded videos from target site
-  seo/              # Favicons, OG images, webmanifest
-docs/
-  research/         # Inspection output (design tokens, components, layout)
-  design-references/ # Screenshots and visual references
-scripts/            # Asset download scripts
+  covers/           # 글 커버 이미지
+  images/           # 아바타, 링크 프리뷰, 리서치 이미지
+  imports/          # 글 본문에 삽입되는 이미지
+scripts/
+  import-docx.mjs   # docx → 마크다운 변환 스크립트
 ```
 
 ## 블로그 글 작성 규칙 (말투)
@@ -83,6 +85,4 @@ scripts/            # Asset download scripts
 
 ## MOST IMPORTANT NOTES
 - When launching Claude Code agent teams, ALWAYS have each teammate work in their own worktree branch and merge everyone's work at the end, resolving any merge conflicts smartly since you are basically serving the orchestrator role and have full context to our goals, work given, work achieved, and desired outcomes.
-- After editing `.claude/skills/clone-website/SKILL.md`, run `node scripts/sync-skills.mjs` to regenerate the skill for all platforms.
-
-@docs/research/INSPECTION_GUIDE.md
+- 블로그 글 말투 상세 규칙과 검증 절차는 `.claude/skills/blog-tone` 스킬에 있다.

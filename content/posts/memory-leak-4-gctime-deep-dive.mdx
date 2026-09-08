@@ -1,5 +1,5 @@
 ---
-title: "메모리 누수 해결을 위한 여정 - gcTime 한 줄이 SSR을 죽인 진짜 이유"
+title: "gcTime 한 줄이 SSR을 죽인 진짜 이유"
 description: "이전 글에서 범인으로 지목된 gcTime: 24h. 그런데 정말 '캐시가 24시간 살아 있어서' 누수가 났을까? TanStack Query 소스 두 파일을 열어 SSR 분기의 실제 메커니즘을 따라간 기록."
 date: "2025-11-20"
 tags: ["nextjs", "performance", "memory", "tanstack-query", "ssr"]
@@ -18,7 +18,7 @@ coverAlt: "메모리 누수 4편 — gcTime SSR 분석 썸네일"
 
 ---
 
-## 재현 환경 — 더 가혹하게
+## 더 가혹한 재현 환경
 
 이전 글에서 사용했던 부하 테스트(`--max-old-space-size=128`, 500회 요청)를 그대로 가져와 한도를 더 조였다.
 
@@ -56,7 +56,7 @@ FATAL ERROR: Ineffective mark-compacts near heap limit
 
 ---
 
-## 이전 글에서 필자가 했던 설명 — 어디가 틀렸나
+## 이전 글의 설명은 어디가 틀렸나
 
 이전 글에서 필자는 이렇게 적었다.
 
@@ -72,7 +72,7 @@ FATAL ERROR: Ineffective mark-compacts near heap limit
 
 ---
 
-## 진짜 메커니즘 — TanStack Query 소스 두 곳
+## 진짜 메커니즘은 소스 두 곳에 있다
 
 ### server default는 Infinity다
 
@@ -151,7 +151,7 @@ export function isValidTimeout(value: unknown): value is number {
 
 ---
 
-## 흔한 오해 정리 — 이전 글 독자에게 보내는 정정
+## 흔한 오해 정리
 
 이전 글에서 필자가 남긴 (그리고 많은 글이 반복하는) 설명은 이렇다.
 
@@ -163,7 +163,7 @@ export function isValidTimeout(value: unknown): value is number {
 
 ---
 
-## 그래서 — 라이브러리 버그인가?
+## 그래서 라이브러리 버그인가?
 
 **아니다.** 이건 알려진 footgun에 가깝다.
 
@@ -193,7 +193,7 @@ export function isValidTimeout(value: unknown): value is number {
 
 이전 글에서는 "옵션을 제거한다"로 정리하고 끝냈지만, 실제로는 선택지가 더 있다. 우선순위 순이다.
 
-### 가장 단순한 fix — hooks 단에서 `gcTime` 빼기
+### hooks 단에서 `gcTime` 빼기
 
 ```ts
 export const useUsers = () => {
@@ -206,7 +206,7 @@ export const useUsers = () => {
 }
 ```
 
-### 클라이언트 캐시는 길게 두고 싶다면 — `makeQueryClient`에서 분기
+### `makeQueryClient`에서 분기하기
 
 ```ts
 import { isServer } from '@tanstack/react-query'
@@ -225,13 +225,13 @@ function makeQueryClient() {
 
 이러면 hooks 단에서 굳이 옵션을 안 줘도 client만 24h가 적용되고, server는 leak-free다.
 
-### 가장 정석 — `prefetchQuery` + `<HydrationBoundary>`
+### `prefetchQuery` 와 `<HydrationBoundary>`
 
 `useUsers()`를 client component에서 직접 호출하지 말고, server component에서 prefetch → dehydrate → client에서 hydrate하는 패턴으로 전환한다. 서버 cache lifecycle이 요청 스코프와 일치해, 누수 가능성 자체가 사라진다.
 
 ---
 
-## 디버깅 회고 — 한 줄로 OOM이 나는 시스템
+## 한 줄로 OOM이 나는 시스템
 
 이번 추적에서 다시 한 번 정리하게 된 것들.
 

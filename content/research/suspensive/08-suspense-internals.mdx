@@ -32,7 +32,7 @@ export interface SuspenseProps extends ReactSuspenseProps {
 완전한 상위 호환**이다. (`SuspenseProps as ReactSuspenseProps` 별칭을 쓴 것도
 React 원본을 확장하겠다는 신호다.)
 
-## 본체 함수 — 구조 분해
+## 본체 함수의 구조 분해
 
 ```tsx
 ({ clientOnly, fallback, children, name, ...rest }: SuspenseProps) => {
@@ -64,7 +64,7 @@ const defaultProps = useContext(SuspenseDefaultPropsContext);
 `undefined`라 아무 영향이 없고 `fallback`을 채워 주면 그 아래 모든 `<Suspense>`가
 fallback을 생략해도 그 값을 쓴다.
 
-## 핵심 — defineSuspense로 "어떤 Suspense를 쓸지" 고르기
+## defineSuspense로 어떤 Suspense를 쓸지 고른다
 
 ```tsx
 const DefinedSuspense = defineSuspense({
@@ -119,7 +119,7 @@ export function defineSuspense({
 HTML에 담음), 브라우저 하이드레이션에선 `true`(children을 그림)가 되어, 미스매치
 경고 없이 "서버엔 fallback, 브라우저에서만 진짜 내용"이 구현된다.
 
-## return — fallback 기본값 처리
+## return 의 fallback 기본값 처리
 
 ```tsx
 return (
@@ -140,7 +140,7 @@ return (
   중 아무것도 안 보이기")처럼 `null`을 의도적으로 넘길 수 있다. `??`는 `null`도
   기본값으로 덮어써 버리므로, `undefined`만 골라내 "명시적 null" 의도를 존중한다.
 
-## .with — 정적 메서드 (HOC 헬퍼)
+## .with 정적 메서드
 
 `Suspense`는 [Object.assign 패턴](/research/suspensive/05-object-assign-pattern)으로
 `.with` 메서드를 함께 답니다. "어떤 컴포넌트를 Suspense로 미리 감싼 새 컴포넌트를

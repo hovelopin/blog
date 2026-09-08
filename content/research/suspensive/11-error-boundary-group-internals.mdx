@@ -17,7 +17,7 @@ title: "내부 뜯어보기 ⑦: ErrorBoundaryGroup은 숫자 하나를 방송�
 
 핵심 아이디어는 단 하나, **`resetKey`(숫자)를 context로 방송**하는 것이다.
 
-## 핵심 메커니즘 — resetKey 방송
+## resetKey 방송 메커니즘
 
 이 컴포넌트의 전부는 "숫자 하나(`resetKey`)를 context로 방송하는 것"이다.
 
@@ -56,7 +56,7 @@ reset() 호출 → resetKey +1 → 모든 자식 ErrorBoundary의 resetKeys가 �
 즉 `ErrorBoundaryGroup`은 새 로직을 거의 안 만들고 `ErrorBoundary`가 이미 가진
 `resetKeys` 자동 복구 기능에 "공유 숫자"를 얹었을 뿐이다.
 
-## useReducer(increase, 0) — reset이 곧 "증가 버튼"
+## useReducer 로 만든 증가 버튼
 
 ```tsx
 const [resetKey, reset] = useReducer(increase, 0); // increase = (prev) => prev + 1
@@ -79,7 +79,7 @@ const [resetKey, reset] = useReducer(increase, 0); // increase = (prev) => prev 
 `resetKey`가 안 바뀌면 소비자들이 불필요하게 리렌더되지 않게 한다(`reset`은
 useReducer dispatch라 신원이 항상 안정적).
 
-## 중첩 그룹 + blockOutside — 부모가 리셋되면 자식도
+## 중첩 그룹과 blockOutside
 
 그룹 안에 또 그룹을 넣을 수 있다. 이때 "부모 그룹이 리셋되면 자식 그룹도 같이
 리셋될까?"라는 물음이 생긴다.
@@ -100,7 +100,7 @@ useEffect(() => {
 - `blockOutside={true}`: 이 그룹을 부모의 리셋으로부터 격리해 내부 경계들을
   외부 그룹 리셋에서 보호한다.
 
-### useIsChanged — "이전 렌더와 값이 달라졌나"
+### useIsChanged 로 값 변화 감지
 
 ```tsx
 export const useIsChanged = (value) => usePrevious(value) !== value;
@@ -118,7 +118,7 @@ export const usePrevious = (value) => {
 있다. 그래서 `usePrevious(x) !== x`는 "이번 렌더에서 x가 바뀌었나?"가 된다.
 이걸로 부모 resetKey의 변화를 감지해 cascade를 트리거한다.
 
-## useErrorBoundaryGroup / Consumer — 자식에서 리셋 트리거
+## 자식에서 리셋을 부르는 방법
 
 ```tsx
 export const useErrorBoundaryGroup = () => {

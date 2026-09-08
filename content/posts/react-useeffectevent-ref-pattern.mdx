@@ -66,7 +66,7 @@ ref 패턴의 동작은 정확하다. 다만 **의도를 가리는 보일러플�
 
 React 19.2부터 정식 합류한 [`useEffectEvent`](https://react.dev/learn/separating-events-from-effects)가 정확히 이 패턴을 위한 API다. **항상 최신 props/state를 읽으면서도 그 값이 effect를 재실행시키지 않는** 함수를 만들어 주는데, 내부적으로는 ref에 최신 콜백을 담아둔다.
 
-### Before
+### ref 두 개와 동기화 effect
 
 ```tsx
 const onCancelRef = useRef(onCancel)
@@ -92,7 +92,7 @@ useEffect(() => {
 }, [open])
 ```
 
-### After
+### useEffectEvent 한 줄
 
 ```tsx
 import { useEffectEvent } from 'react'
@@ -116,11 +116,11 @@ useEffect(() => {
 
 ---
 
-## React는 이걸 어떻게 구현했나 — 소스 까보기
+## React는 이걸 어떻게 구현했나
 
 React 소스([`react-reconciler`의 `ReactFiberHooks.js`](https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberHooks.js))를 열어보며, `useEffectEvent`가 값을 어떻게 갱신하는지 살펴보자.
 
-### 마운트 — ref 하나와 안 바뀌는 함수 하나
+### 마운트 시 만들어지는 것
 
 첫 렌더에서 `useEffectEvent`는 `mountEvent`를 부른다.
 
@@ -173,7 +173,7 @@ for (let ii = 0; ii < eventPayloads.length; ii++) {
 
 손으로 짜던 `ref.current = handler` 한 줄이, React에선 커밋 단계의 `ref.impl = nextImpl`로 옮겨간 셈이다.
 
-### 타이밍이 전부다 — effect보다 먼저 갱신한다
+### effect보다 먼저 갱신한다
 
 그냥 "ref를 갱신한다"가 아니라 **언제** 갱신하느냐가 이 API의 정확성을 만든다. 커밋 단계의 실행 순서를 보면 이렇다.
 

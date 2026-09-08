@@ -1,5 +1,5 @@
 ---
-title: "Claude Code의 sub-agent 기능을 활용한 Jira 이슈 처리 자동화"
+title: "Jira 이슈 처리를 sub-agent에게 넘기기"
 description: "Claude Code sub-agent + Atlassian MCP + Figma MCP 조합으로 Jira 이슈 처리 워크플로를 자동화한 경험과 jira-fixer agent 설계 과정을 공유한다."
 date: "2026-05-19"
 tags: ["ai", "claude-code", "jira", "mcp", "automation"]
@@ -90,7 +90,7 @@ description: Jira 이슈 번호와 함께 "수정/구현/반영" 요청 시 사�
 
 ![jira-fixer 대화 흐름](/imports/jira-fixer-automation/image-002.svg)
 
-### 1턴 — `PROJ-1234 처리해줘`
+### 1턴 `PROJ-1234 처리해줘`
 
 agent가 본문/댓글 조회 → Figma 시안 fetch → 코드 탐색 → `git diff`까지 알아서 수행한 뒤, 결과를 표로 정리해서 보여준다.
 
@@ -112,7 +112,7 @@ agent가 본문/댓글 조회 → Figma 시안 fetch → 코드 탐색 → `git 
 
 여기서 **agent는 코드를 손대지 않는다.** 사용자 OK를 기다린다.
 
-### 2턴 — `진행해줘`
+### 2턴 `진행해줘`
 
 Edit/Write로 코드를 수정하고 lint/typecheck를 돌린 뒤, **Jira 댓글 초안만** 출력한다.
 
@@ -131,7 +131,7 @@ Edit/Write로 코드를 수정하고 lint/typecheck를 돌린 뒤, **Jira 댓글
 
 **댓글은 아직 게시되지 않은 상태다.** 한 번 더 OK가 필요하다.
 
-### 3턴 — 사용자가 댓글 게시를 승인한다
+### 3턴, 사용자가 댓글 게시를 승인한다
 
 ```
 올려줘

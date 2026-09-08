@@ -13,7 +13,7 @@ title: "내부 뜯어보기 ⑤: Delay와 useTimeout의 최신 ref 패턴"
 > children 렌더를 지정한 `ms`만큼 미루는 컴포넌트. 대표 용도는 로딩 스피너 깜빡임
 > 방지 — "로딩이 500ms 넘게 걸릴 때만 스피너 보여줘".
 
-## DelayProps — 유니온 타입
+## DelayProps 유니온 타입
 
 ```tsx
 export type DelayProps =
@@ -42,7 +42,7 @@ export type DelayProps =
 `fallback?: never`가 포인트다. 함수형 children을 쓰면서 fallback까지 주는
 잘못된 조합을 컴파일 단계에서 막는, 세심한 타입 설계다.
 
-## 본체 — 우선순위와 isDelayed의 진짜 의미
+## 우선순위와 isDelayed의 진짜 의미
 
 ```tsx
 const defaultProps = useContext(DelayDefaultPropsContext); // ← DefaultProps 소비
@@ -90,7 +90,7 @@ return <>{props.fallback}</>; // (C-2) 개별 fallback
 - (C) 아직이면 fallback — 여기서도 **개별 > 전역**(`Suspense`에서 본 `=== undefined`
   삼항과 동일 철학).
 
-## useTimeout — 최신 ref 패턴 (제일 중요)
+## useTimeout 의 최신 ref 패턴
 
 이 파일에서 가장 배울 게 많은 부분이다.
 
@@ -125,7 +125,7 @@ export const useTimeout = (fn: () => void, ms: number) => {
 Dan Abramov의 유명한 "useInterval/최신 ref" 패턴과 같은 기법이다. `clearTimeout`
 정리로 언마운트 시 누수도 막는다.
 
-## Suspense와 함께 쓸 때 — 흔한 오해
+## Suspense와 함께 쓸 때 생기는 오해
 
 ### 오해: "Delay가 Suspense에 타이머를 걸어 로딩을 통제한다"
 
@@ -161,7 +161,7 @@ Suspense와 함께 쓰는 건 배치의 문제다. `Delay`를 Suspense의 fallba
 `isDelayed`가 아직 `false`이고 `fallback`이 `undefined`라 빈 Fragment를 렌더하기
 때문이다.
 
-### 이게 의도된 동작 — 왜 빈 화면이 나은가
+### 왜 빈 화면이 나은가
 
 "300ms 빈 화면"이 손해처럼 보이지만 대안이 더 나쁘다.
 

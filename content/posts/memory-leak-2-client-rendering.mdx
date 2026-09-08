@@ -1,5 +1,5 @@
 ---
-title: "메모리 누수 해결을 위한 여정 - 클라이언트 누수 확인 및 렌더링 로직 개선"
+title: "클라이언트에서 새는 곳 찾기"
 description: "Chat Scroll 로직, Tanstack Query GC 시간, Header 리렌더링, react-slick 누수까지 — 프로덕션에서 발견된 클라이언트 메모리 누수 케이스 정리."
 date: "2025-10-27"
 tags: ["nextjs", "performance", "memory", "react"]
@@ -15,7 +15,7 @@ coverAlt: "메모리 누수 2편 — 클라이언트 렌더링 개선 썸네일"
 
 ## Chat Scroll 로직 개선
 
-### 문제점 및 원인 분석
+### 무엇이 문제였나
 
 Nova 기능 단위 하위에 전역으로 적용되던 `layout.tsx`의 Chat Scroll 로직을 분석한 결과, 메모리 누수의 핵심 원인을 발견했다.
 
@@ -100,7 +100,7 @@ export default function NovaContentLayout({ children }: Props) {
 }
 ```
 
-### 핵심 문제점
+### 진짜 원인
 
 이 코드는 `MutationObserver`로 DOM 변경을 감지하고, 변경마다 `setTimeout`으로 스크롤을 최하단으로 이동시킨다. 메모리 누수의 원인은 다음 네 가지다.
 
@@ -109,7 +109,7 @@ export default function NovaContentLayout({ children }: Props) {
 3. Nova 내부 페이지 이동 시에는 cleanup이 실행되지 않음
 4. `setTimeout`이 지속적으로 실행되며 `scrollToBottom`을 반복 호출
 
-### 개선
+### 어떻게 고쳤나
 
 `layout`에서 동작하던 로직을 chat 페이지 내부로 이동하고, 불필요한 `setTimeout`을 제거했다. 채팅 이탈 시 cleanup이 정상적으로 실행되어 GC가 수집할 수 있도록 변경했다.
 
@@ -213,7 +213,7 @@ Header 컴포넌트가 스크롤할 때마다 두 hook에 의해 함수가 재�
 
 ![Header 리렌더링 2](/imports/memory-leak-2-client-rendering/image-001.png)
 
-### 의심되는 로직
+### 의심 가는 로직
 
 ```tsx
 const handleScrollStop = useCallback(() => {
@@ -325,7 +325,7 @@ throttle 500ms 적용 후 핸들러 호출과 리렌더링이 눈에 띄게 줄�
 
 ![throttle 효과 3](/imports/memory-leak-2-client-rendering/image-002.png)
 
-## 라이브러리 메모리 누수 — react-slick
+## react-slick 라이브러리 누수
 
 Home 화면에서 `react-slick` 기반 슬라이더 컴포넌트에서 심각한 메모리 누수가 발견됐다.
 

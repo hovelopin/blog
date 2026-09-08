@@ -1,5 +1,5 @@
 ---
-title: "내부 뜯어보기 ⑧: lazy가 React.lazy에 더한 것 — 프리로드와 reloadOnError"
+title: "내부 뜯어보기 ⑧: lazy가 React.lazy에 더한 것"
 ---
 
 Suspensive의 `lazy`는 `React.lazy`를 감싸면서 프리로드(`.load()`), 콜백,
@@ -9,7 +9,7 @@ Suspensive의 `lazy`는 `React.lazy`를 감싸면서 프리로드(`.load()`), �
 - **의존 부품**: `React.lazy`(originalLazy), `noop`
 - **함께 export**: `createLazy`(팩토리), `reloadOnError`(청크 실패 시 새로고침 옵션)
 
-## 기반 복습 — React.lazy가 원래 하는 일
+## React.lazy가 원래 하는 일
 
 ```tsx
 const Component = React.lazy(() => import("./Component"));
@@ -35,7 +35,7 @@ suspensive의 `lazy`도 이 제약은 그대로다(타입이 `() => Promise<{ de
 | `createLazy(기본옵션)` 팩토리 | 여러 lazy에 공통 옵션을 한 번에 |
 | `reloadOnError` | 청크 로드 실패 시 페이지 자동 새로고침 (배포 후 옛 청크 404 대응) |
 
-## LazyOptions — 콜백 두 개
+## LazyOptions 의 콜백 두 개
 
 ```tsx
 interface LazyOptions {
@@ -54,7 +54,7 @@ interface LazyOptions {
 함수)를 받는다. 실패했을 때 재시도하라고 넘기는 것이고, `onError`는 이 `load`로
 `reloadOnError`를 구현한다.
 
-## createLazy — 커링(curried) 팩토리
+## createLazy 커링 팩토리
 
 ```tsx
 export const createLazy =
@@ -79,7 +79,7 @@ const A = lazy(() => import("./A"));
 const B = lazy(() => import("./B"));
 ```
 
-### 콜백 합성 — 개별 먼저, 기본 나중
+### 개별 먼저, 기본 나중
 
 ```tsx
 const composedOnSuccess = ({ load }) => {
@@ -91,7 +91,7 @@ const composedOnSuccess = ({ load }) => {
 개별 lazy에 준 콜백을 먼저, `createLazy`에 준 기본 콜백을 나중에 실행한다. `?.`로
 없으면 건너뛴다. `onError`도 같은 구조다.
 
-### 핵심 — `Object.assign(React.lazy(...), { load })`
+### `Object.assign(React.lazy(...), { load })`
 
 ```tsx
 const loadNoReturn = () => load().then(noop);
@@ -149,7 +149,7 @@ const loadNoReturn = () => load().then(noop);
 필요 없다. "로딩이 끝났다"는 신호만 있으면 되니, 결과를 `noop`으로 버리고
 `Promise<void>`로 단순화한다. 타입이 `load: () => Promise<void>`인 이유다.
 
-## reloadOnError — 실전 문제를 푸는 옵션
+## reloadOnError 옵션
 
 아주 현실적인 문제를 해결한다.
 

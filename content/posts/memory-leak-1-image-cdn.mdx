@@ -1,5 +1,5 @@
 ---
-title: "메모리 누수 해결을 위한 여정 - 이미지 최적화 및 CDN 편"
+title: "정적 리소스를 CDN으로 넘기기"
 description: "Next.js 애플리케이션의 메모리 누수를 줄이기 위해 정적 리소스를 CDN으로 옮기고, Image 컴포넌트 캐시를 재구성한 과정."
 date: "2025-10-20"
 tags: ["nextjs", "performance", "cdn", "memory"]
@@ -135,13 +135,13 @@ export default config;
 
 검증 환경에서 적용 후 측정한 결과를 정리한다.
 
-### Before — Nginx에서 CSS/JS 직접 서빙
+### Nginx가 CSS·JS를 직접 서빙할 때
 
 ![Nginx 서빙 1](/imports/memory-leak-1-image-cdn/image-013.png)
 
 ![Nginx 서빙 2](/imports/memory-leak-1-image-cdn/image-025.png)
 
-### After — CDN 경로로 치환
+### CDN 경로로 치환한 뒤
 
 ![CDN 적용 1](/imports/memory-leak-1-image-cdn/image-009.png)
 

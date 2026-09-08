@@ -30,9 +30,7 @@ export function ScrollProgress() {
     window.addEventListener("resize", schedule);
 
     const resizeObserver =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(schedule)
-        : null;
+      typeof ResizeObserver !== "undefined" ? new ResizeObserver(schedule) : null;
     resizeObserver?.observe(document.documentElement);
     resizeObserver?.observe(document.body);
 

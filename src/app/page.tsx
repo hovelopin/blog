@@ -6,18 +6,8 @@ import { PostCard } from "@/components/post-card";
 import { DiaryLog } from "@/components/diary-log";
 import { HorizontalScroller } from "@/components/horizontal-scroller";
 import { JsonLd } from "@/components/json-ld";
-import {
-  getAllBooks,
-  getAllDiaryEntries,
-  getAllPostSummaries,
-} from "@/lib/content";
-import {
-  AUTHOR,
-  SITE_DESCRIPTION,
-  SITE_LANG,
-  SITE_NAME,
-  SITE_URL,
-} from "@/lib/site";
+import { getAllBooks, getAllDiaryEntries, getAllPostSummaries } from "@/lib/content";
+import { AUTHOR, SITE_DESCRIPTION, SITE_LANG, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -65,20 +55,14 @@ export default async function Home() {
 
       <section className="mb-14 sm:mb-20">
         <div className="mb-6 flex items-baseline justify-between">
-          <h2 className="font-mono text-sm text-muted-foreground">
-            # recent posts
-          </h2>
-          <Link
-            href="/posts"
-            className="font-mono text-xs text-primary hover:underline"
-          >
+          <h2 className="font-mono text-sm text-muted-foreground"># recent posts</h2>
+          <Link href="/posts" className="font-mono text-xs text-primary hover:underline">
             see all ({posts.length}) →
           </Link>
         </div>
         {recentPosts.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            아직 글이 없습니다. <code>content/posts</code>에 마크다운 파일을
-            추가하세요.
+            아직 글이 없습니다. <code>content/posts</code>에 마크다운 파일을 추가하세요.
           </p>
         ) : (
           // 최신 글 하나를 왼쪽에 크게 두고, 그다음 두 편을 오른쪽에 쌓는 배치.
@@ -99,13 +83,8 @@ export default async function Home() {
       {recentBooks.length > 0 && (
         <section className="mb-14 sm:mb-20">
           <div className="mb-6 flex items-baseline justify-between">
-            <h2 className="font-mono text-sm text-muted-foreground">
-              # bookshelf
-            </h2>
-            <Link
-              href="/research"
-              className="font-mono text-xs text-primary hover:underline"
-            >
+            <h2 className="font-mono text-sm text-muted-foreground"># bookshelf</h2>
+            <Link href="/research" className="font-mono text-xs text-primary hover:underline">
               see all ({books.length}) →
             </Link>
           </div>
@@ -134,20 +113,13 @@ export default async function Home() {
 
       <section>
         <div className="mb-6 flex items-baseline justify-between">
-          <h2 className="font-mono text-sm text-muted-foreground">
-            # recent diary
-          </h2>
-          <Link
-            href="/diary"
-            className="font-mono text-xs text-primary hover:underline"
-          >
+          <h2 className="font-mono text-sm text-muted-foreground"># recent diary</h2>
+          <Link href="/diary" className="font-mono text-xs text-primary hover:underline">
             see all →
           </Link>
         </div>
         {recentDiary.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            다이어리가 비어 있습니다.
-          </p>
+          <p className="text-sm text-muted-foreground">다이어리가 비어 있습니다.</p>
         ) : (
           <DiaryLog entries={recentDiary} />
         )}

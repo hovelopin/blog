@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 import { ImageLightbox, type LightboxImage } from "@/components/image-lightbox";
 
 interface PostContentProps {
-  html: string;
+  /** MDXRemote 가 렌더한 본문. 서버에서 만들어 children 으로 내려온다. */
+  children: React.ReactNode;
   className?: string;
 }
 
@@ -95,7 +96,7 @@ function collectZoomableImages(root: HTMLElement): HTMLImageElement[] {
   return imgs;
 }
 
-export function PostContent({ html, className }: PostContentProps) {
+export function PostContent({ children, className }: PostContentProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -111,7 +112,7 @@ export function PostContent({ html, className }: PostContentProps) {
     const root = containerRef.current;
     if (!root) return;
     return enhanceCodeBlocks(root);
-  }, [html]);
+  }, [children]);
 
   useEffect(() => {
     const root = containerRef.current;
@@ -159,7 +160,7 @@ export function PostContent({ html, className }: PostContentProps) {
         img.removeAttribute("aria-label");
       });
     };
-  }, [html]);
+  }, [children]);
 
   useEffect(() => {
     const root = containerRef.current;
@@ -216,9 +217,7 @@ export function PostContent({ html, className }: PostContentProps) {
 
     const findAnchor = (target: EventTarget | null) =>
       target instanceof Element
-        ? (target.closest(
-            "a[data-preview-src]",
-          ) as HTMLAnchorElement | null)
+        ? (target.closest("a[data-preview-src]") as HTMLAnchorElement | null)
         : null;
 
     const onOver = (e: MouseEvent) => {
@@ -263,11 +262,9 @@ export function PostContent({ html, className }: PostContentProps) {
 
   return (
     <>
-      <div
-        ref={containerRef}
-        className={cn("prose-blog", className)}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+      <div ref={containerRef} className={cn("prose-blog", className)}>
+        {children}
+      </div>
 
       <div
         ref={tooltipRef}
@@ -288,7 +285,7 @@ export function PostContent({ html, className }: PostContentProps) {
           transform: "translateX(-50%) translateY(-4px)",
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {/* oxlint-disable-next-line nextjs/no-img-element */}
         <img
           ref={imgRef}
           alt=""
@@ -301,9 +298,7 @@ export function PostContent({ html, className }: PostContentProps) {
       <ImageLightbox
         images={lightbox?.images ?? []}
         index={lightbox?.index ?? null}
-        onIndexChange={(index) =>
-          setLightbox((prev) => (prev ? { ...prev, index } : prev))
-        }
+        onIndexChange={(index) => setLightbox((prev) => (prev ? { ...prev, index } : prev))}
         onClose={() => {
           setLightbox(null);
           // 라이트박스를 닫으면 눌렀던 이미지로 포커스를 돌려준다.

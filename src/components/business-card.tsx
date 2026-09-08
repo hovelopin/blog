@@ -116,16 +116,9 @@ function Barcode() {
 
   return (
     <div className="flex flex-col items-center justify-end gap-1 self-end pb-1">
-      <div
-        className="flex h-[160px] items-stretch gap-[1.5px]"
-        aria-hidden="true"
-      >
+      <div className="flex h-[160px] items-stretch gap-[1.5px]" aria-hidden="true">
         {bars.map((w, i) => (
-          <div
-            key={i}
-            className="h-full bg-foreground"
-            style={{ width: `${w}px` }}
-          />
+          <div key={i} className="h-full bg-foreground" style={{ width: `${w}px` }} />
         ))}
       </div>
     </div>
@@ -168,21 +161,14 @@ function CardBack() {
           </p>
           <ul className="space-y-1.5">
             {EXPERIENCE.map((item) => (
-              <li
-                key={item.company}
-                className="font-mono text-[12px] leading-relaxed"
-              >
+              <li key={item.company} className="font-mono text-[12px] leading-relaxed">
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-foreground">
-                    {item.company}
-                  </span>
+                  <span className="truncate text-foreground">{item.company}</span>
                   <span className="shrink-0 text-muted-foreground/80 text-[11px]">
                     {item.period}
                   </span>
                 </div>
-                <div className="text-muted-foreground text-[11px]">
-                  {item.role}
-                </div>
+                <div className="text-muted-foreground text-[11px]">{item.role}</div>
               </li>
             ))}
           </ul>

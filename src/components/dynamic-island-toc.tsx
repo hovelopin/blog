@@ -11,11 +11,10 @@ interface DynamicIslandTOCProps {
 
 export function DynamicIslandTOC({ headings }: DynamicIslandTOCProps) {
   const [expanded, setExpanded] = useState(false);
-  const [activeId, setActiveId] = useState<string | null>(
-    headings[0]?.id ?? null,
-  );
+  const [activeId, setActiveId] = useState<string | null>(headings[0]?.id ?? null);
   const [progress, setProgress] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (headings.length === 0) return;
@@ -44,6 +43,23 @@ export function DynamicIslandTOC({ headings }: DynamicIslandTOCProps) {
       window.removeEventListener("resize", update);
     };
   }, [headings]);
+
+  // 읽고 있는 위치가 바뀌면 목록도 그 항목이 보이도록 따라간다.
+  // (목록이 길면 활성 항목이 스크롤 영역 밖에 남아 "목차가 멈춘 것처럼" 보인다)
+  useEffect(() => {
+    if (!expanded || !activeId) return;
+    const nav = navRef.current;
+    const item = nav?.querySelector<HTMLElement>(`[data-heading-id="${activeId}"]`);
+    if (!nav || !item) return;
+    const navBox = nav.getBoundingClientRect();
+    const itemBox = item.getBoundingClientRect();
+    if (itemBox.top < navBox.top + 4) {
+      nav.scrollTop += itemBox.top - navBox.top - 4;
+    } else if (itemBox.bottom > navBox.bottom - 26) {
+      // 아래쪽 페이드에 가리지 않도록 여유를 두고 맞춘다.
+      nav.scrollTop += itemBox.bottom - navBox.bottom + 26;
+    }
+  }, [activeId, expanded]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -86,8 +102,7 @@ export function DynamicIslandTOC({ headings }: DynamicIslandTOCProps) {
 
   if (headings.length === 0) return null;
 
-  const activeHeading =
-    headings.find((h) => h.id === activeId) ?? headings[0];
+  const activeHeading = headings.find((h) => h.id === activeId) ?? headings[0];
   const circumference = 2 * Math.PI * 6;
   const dashOffset = circumference * (1 - progress);
 
@@ -159,8 +174,11 @@ export function DynamicIslandTOC({ headings }: DynamicIslandTOCProps) {
           expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
         )}
       >
-        <div className="overflow-hidden">
-          <nav className="max-h-[50vh] overflow-y-auto px-2 pb-2 pt-1">
+        <div className="relative overflow-hidden">
+          <nav
+            ref={navRef}
+            className="toc-scroll max-h-[min(50vh,420px)] overflow-y-auto overscroll-contain px-2 pb-2 pt-1"
+          >
             <ul className="flex flex-col">
               {headings.map((h) => {
                 const isActive = h.id === activeId;
@@ -168,13 +186,12 @@ export function DynamicIslandTOC({ headings }: DynamicIslandTOCProps) {
                   <li key={h.id}>
                     <button
                       type="button"
+                      data-heading-id={h.id}
                       onClick={() => handleHeadingClick(h.id)}
                       className={cn(
                         "block w-full truncate rounded-lg py-1.5 text-left font-mono text-[13px] leading-tight transition-colors",
                         h.depth === 2 ? "pl-3" : "pl-6",
-                        isActive
-                          ? "text-white"
-                          : "text-white/50 hover:text-white/80",
+                        isActive ? "text-white" : "text-white/50 hover:text-white/80",
                       )}
                     >
                       {h.text}
@@ -184,6 +201,11 @@ export function DynamicIslandTOC({ headings }: DynamicIslandTOCProps) {
               })}
             </ul>
           </nav>
+          {/* 아래로 더 있다는 것을 보여주는 페이드 */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/70 to-transparent"
+          />
         </div>
       </div>
     </div>

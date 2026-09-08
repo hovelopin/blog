@@ -7,10 +7,7 @@ import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
  * https://llmstxt.org 규격. draft 글은 getAllPostSummaries에서 이미 제외된다.
  */
 export async function GET() {
-  const [posts, diary] = await Promise.all([
-    getAllPostSummaries(),
-    getAllDiaryEntries(),
-  ]);
+  const [posts, diary] = await Promise.all([getAllPostSummaries(), getAllDiaryEntries()]);
 
   const lines: string[] = [
     `# ${SITE_NAME}`,
@@ -21,9 +18,7 @@ export async function GET() {
     "",
     "## Posts",
     "",
-    ...posts.map(
-      (p) => `- [${p.title}](${SITE_URL}/posts/${p.slug}): ${p.description}`,
-    ),
+    ...posts.map((p) => `- [${p.title}](${SITE_URL}/posts/${p.slug}): ${p.description}`),
     "",
     "## Diary",
     "",

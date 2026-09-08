@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { BookCover } from "@/components/book-cover";
 import { PostContent } from "@/components/post-content";
+import { MdxContent } from "@/components/mdx-content";
 import { JsonLd } from "@/components/json-ld";
 import { getAllBookSlugs, getBookBySlug } from "@/lib/content";
 import { formatDate } from "@/lib/format";
@@ -18,9 +19,7 @@ export async function generateStaticParams() {
   return slugs.map((book) => ({ book }));
 }
 
-export async function generateMetadata({
-  params,
-}: BookPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: BookPageProps): Promise<Metadata> {
   const { book: slug } = await params;
   const book = await getBookBySlug(slug);
   if (!book) return {};
@@ -55,9 +54,7 @@ export default async function BookPage({ params }: BookPageProps) {
     url: bookUrl,
     author: { "@type": "Person", name: AUTHOR.fullName, url: AUTHOR.url },
     numberOfPages: book.chapters.length,
-    ...(book.tags && book.tags.length > 0
-      ? { keywords: book.tags.join(", ") }
-      : {}),
+    ...(book.tags && book.tags.length > 0 ? { keywords: book.tags.join(", ") } : {}),
   };
 
   return (
@@ -142,19 +139,19 @@ export default async function BookPage({ params }: BookPageProps) {
       {/* 서문 */}
       {book.intro && (
         <section className="mb-12">
-          <PostContent html={book.intro} />
+          <PostContent>
+            <MdxContent source={book.intro} />
+          </PostContent>
         </section>
       )}
 
       {/* 목차 */}
       <section>
-        <h2 className="mb-5 font-mono text-sm text-muted-foreground">
-          # 목차 (table of contents)
-        </h2>
+        <h2 className="mb-5 font-mono text-sm text-muted-foreground"># 목차 (table of contents)</h2>
         {book.chapters.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            아직 챕터가 없습니다. <code>content/research/{slug}/</code>에{" "}
-            <code>NN-제목.md</code> 파일을 추가하세요.
+            아직 챕터가 없습니다. <code>content/research/{slug}/</code>에 <code>NN-제목.md</code>{" "}
+            파일을 추가하세요.
           </p>
         ) : (
           <ol className="flex flex-col divide-y divide-border/50 overflow-hidden rounded-xl border border-border/60">

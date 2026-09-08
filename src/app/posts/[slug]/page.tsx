@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/format";
 import { AUTHOR, SITE_LANG, absoluteUrl } from "@/lib/site";
 import { DynamicIslandTOC } from "@/components/dynamic-island-toc";
 import { PostContent } from "@/components/post-content";
+import { MdxContent } from "@/components/mdx-content";
 import { PostFooterNav } from "@/components/post-footer-nav";
 import { PostComments } from "@/components/post-comments";
 import { SeriesNav } from "@/components/series-nav";
@@ -26,16 +27,12 @@ export async function generateStaticParams() {
   return slugs.map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({
-  params,
-}: PostPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPostBySlug(slug);
   if (!post) return {};
   const url = `/posts/${slug}`;
-  const images = post.cover
-    ? [{ url: post.cover, alt: post.coverAlt ?? post.title }]
-    : undefined;
+  const images = post.cover ? [{ url: post.cover, alt: post.coverAlt ?? post.title }] : undefined;
   return {
     title: post.title,
     description: post.description,
@@ -89,9 +86,7 @@ export default async function PostPage({ params }: PostPageProps) {
     mainEntityOfPage: postUrl,
     url: postUrl,
     ...(post.cover ? { image: absoluteUrl(post.cover) } : {}),
-    ...(post.tags && post.tags.length > 0
-      ? { keywords: post.tags.join(", ") }
-      : {}),
+    ...(post.tags && post.tags.length > 0 ? { keywords: post.tags.join(", ") } : {}),
   };
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -111,9 +106,7 @@ export default async function PostPage({ params }: PostPageProps) {
   return (
     <article className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-6 sm:py-16">
       <JsonLd data={[blogPostingJsonLd, breadcrumbJsonLd]} />
-      {post.headings.length > 0 && (
-        <DynamicIslandTOC headings={post.headings} />
-      )}
+      {post.headings.length > 0 && <DynamicIslandTOC headings={post.headings} />}
       <Link
         href="/"
         className="mb-10 inline-flex items-center font-mono text-xs text-muted-foreground transition-colors hover:text-primary"
@@ -133,10 +126,10 @@ export default async function PostPage({ params }: PostPageProps) {
             </>
           )}
         </div>
-        <h1 className="mb-4 text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl">
+        <h1 className="mb-4 text-[28px] font-semibold leading-tight tracking-tight text-foreground sm:text-[32px]">
           {post.title}
         </h1>
-        <p className="text-[15px] leading-relaxed text-muted-foreground sm:text-base">
+        <p className="text-[12px] leading-relaxed text-muted-foreground sm:text-[13px]">
           {post.description}
         </p>
         {post.tags && post.tags.length > 0 && (
@@ -156,22 +149,16 @@ export default async function PostPage({ params }: PostPageProps) {
 
       {series && <SeriesNav context={series} />}
 
-      <PostContent html={post.content} />
+      <PostContent>
+        <MdxContent source={post.content} linkPreviews={post.linkPreviews} />
+      </PostContent>
 
-      <PostFooterNav
-        prev={prev}
-        next={next}
-        related={related}
-        series={series}
-      />
+      <PostFooterNav prev={prev} next={next} related={related} series={series} />
 
       <PostComments slug={post.slug} title={post.title} />
 
       <footer className="mt-12 border-t border-border/60 pt-8">
-        <Link
-          href="/posts"
-          className="font-mono text-xs text-primary hover:underline"
-        >
+        <Link href="/posts" className="font-mono text-xs text-primary hover:underline">
           ← 다른 글 보기
         </Link>
       </footer>

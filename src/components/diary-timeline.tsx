@@ -54,9 +54,7 @@ export function DiaryTimeline({ entries }: DiaryTimelineProps) {
   }, [entries]);
 
   const groups = useMemo(() => {
-    const filtered = selectedMood
-      ? entries.filter((e) => e.mood === selectedMood)
-      : entries;
+    const filtered = selectedMood ? entries.filter((e) => e.mood === selectedMood) : entries;
     return groupByMonth(filtered);
   }, [entries, selectedMood]);
 
@@ -81,9 +79,7 @@ export function DiaryTimeline({ entries }: DiaryTimelineProps) {
       )}
 
       {groups.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          선택한 필터의 결과가 없습니다.
-        </p>
+        <p className="text-sm text-muted-foreground">선택한 필터의 결과가 없습니다.</p>
       ) : (
         groups.map(([ym, items]) => (
           <section key={ym} className="mb-10 last:mb-0">

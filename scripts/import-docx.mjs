@@ -1,12 +1,6 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
-import {
-  existsSync,
-  mkdirSync,
-  writeFileSync,
-  rmSync,
-  readFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
@@ -141,8 +135,7 @@ function decodeQuotedPrintable(s) {
 
 function detectImageExt(buf) {
   if (buf.length < 4) return "bin";
-  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47)
-    return "png";
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return "png";
   if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "jpg";
   if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46) return "gif";
   if (
@@ -231,10 +224,7 @@ function processMhtml(input, slug, mediaDir) {
     const targets = new Set([img.location]);
     if (basename) targets.add(basename);
     for (const t of targets) {
-      rewritten = rewritten.replace(
-        new RegExp(escapeRegex(t), "g"),
-        absPath,
-      );
+      rewritten = rewritten.replace(new RegExp(escapeRegex(t), "g"), absPath);
     }
   });
 
@@ -265,10 +255,7 @@ function cleanupConfluence(md) {
 
   out = out.replace(/<\/?div\b[^>]*>/g, "");
 
-  out = out.replace(
-    /<span\s+class="confluence-[^"]*">([\s\S]*?)<\/span>/g,
-    "$1",
-  );
+  out = out.replace(/<span\s+class="confluence-[^"]*">([\s\S]*?)<\/span>/g, "$1");
 
   out = out.replace(/<img\s+([^>]+?)\/?>/g, (_, attrs) => {
     const pick = (name) => {
@@ -281,13 +268,10 @@ function cleanupConfluence(md) {
     return `![${alt}](${src})`;
   });
 
-  out = out.replace(
-    /<a\s+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g,
-    (_, href, text) => {
-      const cleaned = text.replace(/<[^>]+>/g, "").trim();
-      return `[${cleaned || href}](${href})`;
-    },
-  );
+  out = out.replace(/<a\s+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g, (_, href, text) => {
+    const cleaned = text.replace(/<[^>]+>/g, "").trim();
+    return `[${cleaned || href}](${href})`;
+  });
 
   out = out.replace(/```\s*syntaxhighlighter-pre/g, "```");
 

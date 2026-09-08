@@ -113,12 +113,7 @@ export function SiteHeader() {
                       : "border-border/70 text-muted-foreground hover:border-border hover:bg-accent hover:text-foreground",
                   )}
                 >
-                  <span
-                    className={cn(
-                      "mr-1.5",
-                      isActive ? "text-primary" : "text-primary/70",
-                    )}
-                  >
+                  <span className={cn("mr-1.5", isActive ? "text-primary" : "text-primary/70")}>
                     $
                   </span>
                   {item.command}
@@ -179,12 +174,7 @@ export function SiteHeader() {
                         : "border-transparent text-muted-foreground hover:border-border/70 hover:bg-accent hover:text-foreground",
                     )}
                   >
-                    <span
-                      className={cn(
-                        "mr-2",
-                        isActive ? "text-primary" : "text-primary/70",
-                      )}
-                    >
+                    <span className={cn("mr-2", isActive ? "text-primary" : "text-primary/70")}>
                       $
                     </span>
                     {item.command}

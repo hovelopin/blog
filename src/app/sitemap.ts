@@ -1,11 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
-import {
-  getAllBooks,
-  getAllDiaryEntries,
-  getAllPostSummaries,
-  getAllTags,
-} from "@/lib/content";
+import { getAllBooks, getAllDiaryEntries, getAllPostSummaries, getAllTags } from "@/lib/content";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [posts, diary, tags, books] = await Promise.all([

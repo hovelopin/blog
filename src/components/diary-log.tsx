@@ -26,9 +26,7 @@ const NAMED_ENTITIES: Record<string, string> = {
 
 function decodeEntities(input: string): string {
   return input
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
-      String.fromCodePoint(parseInt(hex, 16)),
-    )
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
     .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
     .replace(/&([a-z]+);/gi, (full, name) => NAMED_ENTITIES[name] ?? full);
 }
@@ -59,9 +57,7 @@ export function DiaryLog({ entries }: DiaryLogProps) {
               >
                 *
               </span>
-              <span className="text-primary/80 group-hover:text-primary">
-                {hash}
-              </span>
+              <span className="text-primary/80 group-hover:text-primary">{hash}</span>
               <time
                 dateTime={entry.date}
                 // 행마다 grid 가 따로라 날짜 열은 고정 폭으로만 줄을 맞출 수 있다.
@@ -71,9 +67,7 @@ export function DiaryLog({ entries }: DiaryLogProps) {
                 {formatDate(entry.date)}
               </time>
               <span className="truncate text-foreground/85">
-                {entry.mood && (
-                  <span className="mr-2 text-primary/70">[{entry.mood}]</span>
-                )}
+                {entry.mood && <span className="mr-2 text-primary/70">[{entry.mood}]</span>}
                 {preview}
               </span>
             </Link>

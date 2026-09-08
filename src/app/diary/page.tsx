@@ -22,9 +22,7 @@ export default async function DiaryPage() {
       </Link>
 
       <header className="mb-10">
-        <p className="mb-3 font-mono text-xs text-primary">
-          ~/hovelopin/diary $ ls -la
-        </p>
+        <p className="mb-3 font-mono text-xs text-primary">~/hovelopin/diary $ ls -la</p>
         <h1 className="mb-3 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           diary
         </h1>

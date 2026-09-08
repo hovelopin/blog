@@ -77,10 +77,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [posts, tags] = await Promise.all([
-    getAllPostSummaries(),
-    getAllTags(),
-  ]);
+  const [posts, tags] = await Promise.all([getAllPostSummaries(), getAllTags()]);
   const paletteItems = posts.map((p) => ({
     slug: p.slug,
     title: p.title,
@@ -90,11 +87,7 @@ export default async function RootLayout({
   }));
 
   return (
-    <html
-      lang="ko"
-      className="h-full antialiased"
-      suppressHydrationWarning
-    >
+    <html lang="ko" className="h-full antialiased" suppressHydrationWarning>
       <head>
         {/* 본문 폰트는 통짜 variable woff2 한 개라, 스타일 계산을 기다리지 않고 미리 받게 한다. */}
         <link

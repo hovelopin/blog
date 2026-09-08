@@ -46,12 +46,7 @@ export function BookCover({ book, size = "shelf", className }: BookCoverProps) {
   const hero = size === "hero";
 
   return (
-    <div
-      className={cn(
-        "group/book relative w-full [perspective:1400px]",
-        className,
-      )}
-    >
+    <div className={cn("group/book relative w-full [perspective:1400px]", className)}>
       {/* 책배: 표지 뒤에서 오른쪽·아래로 살짝 삐져나온 책장(페이지) 더미 */}
       <div
         aria-hidden="true"
@@ -75,7 +70,7 @@ export function BookCover({ book, size = "shelf", className }: BookCoverProps) {
       >
         {/* 실제 표지 이미지가 있으면 채운다 */}
         {book.coverImage && (
-          // eslint-disable-next-line @next/next/no-img-element
+          // oxlint-disable-next-line nextjs/no-img-element
           <img
             src={book.coverImage}
             alt={`${book.title} 표지`}
@@ -131,9 +126,7 @@ export function BookCover({ book, size = "shelf", className }: BookCoverProps) {
               )}
             >
               <span className="truncate">{book.repo ?? "hovelopin"}</span>
-              <span className="shrink-0 tabular-nums">
-                {book.chapters.length}ch
-              </span>
+              <span className="shrink-0 tabular-nums">{book.chapters.length}ch</span>
             </div>
           </>
         )}

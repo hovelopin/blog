@@ -10,49 +10,47 @@ export const contentType = "image/png";
 export default function OpenGraphImage() {
   const host = SITE_URL.replace(/^https?:\/\//, "");
   return new ImageResponse(
-    (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        background: "#0a0a0a",
+        color: "#ededed",
+        padding: "80px",
+        fontFamily: "monospace",
+      }}
+    >
+      <div style={{ display: "flex", color: "#4ade80", fontSize: 30 }}>
+        ~/hovelopin $ cat about.md
+      </div>
       <div
         style={{
-          width: "100%",
-          height: "100%",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          background: "#0a0a0a",
-          color: "#ededed",
-          padding: "80px",
-          fontFamily: "monospace",
+          fontSize: 130,
+          fontWeight: 700,
+          letterSpacing: "-0.04em",
+          marginTop: 24,
         }}
       >
-        <div style={{ display: "flex", color: "#4ade80", fontSize: 30 }}>
-          ~/hovelopin $ cat about.md
-        </div>
-        <div
-          style={{
-            display: "flex",
-            fontSize: 130,
-            fontWeight: 700,
-            letterSpacing: "-0.04em",
-            marginTop: 24,
-          }}
-        >
-          {SITE_SHORT_NAME}
-        </div>
-        <div style={{ display: "flex", fontSize: 44, color: "#a1a1aa" }}>
-          dev log — build, break, learn
-        </div>
-        <div
-          style={{
-            display: "flex",
-            marginTop: "auto",
-            fontSize: 28,
-            color: "#71717a",
-          }}
-        >
-          {host}
-        </div>
+        {SITE_SHORT_NAME}
       </div>
-    ),
+      <div style={{ display: "flex", fontSize: 44, color: "#a1a1aa" }}>
+        dev log — build, break, learn
+      </div>
+      <div
+        style={{
+          display: "flex",
+          marginTop: "auto",
+          fontSize: 28,
+          color: "#71717a",
+        }}
+      >
+        {host}
+      </div>
+    </div>,
     { ...size },
   );
 }

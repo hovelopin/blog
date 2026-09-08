@@ -80,11 +80,7 @@ function fuzzyScore(query: string, target: string): number {
   return score;
 }
 
-function IconFor({
-  name,
-}: {
-  name: "home" | "blog" | "research" | "diary" | "rss";
-}) {
+function IconFor({ name }: { name: "home" | "blog" | "research" | "diary" | "rss" }) {
   if (name === "home") return <Home size={14} aria-hidden="true" />;
   if (name === "blog") return <Newspaper size={14} aria-hidden="true" />;
   if (name === "research") return <Library size={14} aria-hidden="true" />;
@@ -193,10 +189,7 @@ export function CommandPalette({ posts, tags }: CommandPaletteProps) {
     }
     return items
       .map((item) => {
-        const score = Math.max(
-          fuzzyScore(query, item.label),
-          fuzzyScore(query, item.keywords),
-        );
+        const score = Math.max(fuzzyScore(query, item.label), fuzzyScore(query, item.keywords));
         return { item, score };
       })
       .filter((x) => x.score > 0)
@@ -220,13 +213,7 @@ export function CommandPalette({ posts, tags }: CommandPaletteProps) {
         else openPalette();
       } else if (e.key === "/" && !open) {
         const t = e.target as HTMLElement | null;
-        if (
-          t &&
-          (t.tagName === "INPUT" ||
-            t.tagName === "TEXTAREA" ||
-            t.isContentEditable)
-        )
-          return;
+        if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
         e.preventDefault();
         openPalette();
       } else if (e.key === "Escape" && open) {
@@ -239,9 +226,7 @@ export function CommandPalette({ posts, tags }: CommandPaletteProps) {
 
   useEffect(() => {
     if (!open) return;
-    const el = listRef.current?.querySelector<HTMLElement>(
-      `[data-idx="${cursor}"]`,
-    );
+    const el = listRef.current?.querySelector<HTMLElement>(`[data-idx="${cursor}"]`);
     el?.scrollIntoView({ block: "nearest" });
   }, [cursor, open, filtered.length]);
 
@@ -285,11 +270,7 @@ export function CommandPalette({ posts, tags }: CommandPaletteProps) {
 
       <div className="relative w-full max-w-xl overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl">
         <div className="flex items-center gap-2 border-b border-border/60 px-3">
-          <Search
-            size={16}
-            className="text-muted-foreground"
-            aria-hidden="true"
-          />
+          <Search size={16} className="text-muted-foreground" aria-hidden="true" />
           <input
             ref={inputRef}
             value={query}
@@ -354,9 +335,7 @@ export function CommandPalette({ posts, tags }: CommandPaletteProps) {
                     )}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm text-foreground">
-                      {item.label}
-                    </span>
+                    <span className="block truncate text-sm text-foreground">{item.label}</span>
                     <span className="block truncate font-mono text-[11px] text-muted-foreground">
                       {item.hint}
                     </span>
@@ -373,23 +352,15 @@ export function CommandPalette({ posts, tags }: CommandPaletteProps) {
         <div className="flex items-center justify-between border-t border-border/60 px-3 py-2 font-mono text-[10px] text-muted-foreground">
           <span className="flex items-center gap-3">
             <span>
-              <kbd className="rounded border border-border/70 bg-muted/40 px-1 py-0.5">
-                ↑↓
-              </kbd>{" "}
+              <kbd className="rounded border border-border/70 bg-muted/40 px-1 py-0.5">↑↓</kbd>{" "}
               navigate
             </span>
             <span>
-              <kbd className="rounded border border-border/70 bg-muted/40 px-1 py-0.5">
-                ↵
-              </kbd>{" "}
-              open
+              <kbd className="rounded border border-border/70 bg-muted/40 px-1 py-0.5">↵</kbd> open
             </span>
           </span>
           <span>
-            <kbd className="rounded border border-border/70 bg-muted/40 px-1 py-0.5">
-              ⌘K
-            </kbd>{" "}
-            toggle
+            <kbd className="rounded border border-border/70 bg-muted/40 px-1 py-0.5">⌘K</kbd> toggle
           </span>
         </div>
       </div>

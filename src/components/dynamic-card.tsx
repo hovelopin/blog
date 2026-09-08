@@ -43,11 +43,7 @@ export function DynamicCard({ post, className }: DynamicCardProps) {
   return (
     <Link
       href={`/posts/${post.slug}`}
-      className={cn(
-        "group block [perspective:900px]",
-        "w-full max-w-[320px]",
-        className,
-      )}
+      className={cn("group block [perspective:900px]", "w-full max-w-[320px]", className)}
       onMouseMove={handleMove}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={handleLeave}

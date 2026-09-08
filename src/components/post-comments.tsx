@@ -37,9 +37,7 @@ export function PostComments({ slug, title }: PostCommentsProps) {
     host.appendChild(script);
 
     const observer = new MutationObserver(() => {
-      const iframe = host.querySelector<HTMLIFrameElement>(
-        "iframe.giscus-frame",
-      );
+      const iframe = host.querySelector<HTMLIFrameElement>("iframe.giscus-frame");
       if (!iframe?.contentWindow) return;
       iframe.contentWindow.postMessage(
         { giscus: { setConfig: { theme: getGiscusTheme() } } },

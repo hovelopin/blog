@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, List } from "lucide-react";
 import { PostContent } from "@/components/post-content";
+import { MdxContent } from "@/components/mdx-content";
 import { DynamicIslandTOC } from "@/components/dynamic-island-toc";
 import { JsonLd } from "@/components/json-ld";
 import { getAllChapterParams, getChapterContext } from "@/lib/content";
@@ -16,9 +17,7 @@ export async function generateStaticParams() {
   return getAllChapterParams();
 }
 
-export async function generateMetadata({
-  params,
-}: ChapterPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: ChapterPageProps): Promise<Metadata> {
   const { book: bookSlug, chapter: chapterSlug } = await params;
   const ctx = await getChapterContext(bookSlug, chapterSlug);
   if (!ctx) return {};
@@ -64,9 +63,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
   return (
     <article className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-6 sm:py-16">
       <JsonLd data={jsonLd} />
-      {chapter.headings.length > 0 && (
-        <DynamicIslandTOC headings={chapter.headings} />
-      )}
+      {chapter.headings.length > 0 && <DynamicIslandTOC headings={chapter.headings} />}
 
       <Link
         href={`/research/${bookSlug}`}
@@ -99,7 +96,9 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
         </div>
       </header>
 
-      <PostContent html={chapter.content} />
+      <PostContent>
+        <MdxContent source={chapter.content} />
+      </PostContent>
 
       {/* 페이지 넘기기 네비게이션 */}
       <nav className="mt-14 grid grid-cols-1 gap-3 border-t border-border/60 pt-8 sm:grid-cols-2">

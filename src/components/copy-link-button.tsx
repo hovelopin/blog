@@ -14,10 +14,7 @@ export function CopyLinkButton({ path, className }: CopyLinkButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    const url =
-      typeof window !== "undefined"
-        ? `${window.location.origin}${path}`
-        : path;
+    const url = typeof window !== "undefined" ? `${window.location.origin}${path}` : path;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -35,17 +32,11 @@ export function CopyLinkButton({ path, className }: CopyLinkButtonProps) {
       title={copied ? "복사됨!" : "이 글 링크 복사"}
       className={cn(
         "inline-flex shrink-0 items-center gap-1 transition-colors",
-        copied
-          ? "text-primary"
-          : "text-muted-foreground/50 hover:text-primary",
+        copied ? "text-primary" : "text-muted-foreground/50 hover:text-primary",
         className,
       )}
     >
-      {copied ? (
-        <Check size={14} aria-hidden="true" />
-      ) : (
-        <Link2 size={14} aria-hidden="true" />
-      )}
+      {copied ? <Check size={14} aria-hidden="true" /> : <Link2 size={14} aria-hidden="true" />}
       <span
         aria-live="polite"
         className={cn(

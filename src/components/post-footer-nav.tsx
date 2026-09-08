@@ -45,19 +45,12 @@ function AdjacentCard({
       <span className="line-clamp-2 text-sm font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">
         {post.title}
       </span>
-      <span className="font-mono text-[11px] text-muted-foreground">
-        {formatDate(post.date)}
-      </span>
+      <span className="font-mono text-[11px] text-muted-foreground">{formatDate(post.date)}</span>
     </Link>
   );
 }
 
-export function PostFooterNav({
-  prev,
-  next,
-  related,
-  series,
-}: PostFooterNavProps) {
+export function PostFooterNav({ prev, next, related, series }: PostFooterNavProps) {
   const hasSeriesNav = series && (series.prev || series.next);
   return (
     <div className="mt-16 border-t border-border/60 pt-10">
@@ -68,20 +61,12 @@ export function PostFooterNav({
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {series.prev ? (
-              <AdjacentCard
-                post={series.prev}
-                direction="prev"
-                label="previous in series"
-              />
+              <AdjacentCard post={series.prev} direction="prev" label="previous in series" />
             ) : (
               <div aria-hidden="true" />
             )}
             {series.next ? (
-              <AdjacentCard
-                post={series.next}
-                direction="next"
-                label="next in series"
-              />
+              <AdjacentCard post={series.next} direction="next" label="next in series" />
             ) : (
               <div aria-hidden="true" />
             )}
@@ -120,16 +105,8 @@ export function PostFooterNav({
             # nav
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            {prev ? (
-              <AdjacentCard post={prev} direction="prev" />
-            ) : (
-              <div aria-hidden="true" />
-            )}
-            {next ? (
-              <AdjacentCard post={next} direction="next" />
-            ) : (
-              <div aria-hidden="true" />
-            )}
+            {prev ? <AdjacentCard post={prev} direction="prev" /> : <div aria-hidden="true" />}
+            {next ? <AdjacentCard post={next} direction="next" /> : <div aria-hidden="true" />}
           </div>
         </section>
       )}

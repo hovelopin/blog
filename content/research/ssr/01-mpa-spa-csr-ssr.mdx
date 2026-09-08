@@ -1,0 +1,39 @@
+---
+title: "MPA, SPA, CSR, SSR"
+---
+
+먼저 SSR을 Deep Dive 하기 전에 MPA, SPA, CSR, SSR에 대한 개념을 살펴보자.
+
+## MPA ( Multi Page Application )
+
+![MPA 페이지 이동 흐름](/images/research/ssr/mpa.png)
+
+MPA란 여러개의 페이지로 이루어져 있어서 위와 같이 페이지 이동시, 페이지 변경
+사항이 발생할때마다 필요한 데이터가 있다면 서버에서 렌더링된 정적 리소스를
+다운받는 방식이다.
+
+## SPA ( Single Page Application )
+
+![SPA 리소스 다운로드 흐름](/images/research/ssr/spa.png)
+
+SPA의 경우에는 한 개의 페이지로 이루어져 있어서 단 한번의 리소스를 다운받고 그
+이후에는 데이터를 받아올때만 서버와 통신한다.
+
+## CSR ( Client Side Rendering )
+
+![CSR 렌더링 흐름](/images/research/ssr/csr.png)
+
+CSR이란 브라우저에서 HTML과 JS bundle을 내려받고 이후에 클라이언트로 넘어와서
+데이터 패칭 및 JS를 실행해서 컨텐츠를 렌더링하는 방식이다. 이후에 페이지
+이동시에는 내려받았던 JS 기반으로 페이지를 재구성하는 방식이다.
+
+## SSR ( Server Side Rendering )
+
+![SSR 렌더링 흐름](/images/research/ssr/ssr.png)
+
+CSR은 개발자에게 interactive interface를 구축하기 위한 강력하고 새로운 접근
+방식을 제시했지만, 모든 사용자는 해당 부분에 접근하기 위해 빈 화면과 로딩을 많이
+접해야 했다. 이 방법의 해결책은 렌더링 경험을 **클라이언트에서 서버**로 옮기는
+것이었다. 따라서 SSR은 서버에서 초기 HTML을 렌더링하여 브라우저로 보냈다.
+브라우저는 로딩 표시기를 표시할 필요 없이 콘텐츠 표시를 즉시 시작할 수 있었다.
+이는 **FCP ( First Contentful Paint )** 성능 측정 항목을 향상 시킨다.

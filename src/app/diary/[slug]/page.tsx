@@ -16,9 +16,7 @@ export async function generateStaticParams() {
   return slugs.map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({
-  params,
-}: DiaryEntryPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: DiaryEntryPageProps): Promise<Metadata> {
   const { slug } = await params;
   const entry = await getDiaryEntryBySlug(slug);
   if (!entry) return {};
@@ -87,9 +85,7 @@ export default async function DiaryEntryPage({ params }: DiaryEntryPageProps) {
       </Link>
 
       <header className="mb-6">
-        <p className="font-mono text-xs text-primary">
-          ~/hovelopin/diary $ cat {slug}.md
-        </p>
+        <p className="font-mono text-xs text-primary">~/hovelopin/diary $ cat {slug}.md</p>
       </header>
 
       <DiaryCard entry={entry} hidePermalink />

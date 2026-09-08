@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
  * feature — /posts 최상단 큰 카드 (썸네일 위, 본문 아래)
  * default — /posts 목록 가로 카드 (모바일에서 세로로 접힘)
  * bento   — 홈 recent posts 왼쪽 큰 카드 (오른쪽 두 장과 높이를 맞춤)
- * compact — 홈 recent posts 오른쪽 작은 카드 (제목 + 날짜만)
+ * compact — 홈 recent posts 오른쪽 작은 카드 (제목 + 날짜·읽는 시간)
  */
 type Variant = "feature" | "default" | "bento" | "compact";
 
@@ -21,8 +21,7 @@ interface PostCardProps {
 const CARD_BASE =
   "group block overflow-hidden rounded-xl border border-border/60 bg-card/40 no-underline transition-colors hover:border-primary/50 hover:bg-card/70";
 
-const TITLE_HOVER =
-  "tracking-tight text-foreground transition-colors group-hover:text-primary";
+const TITLE_HOVER = "tracking-tight text-foreground transition-colors group-hover:text-primary";
 
 /**
  * 썸네일 자리.
@@ -63,22 +62,12 @@ function Thumbnail({
   );
 }
 
-function Meta({
-  post,
-  dateOnly = false,
-}: {
-  post: PostSummary;
-  dateOnly?: boolean;
-}) {
+function Meta({ post }: { post: PostSummary }) {
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] text-muted-foreground/80">
       <time dateTime={post.date}>{formatDate(post.date)}</time>
-      {!dateOnly && (
-        <>
-          <span aria-hidden="true">·</span>
-          <span>{post.readingTimeMinutes} min read</span>
-        </>
-      )}
+      <span aria-hidden="true">·</span>
+      <span>{post.readingTimeMinutes} min read</span>
     </div>
   );
 }
@@ -92,11 +81,7 @@ function LatestBadge() {
   );
 }
 
-export function PostCard({
-  post,
-  variant = "default",
-  className,
-}: PostCardProps) {
+export function PostCard({ post, variant = "default", className }: PostCardProps) {
   const href = `/posts/${post.slug}`;
 
   // /posts 최상단: 썸네일을 위로 크게 깔고 요약을 3줄까지 보여준다.
@@ -113,12 +98,7 @@ export function PostCard({
         </div>
         <div className="px-5 pb-5 pt-4 sm:px-6">
           <LatestBadge />
-          <h2
-            className={cn(
-              "mb-2 text-lg font-bold leading-snug sm:text-xl",
-              TITLE_HOVER,
-            )}
-          >
+          <h2 className={cn("mb-2 text-lg font-bold leading-snug sm:text-xl", TITLE_HOVER)}>
             {post.title}
           </h2>
           <p className="mb-2.5 line-clamp-3 text-[13px] leading-relaxed text-muted-foreground sm:text-sm">
@@ -135,11 +115,7 @@ export function PostCard({
     return (
       <Link href={href} className={cn(CARD_BASE, "flex h-full flex-col", className)}>
         <div className="relative aspect-16/9 w-full overflow-hidden bg-muted/40">
-          <Thumbnail
-            post={post}
-            sizes="(max-width: 768px) 100vw, 460px"
-            priority
-          />
+          <Thumbnail post={post} sizes="(max-width: 768px) 100vw, 460px" priority />
         </div>
         <div className="flex flex-1 flex-col px-4 pb-4 pt-3.5">
           <LatestBadge />
@@ -163,7 +139,7 @@ export function PostCard({
     );
   }
 
-  // 홈 오른쪽 작은 카드: 제목과 날짜만 둔다.
+  // 홈 오른쪽 작은 카드: 제목과 날짜·읽는 시간만 둔다.
   if (variant === "compact") {
     return (
       <Link href={href} className={cn(CARD_BASE, "flex h-full flex-col", className)}>
@@ -171,20 +147,15 @@ export function PostCard({
           <Thumbnail post={post} sizes="(max-width: 768px) 50vw, 300px" />
         </div>
         <div className="flex flex-1 flex-col px-3.5 pb-3.5 pt-3">
-          <h3
-            className={cn(
-              "mb-1.5 line-clamp-2 text-sm font-semibold leading-snug",
-              TITLE_HOVER,
-            )}
-          >
+          <h3 className={cn("mb-1.5 line-clamp-2 text-sm font-semibold leading-snug", TITLE_HOVER)}>
             {post.title}
           </h3>
           <p className="mb-2.5 line-clamp-2 text-[12px] leading-relaxed text-muted-foreground">
             {post.description}
           </p>
-          {/* 카드 높이가 제목 줄 수에 따라 달라지므로 날짜는 밑단에 붙여 둔다. */}
+          {/* 카드 높이가 제목 줄 수에 따라 달라지므로 메타 정보는 밑단에 붙여 둔다. */}
           <div className="mt-auto">
-            <Meta post={post} dateOnly />
+            <Meta post={post} />
           </div>
         </div>
       </Link>

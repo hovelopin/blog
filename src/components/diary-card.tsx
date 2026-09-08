@@ -1,6 +1,7 @@
 import type { DiaryEntry } from "@/types/content";
 import { formatDate } from "@/lib/format";
 import { CopyLinkButton } from "@/components/copy-link-button";
+import { MdxContent } from "@/components/mdx-content";
 
 interface DiaryCardProps {
   entry: DiaryEntry;
@@ -9,11 +10,7 @@ interface DiaryCardProps {
   hidePermalink?: boolean;
 }
 
-export function DiaryCard({
-  entry,
-  compact = false,
-  hidePermalink = false,
-}: DiaryCardProps) {
+export function DiaryCard({ entry, compact = false, hidePermalink = false }: DiaryCardProps) {
   return (
     <article
       className={
@@ -30,14 +27,11 @@ export function DiaryCard({
             <span className="text-primary/80">{entry.mood}</span>
           </>
         )}
-        {!hidePermalink && (
-          <CopyLinkButton path={`/diary/${entry.slug}`} className="ml-auto" />
-        )}
+        {!hidePermalink && <CopyLinkButton path={`/diary/${entry.slug}`} className="ml-auto" />}
       </header>
-      <div
-        className="diary-content"
-        dangerouslySetInnerHTML={{ __html: entry.content }}
-      />
+      <div className="diary-content">
+        <MdxContent source={entry.content} />
+      </div>
     </article>
   );
 }

@@ -18,72 +18,68 @@ interface ImageLightboxProps {
 }
 
 /**
- * 본문 이미지를 전체 화면으로 띄우는 라이트박스.
- * 처음에는 화면에 맞춰 보여주고(fit), 이미지를 다시 누르면 원본 크기(1:1)로 확대한다.
- * 원본이 화면보다 작으면 확대할 것이 없으므로 fit 상태만 유지한다.
- */
-/**
  * 라이트박스 안에서 이미지 한 장을 보여주는 영역.
  * 확대 상태는 이 컴포넌트가 들고 있고, 상위에서 index 를 key 로 넘겨
  * 이미지가 바뀔 때마다 새로 마운트되며 확대·스크롤이 초기화된다.
  */
-function LightboxImageView({
-  image,
-  onClose,
-}: {
-  image: LightboxImage;
-  onClose: () => void;
-}) {
+function LightboxImageView({ image, onClose }: { image: LightboxImage; onClose: () => void }) {
   const [zoomed, setZoomed] = useState(false);
   const [zoomable, setZoomable] = useState(false);
 
   return (
     <div
+      // 여백은 마우스 편의용 닫기 영역이다.
+      // 키보드 사용자는 Escape 와 헤더의 닫기 버튼으로 같은 동작을 할 수 있다.
+      role="presentation"
       onClick={(e) => {
         // 이미지 바깥(여백)을 누르면 닫는다.
         if (e.target === e.currentTarget) onClose();
       }}
       className={cn(
         "relative flex-1 p-4",
-        zoomed
-          ? "overflow-auto"
-          : "flex items-center justify-center overflow-hidden",
+        zoomed ? "overflow-auto" : "flex items-center justify-center overflow-hidden",
       )}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={image.src}
-        alt={image.alt}
-        onLoad={(e) => {
-          const el = e.currentTarget;
-          // 원본이 표시 크기보다 클 때만 확대를 허용한다.
-          setZoomable(
-            el.naturalWidth > el.clientWidth ||
-              el.naturalHeight > el.clientHeight,
-          );
-        }}
-        onClick={() => {
-          if (zoomable) setZoomed((z) => !z);
-        }}
-        className={cn(
-          "mx-auto rounded-lg bg-white/5",
-          zoomed
-            ? "w-auto max-w-none cursor-zoom-out"
-            : "max-h-full max-w-full object-contain",
-          !zoomed && zoomable && "cursor-zoom-in",
-        )}
-        draggable={false}
-      />
+      {/*
+        확대·축소 토글은 진짜 버튼이라 Enter·Space 로도 동작한다.
+        display:contents 로 버튼 박스를 없애야 이미지의 max-height 가
+        라이트박스 높이를 기준으로 잡혀 "화면에 맞춤" 크기가 나온다.
+      */}
+      <button
+        type="button"
+        disabled={!zoomable}
+        aria-pressed={zoomed}
+        aria-label={zoomed ? "이미지 원래 크기로 보기" : "이미지 확대해서 보기"}
+        onClick={() => setZoomed((z) => !z)}
+        className="contents focus-visible:[&_img]:outline focus-visible:[&_img]:outline-2 focus-visible:[&_img]:outline-white/70"
+      >
+        {/* oxlint-disable-next-line nextjs/no-img-element */}
+        <img
+          src={image.src}
+          alt={image.alt}
+          onLoad={(e) => {
+            const el = e.currentTarget;
+            // 원본이 표시 크기보다 클 때만 확대를 허용한다.
+            setZoomable(el.naturalWidth > el.clientWidth || el.naturalHeight > el.clientHeight);
+          }}
+          className={cn(
+            "mx-auto rounded-lg bg-white/5",
+            zoomed ? "w-auto max-w-none cursor-zoom-out" : "max-h-full max-w-full object-contain",
+            !zoomed && zoomable && "cursor-zoom-in",
+          )}
+          draggable={false}
+        />
+      </button>
     </div>
   );
 }
 
-export function ImageLightbox({
-  images,
-  index,
-  onIndexChange,
-  onClose,
-}: ImageLightboxProps) {
+/**
+ * 본문 이미지를 전체 화면으로 띄우는 라이트박스.
+ * 처음에는 화면에 맞춰 보여주고(fit), 이미지를 다시 누르면 원본 크기(1:1)로 확대한다.
+ * 원본이 화면보다 작으면 확대할 것이 없으므로 fit 상태만 유지한다.
+ */
+export function ImageLightbox({ images, index, onIndexChange, onClose }: ImageLightboxProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -129,8 +125,7 @@ export function ImageLightbox({
         go(-1);
       } else if (e.key === "Tab") {
         // 포커스가 라이트박스 밖으로 새지 않게 가둔다.
-        const focusables =
-          dialogRef.current?.querySelectorAll<HTMLElement>("button");
+        const focusables = dialogRef.current?.querySelectorAll<HTMLElement>("button");
         if (!focusables || focusables.length === 0) return;
         const first = focusables[0];
         const last = focusables[focusables.length - 1];

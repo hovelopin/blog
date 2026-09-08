@@ -39,9 +39,7 @@ export function SeriesNav({ context }: SeriesNavProps) {
                 {String(i + 1).padStart(2, "0")}
               </span>
               {isCurrent ? (
-                <span className="text-sm font-medium text-primary">
-                  {p.title}
-                </span>
+                <span className="text-sm font-medium text-primary">{p.title}</span>
               ) : (
                 <Link
                   href={`/posts/${p.slug}`}

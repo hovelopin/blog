@@ -2,9 +2,10 @@
  * 사이트 전역 메타 상수. SEO/GEO 관련 파일(layout, sitemap, robots, rss,
  * llms.txt, JSON-LD)이 모두 여기서 단일 소스를 참조한다.
  */
-export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://hovelopin.xyz"
-).replace(/\/+$/, "");
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://hovelopin.xyz").replace(
+  /\/+$/,
+  "",
+);
 
 export const SITE_NAME = "hovelopin — dev log";
 export const SITE_SHORT_NAME = "hovelopin";

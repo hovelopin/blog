@@ -35,16 +35,10 @@ export function BackToTop() {
         "bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 h-11 w-11 justify-center rounded-full shadow-lg shadow-black/30",
         // Desktop: centered pill with text
         "sm:bottom-5 sm:left-1/2 sm:right-auto sm:h-9 sm:w-auto sm:-translate-x-1/2 sm:gap-2 sm:rounded-lg sm:px-3.5 sm:font-mono sm:text-[13px] sm:shadow-lg sm:shadow-black/40",
-        visible
-          ? "translate-y-0 opacity-100"
-          : "pointer-events-none translate-y-3 opacity-0",
+        visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0",
       )}
     >
-      <ArrowUp
-        size={18}
-        aria-hidden="true"
-        className="text-foreground sm:hidden"
-      />
+      <ArrowUp size={18} aria-hidden="true" className="text-foreground sm:hidden" />
       <span className="hidden sm:inline text-primary">$</span>
       <span className="hidden sm:inline text-foreground">cd</span>
       <span className="hidden sm:inline text-amber-400">↑</span>

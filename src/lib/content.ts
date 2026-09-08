@@ -5,14 +5,9 @@ import readingTime from "reading-time";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
-import remarkCjkFriendly from "remark-cjk-friendly";
-import remarkFlexibleMarkers from "remark-flexible-markers";
-import remarkRehype from "remark-rehype";
-import rehypePrettyCode from "rehype-pretty-code";
-import rehypeSlug from "rehype-slug";
-import rehypeStringify from "rehype-stringify";
+import GithubSlugger from "github-slugger";
 import { visit } from "unist-util-visit";
-import type { Root, Element, Text } from "hast";
+import type { Root as MdastRoot, Heading as MdastHeading } from "mdast";
 import type {
   Book,
   BookFrontmatter,
@@ -59,7 +54,7 @@ async function listMarkdownFiles(dir: string): Promise<string[]> {
   try {
     const entries = await fs.readdir(dir, { withFileTypes: true });
     return entries
-      .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".mdx"))
       .map((entry) => entry.name);
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
@@ -68,84 +63,30 @@ async function listMarkdownFiles(dir: string): Promise<string[]> {
 }
 
 function slugFromFilename(filename: string): string {
-  return filename.replace(/\.md$/, "");
+  return filename.replace(/\.mdx$/, "");
 }
 
-async function renderMarkdown(source: string): Promise<string> {
-  const file = await unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .use(remarkCjkFriendly)
-    .use(remarkFlexibleMarkers)
-    .use(remarkRehype)
-    .use(rehypePrettyCode, {
-      theme: "github-dark-dimmed",
-      keepBackground: false,
-      // 언어를 적지 않은 블록도 figure 로 감싸지게 해서
-      // js/ts 블록과 툴바·테두리 구조를 똑같이 맞춘다.
-      defaultLang: "plaintext",
-    })
-    .use(rehypeStringify)
-    .process(source);
-  return String(file);
-}
-
-function collectHeadingsPlugin(bucket: Heading[]) {
-  return () => (tree: Root) => {
-    visit(tree, "element", (node: Element) => {
-      if (node.tagName !== "h2" && node.tagName !== "h3") return;
-      const id = typeof node.properties?.id === "string" ? node.properties.id : null;
-      if (!id) return;
-      let text = "";
-      visit(node, "text", (t: Text) => {
-        text += t.value;
-      });
-      bucket.push({
-        id,
-        text: text.trim(),
-        depth: node.tagName === "h2" ? 2 : 3,
-      });
-    });
-  };
-}
-
-function linkPreviewPlugin(map: Record<string, string> | undefined) {
-  return () => (tree: Root) => {
-    if (!map || Object.keys(map).length === 0) return;
-    visit(tree, "element", (node: Element) => {
-      if (node.tagName !== "a") return;
-      const href = node.properties?.href;
-      if (typeof href !== "string") return;
-      const src = map[href];
-      if (!src) return;
-      node.properties = { ...node.properties, dataPreviewSrc: src };
-    });
-  };
-}
-
-async function renderPostMarkdown(
-  source: string,
-  linkPreviews?: Record<string, string>,
-): Promise<{ html: string; headings: Heading[] }> {
+/**
+ * 본문에서 h2·h3 만 뽑아 목차를 만든다.
+ * id 는 rehype-slug 와 같은 github-slugger 로 만들어 본문 heading 의 id 와 맞춘다.
+ */
+function extractHeadings(source: string): Heading[] {
+  const tree = unified().use(remarkParse).use(remarkGfm).parse(source) as MdastRoot;
+  const slugger = new GithubSlugger();
   const headings: Heading[] = [];
-  const file = await unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .use(remarkCjkFriendly)
-    .use(remarkRehype)
-    .use(rehypeSlug)
-    .use(collectHeadingsPlugin(headings))
-    .use(linkPreviewPlugin(linkPreviews))
-    .use(rehypePrettyCode, {
-      theme: "github-dark-dimmed",
-      keepBackground: false,
-      // 언어를 적지 않은 블록도 figure 로 감싸지게 해서
-      // js/ts 블록과 툴바·테두리 구조를 똑같이 맞춘다.
-      defaultLang: "plaintext",
-    })
-    .use(rehypeStringify)
-    .process(source);
-  return { html: String(file), headings };
+  visit(tree, "heading", (node: MdastHeading) => {
+    if (node.depth !== 2 && node.depth !== 3) return;
+    let text = "";
+    visit(node, (child) => {
+      if (child.type === "text" || child.type === "inlineCode") {
+        text += (child as { value: string }).value;
+      }
+    });
+    text = text.trim();
+    if (!text) return;
+    headings.push({ id: slugger.slug(text), text, depth: node.depth === 2 ? 2 : 3 });
+  });
+  return headings;
 }
 
 export async function getAllPostSummaries(): Promise<PostSummary[]> {
@@ -179,7 +120,7 @@ export async function getAllPostSummaries(): Promise<PostSummary[]> {
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-  const filePath = path.join(postsDir, `${slug}.md`);
+  const filePath = path.join(postsDir, `${slug}.mdx`);
   let raw: string;
   try {
     raw = await fs.readFile(filePath, "utf8");
@@ -191,7 +132,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   const fm = data as PostFrontmatter;
   if (!isPostVisible(fm)) return null;
   const stats = readingTime(content);
-  const { html, headings } = await renderPostMarkdown(content, fm.linkPreviews);
+  const headings = extractHeadings(content);
   return {
     slug,
     title: fm.title,
@@ -205,7 +146,8 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     seriesOrder: fm.seriesOrder,
     draft: fm.draft,
     readingTimeMinutes: Math.max(1, Math.round(stats.minutes)),
-    content: html,
+    // MDX 원본. 렌더는 페이지에서 MDXRemote 가 맡는다.
+    content,
     headings,
   } satisfies Post;
 }
@@ -215,9 +157,7 @@ export async function getAllPostSlugs(): Promise<string[]> {
   return posts.map((p) => p.slug);
 }
 
-export async function getAllTags(): Promise<
-  { tag: string; count: number }[]
-> {
+export async function getAllTags(): Promise<{ tag: string; count: number }[]> {
   const posts = await getAllPostSummaries();
   const counts = new Map<string, number>();
   for (const p of posts) {
@@ -235,9 +175,7 @@ export async function getPostsByTag(tag: string): Promise<PostSummary[]> {
   return posts.filter((p) => (p.tags ?? []).includes(tag));
 }
 
-export async function getSeriesContext(
-  slug: string,
-): Promise<SeriesContext | null> {
+export async function getSeriesContext(slug: string): Promise<SeriesContext | null> {
   const posts = await getAllPostSummaries();
   const current = posts.find((p) => p.slug === slug);
   if (!current?.series) return null;
@@ -287,10 +225,7 @@ export async function getRelatedPosts(
       return { post: p, overlap };
     })
     .filter((x) => x.overlap > 0)
-    .sort(
-      (a, b) =>
-        b.overlap - a.overlap || b.post.date.localeCompare(a.post.date),
-    )
+    .sort((a, b) => b.overlap - a.overlap || b.post.date.localeCompare(a.post.date))
     .slice(0, limit)
     .map((x) => x.post);
 }
@@ -301,12 +236,11 @@ async function readDiaryFile(filename: string): Promise<DiaryEntry | null> {
   const fm = data as DiaryFrontmatter;
   // 날짜가 없는(아직 작성 중인) 항목은 목록/링크에서 제외한다.
   if (!fm.date) return null;
-  const html = await renderMarkdown(content);
   return {
     slug: slugFromFilename(filename),
     date: fm.date,
     mood: fm.mood,
-    content: html,
+    content,
   } satisfies DiaryEntry;
 }
 
@@ -318,11 +252,9 @@ export async function getAllDiaryEntries(): Promise<DiaryEntry[]> {
   return entries.sort((a, b) => b.date.localeCompare(a.date));
 }
 
-export async function getDiaryEntryBySlug(
-  slug: string,
-): Promise<DiaryEntry | null> {
+export async function getDiaryEntryBySlug(slug: string): Promise<DiaryEntry | null> {
   try {
-    return await readDiaryFile(`${slug}.md`);
+    return await readDiaryFile(`${slug}.mdx`);
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
     throw err;
@@ -343,9 +275,7 @@ export async function getAllDiarySlugs(): Promise<string[]> {
 async function listBookDirs(): Promise<string[]> {
   try {
     const entries = await fs.readdir(researchDir, { withFileTypes: true });
-    return entries
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name);
+    return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
     throw err;
@@ -357,7 +287,7 @@ function chapterOrderFromFilename(filename: string): number {
   return match ? Number.parseInt(match[1], 10) : Number.MAX_SAFE_INTEGER;
 }
 
-// "01-render-architecture.md" -> "제목 미지정" 대체용 사람이 읽을 문자열
+// "01-render-architecture.mdx" -> "제목 미지정" 대체용 사람이 읽을 문자열
 function titleFromChapterFilename(filename: string): string {
   return slugFromFilename(filename)
     .replace(/^\d+[-_]?/, "")
@@ -369,9 +299,7 @@ async function readBookChapters(
   bookSlug: string,
 ): Promise<{ filename: string; summary: ChapterSummary }[]> {
   const dir = path.join(researchDir, bookSlug);
-  const files = (await listMarkdownFiles(dir)).filter(
-    (name) => name !== "book.md",
-  );
+  const files = (await listMarkdownFiles(dir)).filter((name) => name !== "book.mdx");
   const chapters = await Promise.all(
     files.map(async (filename) => {
       const raw = await fs.readFile(path.join(dir, filename), "utf8");
@@ -389,14 +317,12 @@ async function readBookChapters(
     }),
   );
   return chapters.sort(
-    (a, b) =>
-      a.summary.order - b.summary.order ||
-      a.summary.slug.localeCompare(b.summary.slug),
+    (a, b) => a.summary.order - b.summary.order || a.summary.slug.localeCompare(b.summary.slug),
   );
 }
 
 async function readBookSummary(bookSlug: string): Promise<BookSummary | null> {
-  const bookPath = path.join(researchDir, bookSlug, "book.md");
+  const bookPath = path.join(researchDir, bookSlug, "book.mdx");
   let raw: string;
   try {
     raw = await fs.readFile(bookPath, "utf8");
@@ -439,16 +365,14 @@ export async function getAllBookSlugs(): Promise<string[]> {
 export async function getBookBySlug(slug: string): Promise<Book | null> {
   const summary = await readBookSummary(slug);
   if (!summary) return null;
-  const bookPath = path.join(researchDir, slug, "book.md");
+  const bookPath = path.join(researchDir, slug, "book.mdx");
   const raw = await fs.readFile(bookPath, "utf8");
   const { content } = matter(raw);
-  const intro = content.trim() ? await renderMarkdown(content) : "";
+  const intro = content.trim() ? content : "";
   return { ...summary, intro } satisfies Book;
 }
 
-export async function getAllChapterParams(): Promise<
-  { book: string; chapter: string }[]
-> {
+export async function getAllChapterParams(): Promise<{ book: string; chapter: string }[]> {
   const dirs = await listBookDirs();
   const params = await Promise.all(
     dirs.map(async (bookSlug) => {
@@ -472,7 +396,7 @@ export async function getChapterContext(
   const index = summary.chapters.findIndex((c) => c.slug === chapterSlug);
   if (index < 0) return null;
 
-  const filePath = path.join(researchDir, bookSlug, `${chapterSlug}.md`);
+  const filePath = path.join(researchDir, bookSlug, `${chapterSlug}.mdx`);
   let raw: string;
   try {
     raw = await fs.readFile(filePath, "utf8");
@@ -482,7 +406,7 @@ export async function getChapterContext(
   }
   const { data, content } = matter(raw);
   const fm = data as { title?: string };
-  const { html, headings } = await renderPostMarkdown(content);
+  const headings = extractHeadings(content);
   const meta = summary.chapters[index];
 
   const chapter: Chapter = {
@@ -491,7 +415,7 @@ export async function getChapterContext(
     slug: chapterSlug,
     title: fm.title ?? meta.title,
     order: meta.order,
-    content: html,
+    content,
     headings,
   };
 

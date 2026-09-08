@@ -11,11 +11,7 @@ interface HorizontalScrollerProps {
   step?: number;
 }
 
-export function HorizontalScroller({
-  children,
-  className,
-  step = 340,
-}: HorizontalScrollerProps) {
+export function HorizontalScroller({ children, className, step = 340 }: HorizontalScrollerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);

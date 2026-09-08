@@ -22,9 +22,7 @@ export default async function ResearchPage() {
       </Link>
 
       <header className="mb-12">
-        <p className="mb-3 font-mono text-xs text-primary">
-          ~/hovelopin/research $ ls ./bookshelf
-        </p>
+        <p className="mb-3 font-mono text-xs text-primary">~/hovelopin/research $ ls ./bookshelf</p>
         <h1 className="mb-3 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
           research
         </h1>
@@ -44,8 +42,7 @@ export default async function ResearchPage() {
 
       {books.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          아직 탐구한 책이 없습니다.{" "}
-          <code>content/research/&lt;slug&gt;/book.md</code>로 첫 책을
+          아직 탐구한 책이 없습니다. <code>content/research/&lt;slug&gt;/book.md</code>로 첫 책을
           꽂아보세요.
         </p>
       ) : (

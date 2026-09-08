@@ -11,10 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PostsPage() {
-  const [posts, tags] = await Promise.all([
-    getAllPostSummaries(),
-    getAllTags(),
-  ]);
+  const [posts, tags] = await Promise.all([getAllPostSummaries(), getAllTags()]);
 
   return (
     <div className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-6 sm:py-16">
@@ -26,9 +23,7 @@ export default async function PostsPage() {
       </Link>
 
       <header className="mb-10">
-        <p className="mb-3 font-mono text-xs text-primary">
-          ~/hovelopin/posts $ ls -lah
-        </p>
+        <p className="mb-3 font-mono text-xs text-primary">~/hovelopin/posts $ ls -lah</p>
         <h1 className="mb-3 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
           posts
         </h1>
@@ -46,8 +41,7 @@ export default async function PostsPage() {
         ))}
         {posts.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            아직 글이 없습니다. <code>content/posts</code>에 마크다운 파일을
-            추가하세요.
+            아직 글이 없습니다. <code>content/posts</code>에 마크다운 파일을 추가하세요.
           </p>
         )}
       </div>

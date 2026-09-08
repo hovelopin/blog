@@ -13,9 +13,7 @@ export async function generateStaticParams() {
   return tags.map(({ tag }) => ({ tag: encodeURIComponent(tag) }));
 }
 
-export async function generateMetadata({
-  params,
-}: TagPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
   const { tag } = await params;
   const decoded = decodeURIComponent(tag);
   return {
@@ -47,9 +45,7 @@ export default async function TagPage({ params }: TagPageProps) {
         <h1 className="mb-3 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
           #{decoded}
         </h1>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          {posts.length}개의 글.
-        </p>
+        <p className="text-sm leading-relaxed text-muted-foreground">{posts.length}개의 글.</p>
       </header>
 
       <div className="flex flex-col gap-4">

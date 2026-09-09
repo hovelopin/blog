@@ -28,6 +28,10 @@ Next.js 기반 개인 블로그. 글은 `content/` 아래 마크다운으로 관
 - `pnpm check` — lint + typecheck + build
 - `pnpm import:docx <file>` — docx 원고를 마크다운으로 변환
 
+## Environment
+`.env.example` 참고. 지금은 조회수용 Upstash Redis 자격증명만 쓴다.
+없어도 빌드·실행은 되고 조회수 표시만 꺼진다.
+
 ## Code Style
 - TypeScript strict mode, no `any`
 - Named exports, PascalCase components, camelCase utils

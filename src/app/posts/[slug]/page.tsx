@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/format";
 import { AUTHOR, SITE_LANG, absoluteUrl } from "@/lib/site";
 import { DynamicIslandTOC } from "@/components/dynamic-island-toc";
 import { PostContent } from "@/components/post-content";
+import { ViewCount } from "@/components/view-count";
 import { MdxContent } from "@/components/mdx-content";
 import { PostFooterNav } from "@/components/post-footer-nav";
 import { PostComments } from "@/components/post-comments";
@@ -125,6 +126,7 @@ export default async function PostPage({ params }: PostPageProps) {
               <span>@{post.author}</span>
             </>
           )}
+          <ViewCount slug={post.slug} />
         </div>
         <h1 className="mb-4 text-[28px] font-semibold leading-tight tracking-tight text-foreground sm:text-[32px]">
           {post.title}

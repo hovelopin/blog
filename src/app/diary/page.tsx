@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { DiaryTimeline } from "@/components/diary-timeline";
+import { DiaryCard } from "@/components/diary-card";
 import { getAllDiaryEntries } from "@/lib/content";
 
 export const metadata: Metadata = {
@@ -11,6 +12,13 @@ export const metadata: Metadata = {
 
 export default async function DiaryPage() {
   const entries = await getAllDiaryEntries();
+  // 본문(MDX)은 서버 컴포넌트로만 렌더할 수 있어서 여기서 카드를 만들어 내려보낸다.
+  const items = entries.map((entry) => ({
+    slug: entry.slug,
+    date: entry.date,
+    mood: entry.mood,
+    card: <DiaryCard entry={entry} />,
+  }));
 
   return (
     <div className="mx-auto w-full max-w-2xl px-5 py-10 sm:px-6 sm:py-16">
@@ -33,7 +41,7 @@ export default async function DiaryPage() {
           아직 비어 있습니다. <code>content/diary</code>에 파일을 추가하세요.
         </p>
       ) : (
-        <DiaryTimeline entries={entries} />
+        <DiaryTimeline items={items} />
       )}
     </div>
   );

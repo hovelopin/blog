@@ -1,22 +1,30 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { DiaryEntry } from "@/types/content";
-import { DiaryCard } from "@/components/diary-card";
+import { useMemo, useState, type ReactNode } from "react";
+import type { DiaryFrontmatter } from "@/types/content";
 import { formatMonth } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-interface DiaryTimelineProps {
-  entries: DiaryEntry[];
+/**
+ * 타임라인이 필터·그룹에 쓰는 메타와, 서버에서 미리 렌더한 카드.
+ * 본문(MDX)은 서버 컴포넌트로만 렌더할 수 있어서 card 로 받아 그대로 꽂는다.
+ */
+export interface DiaryTimelineItem extends DiaryFrontmatter {
+  slug: string;
+  card: ReactNode;
 }
 
-function groupByMonth(entries: DiaryEntry[]): Array<[string, DiaryEntry[]]> {
-  const groups = new Map<string, DiaryEntry[]>();
-  for (const entry of entries) {
-    const key = entry.date.slice(0, 7);
+interface DiaryTimelineProps {
+  items: DiaryTimelineItem[];
+}
+
+function groupByMonth(items: DiaryTimelineItem[]): Array<[string, DiaryTimelineItem[]]> {
+  const groups = new Map<string, DiaryTimelineItem[]>();
+  for (const item of items) {
+    const key = item.date.slice(0, 7);
     const bucket = groups.get(key);
-    if (bucket) bucket.push(entry);
-    else groups.set(key, [entry]);
+    if (bucket) bucket.push(item);
+    else groups.set(key, [item]);
   }
   return Array.from(groups.entries());
 }
@@ -44,19 +52,19 @@ function FilterChip({ label, active, onClick }: ChipProps) {
   );
 }
 
-export function DiaryTimeline({ entries }: DiaryTimelineProps) {
+export function DiaryTimeline({ items }: DiaryTimelineProps) {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
 
   const moods = useMemo(() => {
     const set = new Set<string>();
-    for (const entry of entries) if (entry.mood) set.add(entry.mood);
+    for (const item of items) if (item.mood) set.add(item.mood);
     return Array.from(set);
-  }, [entries]);
+  }, [items]);
 
   const groups = useMemo(() => {
-    const filtered = selectedMood ? entries.filter((e) => e.mood === selectedMood) : entries;
+    const filtered = selectedMood ? items.filter((i) => i.mood === selectedMood) : items;
     return groupByMonth(filtered);
-  }, [entries, selectedMood]);
+  }, [items, selectedMood]);
 
   return (
     <div>
@@ -81,20 +89,22 @@ export function DiaryTimeline({ entries }: DiaryTimelineProps) {
       {groups.length === 0 ? (
         <p className="text-sm text-muted-foreground">선택한 필터의 결과가 없습니다.</p>
       ) : (
-        groups.map(([ym, items]) => (
+        groups.map(([ym, group]) => (
           <section key={ym} className="mb-10 last:mb-0">
-            <h2 className="sticky top-0 z-10 -mx-5 mb-4 border-b border-border/50 bg-background/85 px-5 py-2 font-mono text-xs text-muted-foreground backdrop-blur sm:-mx-6 sm:px-6">
+            <h2 className="sticky top-0 z-10 -mx-5 mb-4 bg-background/85 px-5 py-2 font-mono text-xs text-muted-foreground backdrop-blur sm:-mx-6 sm:px-6">
               <span className="text-foreground">{formatMonth(ym)}</span>
-              <span className="ml-2 text-primary/70">({items.length})</span>
+              <span className="ml-2 text-primary/70">({group.length})</span>
             </h2>
-            <ol className="relative border-l border-border/60 pl-6">
-              {items.map((entry) => (
-                <li key={entry.slug} className="relative mb-5 last:mb-0">
+            <ol className="relative pl-6">
+              {/* 타임라인 선. 첫 점 위로 꼬리가 남지 않게 점 중심(= 카드 상단)에서 시작한다. */}
+              <span aria-hidden="true" className="absolute inset-y-0 left-0 w-px bg-primary/40" />
+              {group.map((item) => (
+                <li key={item.slug} className="relative mb-5 last:mb-0">
                   <span
                     aria-hidden="true"
-                    className="absolute -left-[27px] top-5 h-2 w-2 rounded-full bg-primary/70 ring-4 ring-background"
+                    className="absolute -left-[27px] -top-1 h-2 w-2 rounded-full bg-primary/70"
                   />
-                  <DiaryCard entry={entry} />
+                  {item.card}
                 </li>
               ))}
             </ol>

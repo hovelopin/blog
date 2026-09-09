@@ -128,6 +128,15 @@
     background: color-mix(in oklch, var(--primary) 40%, transparent);
     color: var(--foreground);
   }
+  /*
+    Tailwind v4 Preflight 는 v3 와 달리 button 에 cursor:pointer 를 넣지 않는다.
+    누를 수 있는 요소는 손가락 커서가 기본이 되도록 되돌린다.
+    base 레이어라서 cursor-zoom-in / cursor-default 같은 유틸리티가 항상 이긴다.
+  */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
 }
 
 @keyframes cursor-blink {

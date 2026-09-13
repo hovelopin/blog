@@ -56,6 +56,8 @@
   --popover-foreground: oklch(0.2 0.005 260);
   --primary: oklch(0.58 0.15 155);
   --primary-foreground: oklch(0.99 0.003 260);
+  /* 인라인 코드 글자색. 밝은 배경에서 --primary 는 대비가 모자라 한 단계 어둡게 쓴다. */
+  --code-inline: oklch(0.5 0.14 155);
   --secondary: oklch(0.95 0.005 260);
   --secondary-foreground: oklch(0.2 0.005 260);
   --muted: oklch(0.94 0.005 260);
@@ -86,6 +88,7 @@
   --popover-foreground: oklch(0.94 0.005 260);
   --primary: oklch(0.82 0.14 155);
   --primary-foreground: oklch(0.145 0.005 260);
+  --code-inline: oklch(0.82 0.14 155);
   --secondary: oklch(0.24 0.006 260);
   --secondary-foreground: oklch(0.94 0.005 260);
   --muted: oklch(0.22 0.006 260);
@@ -266,14 +269,15 @@
 .prose-blog hr {
   display: none;
 }
+/* 본문 속 인라인 코드. 본문 색과 같으면 묻혀서 강조색으로 띄운다. */
 .prose-blog :not(pre) > code {
   border-radius: calc(var(--radius) * 0.6);
-  border: 1px solid var(--border);
-  background: color-mix(in oklch, var(--muted) 60%, transparent);
+  border: 1px solid color-mix(in oklch, var(--primary) 22%, transparent);
+  background: color-mix(in oklch, var(--primary) 10%, transparent);
   padding: 0.1rem 0.4rem;
   font-family: var(--font-mono);
   font-size: 0.88em;
-  color: var(--foreground);
+  color: var(--code-inline);
 }
 .prose-blog pre {
   margin: 1.5rem 0;
@@ -425,11 +429,12 @@
 }
 .diary-content code {
   border-radius: 4px;
-  border: 1px solid var(--border);
-  background: color-mix(in oklch, var(--muted) 60%, transparent);
+  border: 1px solid color-mix(in oklch, var(--primary) 22%, transparent);
+  background: color-mix(in oklch, var(--primary) 10%, transparent);
   padding: 0.05rem 0.3rem;
   font-family: var(--font-mono);
   font-size: 0.85em;
+  color: var(--code-inline);
 }
 .diary-content strong {
   font-weight: 600;

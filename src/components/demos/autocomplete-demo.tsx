@@ -1,6 +1,6 @@
 "use client";
 
-import { CanvasDemo, type DrawArgs } from "@/components/demos/canvas-demo";
+import { CanvasDemo, twoLanes, type DrawArgs } from "@/components/demos/canvas-demo";
 
 const MONO = "ui-monospace, SFMono-Regular, Menlo, monospace";
 const STEP = 1500;
@@ -80,43 +80,32 @@ function drawPanel(
 }
 
 function draw(args: DrawArgs) {
-  const { width, height, elapsed, ctx, palette } = args;
-  const pad = 14;
-  const gap = 22;
-  const colW = (width - pad * 2 - gap) / 2;
+  const { elapsed, ctx, palette } = args;
   const step = Math.min(SELECTOR_STEPS.length - 1, Math.floor(elapsed / STEP));
   const local = (elapsed % STEP) / STEP;
-
-  // 왼쪽 — 문자열 방식은 전체 목록을 한 번에 보여준다
-  drawPanel(
-    args,
-    pad,
-    18,
-    colW,
-    "문자열 방식 — 후보 목록",
-    "t('pages",
-    STRING_CANDIDATES,
-    Math.min(1, elapsed / STEP),
-  );
-
-  // 오른쪽 — selector 는 프로퍼티를 타고 내려간다
   const s = SELECTOR_STEPS[step];
-  drawPanel(
-    args,
-    pad + colW + gap,
-    18,
-    colW,
-    "selector 방식 — 프로퍼티 탐색",
-    `t(${s.typed}`,
-    s.options,
-    Math.min(1, local * 2.2),
-  );
 
-  ctx.font = `10px ${MONO}`;
-  ctx.fillStyle = palette.muted;
-  ctx.textAlign = "left";
-  ctx.fillText("경로 전체를 문자열로 고른다", pad, height - 10);
-  ctx.fillText("한 단계씩 객체를 타고 내려간다", pad + colW + gap, height - 10);
+  const footnote = (text: string, x: number, laneH: number) => {
+    ctx.font = `10px ${MONO}`;
+    ctx.fillStyle = palette.muted;
+    ctx.textAlign = "left";
+    ctx.fillText(text, x, laneH - 10);
+  };
+
+  twoLanes(
+    args,
+    { pad: 14, gap: 22 },
+    // 왼쪽 — 문자열 방식은 전체 목록을 한 번에 보여준다
+    (x, w, laneH) => {
+      drawPanel(args, x, 18, w, "문자열 방식 — 후보 목록", "t('pages", STRING_CANDIDATES, Math.min(1, elapsed / STEP));
+      footnote("경로 전체를 문자열로 고른다", x, laneH);
+    },
+    // 오른쪽 — selector 는 프로퍼티를 타고 내려간다
+    (x, w, laneH) => {
+      drawPanel(args, x, 18, w, "selector 방식 — 프로퍼티 탐색", `t(${s.typed}`, s.options, Math.min(1, local * 2.2));
+      footnote("한 단계씩 객체를 타고 내려간다", x, laneH);
+    },
+  );
 }
 
 /** 같은 리소스를 두고 자동완성이 어떻게 다르게 뜨는지 나란히 보여준다. */
@@ -125,6 +114,7 @@ export function AutocompleteDemo() {
     <CanvasDemo
       caption="IDE 자동완성 — 문자열 목록과 프로퍼티 트리"
       height={190}
+      stackable
       duration={DURATION}
       draw={draw}
     />

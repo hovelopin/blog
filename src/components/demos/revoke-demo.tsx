@@ -1,6 +1,6 @@
 "use client";
 
-import { CanvasDemo, type DrawArgs } from "@/components/demos/canvas-demo";
+import { CanvasDemo, twoLanes, type DrawArgs } from "@/components/demos/canvas-demo";
 
 const MONO = "ui-monospace, SFMono-Regular, Menlo, monospace";
 const STEP = 1400;
@@ -82,23 +82,16 @@ function drawCase(
 }
 
 function draw(args: DrawArgs) {
-  const { ctx, width, height, elapsed, palette } = args;
-  const pad = 14;
-  const gap = 22;
-  const colW = (width - pad * 2 - gap) / 2;
+  const { ctx, elapsed } = args;
   const step = Math.min(ACCESSES.length, Math.floor(elapsed / STEP));
   const local = (elapsed % STEP) / STEP;
 
-  drawCase(args, pad, colW, "중간 Proxy 를 그대로 두면", false, step, local);
-  drawCase(args, pad + colW + gap, colW, "접근할 때마다 revoke 하면", true, step, local);
-
-  ctx.strokeStyle = palette.border;
-  ctx.globalAlpha = 0.6;
-  ctx.beginPath();
-  ctx.moveTo(pad + colW + gap / 2, 12);
-  ctx.lineTo(pad + colW + gap / 2, height - 12);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
+  twoLanes(
+    args,
+    { pad: 14, gap: 22, divider: true },
+    (x, w) => drawCase(args, x, w, "중간 Proxy 를 그대로 두면", false, step, local),
+    (x, w) => drawCase(args, x, w, "접근할 때마다 revoke 하면", true, step, local),
+  );
   ctx.textBaseline = "alphabetic";
 }
 
@@ -108,6 +101,7 @@ export function RevokeDemo() {
     <CanvasDemo
       caption="a.service 를 한 번 읽고 a.title 을 부르면 어떻게 되는가"
       height={196}
+      stackable
       duration={DURATION}
       draw={draw}
     />

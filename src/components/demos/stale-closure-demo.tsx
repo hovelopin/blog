@@ -1,6 +1,6 @@
 "use client";
 
-import { CanvasDemo, type DrawArgs } from "@/components/demos/canvas-demo";
+import { CanvasDemo, twoLanes, type DrawArgs } from "@/components/demos/canvas-demo";
 
 const MONO = "ui-monospace, SFMono-Regular, Menlo, monospace";
 const STEP = 1500;
@@ -80,23 +80,16 @@ function drawLane(
 }
 
 function draw(args: DrawArgs) {
-  const { ctx, width, height, elapsed, palette } = args;
-  const pad = 14;
-  const gap = 20;
-  const colW = (width - pad * 2 - gap) / 2;
+  const { ctx, elapsed } = args;
   const step = Math.min(RENDERS.length - 1, Math.floor(elapsed / STEP));
   const local = (elapsed % STEP) / STEP;
 
-  drawLane(args, pad, colW, "의존성 없이 한 번만 구독하면", false, step, local);
-  drawLane(args, pad + colW + gap, colW, "ref · Effect Event 를 끼우면", true, step, local);
-
-  ctx.strokeStyle = palette.border;
-  ctx.globalAlpha = 0.6;
-  ctx.beginPath();
-  ctx.moveTo(pad + colW + gap / 2, 12);
-  ctx.lineTo(pad + colW + gap / 2, height - 12);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
+  twoLanes(
+    args,
+    { pad: 14, gap: 20, divider: true },
+    (x, w) => drawLane(args, x, w, "의존성 없이 한 번만 구독하면", false, step, local),
+    (x, w) => drawLane(args, x, w, "ref · Effect Event 를 끼우면", true, step, local),
+  );
   ctx.textBaseline = "alphabetic";
 }
 
@@ -106,6 +99,7 @@ export function StaleClosureDemo() {
     <CanvasDemo
       caption="렌더가 세 번 도는 동안 effect 가 부르는 콜백"
       height={196}
+      stackable
       duration={DURATION}
       draw={draw}
     />

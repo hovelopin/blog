@@ -1,6 +1,6 @@
 "use client";
 
-import { CanvasDemo, type DrawArgs } from "@/components/demos/canvas-demo";
+import { CanvasDemo, twoLanes, type DrawArgs } from "@/components/demos/canvas-demo";
 
 const DURATION = 3000;
 // 화면에서 읽히도록 실제 ms 를 4배 느리게 재생한다.
@@ -144,14 +144,15 @@ function drawCase(
 }
 
 function draw(args: DrawArgs) {
-  const { width, elapsed } = args;
-  const pad = 14;
-  const gap = 20;
-  const colW = (width - pad * 2 - gap) / 2;
+  const { elapsed } = args;
   const tReal = elapsed / SCALE;
 
-  drawCase(args, CASES[0], pad, 16, colW, tReal);
-  drawCase(args, CASES[1], pad + colW + gap, 16, colW, tReal);
+  twoLanes(
+    args,
+    { pad: 14, gap: 20 },
+    (x, w) => drawCase(args, CASES[0], x, 16, w, tReal),
+    (x, w) => drawCase(args, CASES[1], x, 16, w, tReal),
+  );
 }
 
 /** 로딩 시간과 Delay 타이머의 경쟁을 두 경우로 나란히 재생한다. */
@@ -160,6 +161,7 @@ export function DelayRaceDemo() {
     <CanvasDemo
       caption="Delay ms={300} 아래에서 로딩 시간에 따라 화면이 달라진다 (4배 느리게 재생)"
       height={168}
+      stackable
       duration={DURATION}
       draw={draw}
     />

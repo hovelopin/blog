@@ -1,6 +1,6 @@
 "use client";
 
-import { CanvasDemo, type DrawArgs } from "@/components/demos/canvas-demo";
+import { CanvasDemo, twoLanes, type DrawArgs } from "@/components/demos/canvas-demo";
 
 const DURATION = 9000;
 const MONO = "ui-monospace, SFMono-Regular, Menlo, monospace";
@@ -138,26 +138,16 @@ function drawChart(
 
 function makeDraw(preset: Preset) {
   return (args: DrawArgs) => {
-    const { width, height, elapsed } = args;
+    const { height, elapsed } = args;
     const pad = 14;
-    const gap = 22;
-    const colW = (width - pad * 2 - gap) / 2;
     const chartTop = 34;
-    const chartH = height - chartTop - 26;
     const progress = Math.min(1, elapsed / (DURATION * 0.92));
+    const [left, right] = preset.series;
 
-    preset.series.forEach((s, i) => {
-      drawChart(
-        args,
-        s,
-        pad + i * (colW + gap),
-        chartTop,
-        colW,
-        chartH,
-        progress,
-        preset.limitLabel,
-      );
-    });
+    // 차트 높이는 레인 높이에서 잡는다. 쌓이면 레인마다 원래 높이를 그대로 받는다.
+    const lane = (s: typeof left) => (x: number, w: number, laneH: number) =>
+      drawChart(args, s, x, chartTop, w, laneH - chartTop - 26, progress, preset.limitLabel);
+    twoLanes(args, { pad, gap: 22 }, lane(left), lane(right));
 
     const { ctx, palette } = args;
     ctx.font = `9px ${MONO}`;
@@ -170,5 +160,5 @@ function makeDraw(preset: Preset) {
 /** 힙 사용량이 계속 쌓이는 경우와 제때 회수되는 경우를 나란히 그린다. */
 export function MemoryGrowthDemo({ preset = "gctime" }: { preset?: keyof typeof PRESETS }) {
   const p = PRESETS[preset] ?? PRESETS.gctime;
-  return <CanvasDemo caption={p.caption} height={210} duration={DURATION} draw={makeDraw(p)} />;
+  return <CanvasDemo caption={p.caption} height={210} duration={DURATION} draw={makeDraw(p)} stackable />;
 }

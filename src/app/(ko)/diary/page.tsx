@@ -21,7 +21,7 @@ export default async function DiaryPage() {
   }));
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-5 py-10 sm:px-6 sm:py-16">
+    <div className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-6 sm:py-16">
       <Link
         href="/"
         className="mb-10 inline-flex items-center font-mono text-xs text-muted-foreground transition-colors hover:text-primary"

@@ -16,7 +16,7 @@ export async function GET() {
   const posts = await getAllPostSummaries();
   const items = posts
     .map((p) => {
-      const url = `${SITE_URL}/posts/${p.slug}`;
+      const url = `${SITE_URL}/articles/${p.slug}`;
       const pubDate = new Date(p.date).toUTCString();
       const categories = (p.tags ?? [])
         .map((t) => `    <category>${escape(t)}</category>`)

@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { PostsIndex } from "@/components/pages/posts-index";
 
 export const metadata: Metadata = {
-  title: "Posts",
+  title: "Articles",
   description: "개발과 관련된 긴 호흡의 글.",
-  alternates: { canonical: "/posts", languages: { "en-US": "/en/posts" } },
+  alternates: { canonical: "/articles", languages: { "en-US": "/en/articles" } },
 };
 
 export default function PostsPage() {

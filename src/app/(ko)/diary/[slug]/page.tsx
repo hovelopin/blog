@@ -75,7 +75,7 @@ export default async function DiaryEntryPage({ params }: DiaryEntryPageProps) {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-5 py-10 sm:px-6 sm:py-16">
+    <div className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-6 sm:py-16">
       <JsonLd data={jsonLd} />
       <Link
         href="/diary"

@@ -11,7 +11,7 @@ cover: "/covers/memory-leak-2-client-rendering.png"
 coverAlt: "메모리 누수 2편 — 클라이언트 렌더링 개선 썸네일"
 ---
 
-[1편](/posts/memory-leak-1-image-cdn)에서 정적 리소스를 CDN으로 옮겨 서버측 부하를 덜었다면, 이번 편에서는 클라이언트에서 직접 발견된 누수 케이스 네 가지를 정리한다.
+[1편](/articles/memory-leak-1-image-cdn)에서 정적 리소스를 CDN으로 옮겨 서버측 부하를 덜었다면, 이번 편에서는 클라이언트에서 직접 발견된 누수 케이스 네 가지를 정리한다.
 
 ## Chat Scroll 로직 개선
 
@@ -359,4 +359,4 @@ Timeline 분석에서는 `InnerSlide`가 리렌더링될 때마다 Heap이 튀�
 
 여기까지가 클라이언트에서 잡아낸 누수 후보들이다. Chat scroll의 observer 정리, TanStack Query GC 주기 단축, Header 리렌더링 throttle, 그리고 react-slick 교체까지 적용한 뒤 클라이언트 측 Heap은 안정화됐다.
 
-하지만 **운영 환경의 서버 메모리는 여전히 우상향을 그리고 있었다.** 클라이언트에서 끊을 수 있는 누수는 다 끊었는데 서버 RSS가 계속 늘어난다면, 원인은 다른 층에 있다는 뜻이다. [3편 — 서버사이드 편](/posts/memory-leak-3-server-side)에서는 운영과 똑같은 OOM을 재현할 수 있는 부하 테스트 환경을 만들고, 그 안에서 진짜 원인 한 점을 좁혀 가는 과정을 다룬다.
+하지만 **운영 환경의 서버 메모리는 여전히 우상향을 그리고 있었다.** 클라이언트에서 끊을 수 있는 누수는 다 끊었는데 서버 RSS가 계속 늘어난다면, 원인은 다른 층에 있다는 뜻이다. [3편 — 서버사이드 편](/articles/memory-leak-3-server-side)에서는 운영과 똑같은 OOM을 재현할 수 있는 부하 테스트 환경을 만들고, 그 안에서 진짜 원인 한 점을 좁혀 가는 과정을 다룬다.

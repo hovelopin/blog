@@ -10,15 +10,16 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/views/*": ["./content/posts/**/*"],
   },
-  // /blog → /posts 로 경로를 통합하면서 기존 링크·검색엔진 색인은 301로 넘긴다.
+  // 옛 주소는 전부 301 로 새 주소에 넘긴다. /blog 는 그보다 앞선 세대의 주소다.
   async redirects() {
     return [
-      { source: "/blog", destination: "/posts", permanent: true },
-      {
-        source: "/blog/tag/:tag",
-        destination: "/posts/tag/:tag",
-        permanent: true,
-      },
+      { source: "/blog", destination: "/articles", permanent: true },
+      { source: "/blog/tag/:tag", destination: "/articles/tag/:tag", permanent: true },
+      { source: "/posts", destination: "/articles", permanent: true },
+      { source: "/posts/tag/:tag", destination: "/articles/tag/:tag", permanent: true },
+      { source: "/posts/:slug", destination: "/articles/:slug", permanent: true },
+      { source: "/en/posts", destination: "/en/articles", permanent: true },
+      { source: "/en/posts/:slug", destination: "/en/articles/:slug", permanent: true },
     ];
   },
 };

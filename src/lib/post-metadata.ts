@@ -14,10 +14,10 @@ export async function postMetadata(slug: string, locale: Locale): Promise<Metada
   if (!post) return {};
 
   const other: Locale = locale === "ko" ? "en" : "ko";
-  const url = localePath(locale, `/posts/${slug}`);
+  const url = localePath(locale, `/articles/${slug}`);
   const images = post.cover ? [{ url: post.cover, alt: post.coverAlt ?? post.title }] : undefined;
   const languages = (await hasPostTranslation(slug, other))
-    ? { [LOCALE_META[other].lang]: localePath(other, `/posts/${slug}`) }
+    ? { [LOCALE_META[other].lang]: localePath(other, `/articles/${slug}`) }
     : undefined;
 
   return {

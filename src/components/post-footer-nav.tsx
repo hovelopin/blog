@@ -23,7 +23,7 @@ function AdjacentCard({
   const isPrev = direction === "prev";
   return (
     <Link
-      href={`/posts/${post.slug}`}
+      href={`/articles/${post.slug}`}
       className={cn(
         "group flex flex-col gap-1.5 rounded-xl border border-border/70 bg-card/40 p-4 transition-colors hover:border-primary/50 hover:bg-muted/40",
         isPrev ? "items-start text-left" : "items-end text-right",
@@ -83,7 +83,7 @@ export function PostFooterNav({ prev, next, related, series }: PostFooterNavProp
             {related.map((p) => (
               <li key={p.slug}>
                 <Link
-                  href={`/posts/${p.slug}`}
+                  href={`/articles/${p.slug}`}
                   className="group flex flex-col gap-1 py-3 transition-colors hover:bg-muted/30 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
                 >
                   <span className="text-sm font-medium text-foreground transition-colors group-hover:text-primary">

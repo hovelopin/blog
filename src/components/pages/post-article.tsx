@@ -33,7 +33,7 @@ export async function PostArticle({ slug, locale }: { slug: string; locale: Loca
     getSeriesContext(slug),
   ]);
 
-  const postUrl = absoluteUrl(at(`/posts/${slug}`));
+  const postUrl = absoluteUrl(at(`/articles/${slug}`));
   const blogPostingJsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -61,8 +61,8 @@ export async function PostArticle({ slug, locale }: { slug: string; locale: Loca
       {
         "@type": "ListItem",
         position: 2,
-        name: "Posts",
-        item: absoluteUrl(at("/posts")),
+        name: "Articles",
+        item: absoluteUrl(at("/articles")),
       },
       { "@type": "ListItem", position: 3, name: post.title, item: postUrl },
     ],
@@ -108,7 +108,7 @@ export async function PostArticle({ slug, locale }: { slug: string; locale: Loca
             {post.tags.map((tag) => (
               <Link
                 key={tag}
-                href={at(`/posts/tag/${encodeURIComponent(tag)}`)}
+                href={at(`/articles/tag/${encodeURIComponent(tag)}`)}
                 className="rounded-full border border-border bg-muted/50 px-2.5 py-1 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
               >
                 #{tag}
@@ -129,8 +129,8 @@ export async function PostArticle({ slug, locale }: { slug: string; locale: Loca
       <PostComments slug={post.slug} title={post.title} />
 
       <footer className="mt-12 border-t border-border/60 pt-8">
-        <Link href={at("/posts")} className="font-mono text-xs text-primary hover:underline">
-          {locale === "ko" ? "← 다른 글 보기" : "← Browse all posts"}
+        <Link href={at("/articles")} className="font-mono text-xs text-primary hover:underline">
+          {locale === "ko" ? "← 다른 글 보기" : "← Browse all articles"}
         </Link>
       </footer>
     </article>

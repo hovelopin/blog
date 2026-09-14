@@ -19,7 +19,7 @@ export function PostLocaleSwitch({ slug, current, other }: PostLocaleSwitchProps
   const label = LOCALE_META[other].label;
   return (
     <Link
-      href={localePath(other, `/posts/${slug}`)}
+      href={localePath(other, `/articles/${slug}`)}
       hrefLang={LOCALE_META[other].lang}
       className="inline-flex items-center gap-1.5 rounded-lg border border-border/70 px-2.5 py-1 font-mono text-[11px] text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
     >

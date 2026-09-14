@@ -29,7 +29,7 @@ export function TagList({ tags, visibleCount = 10 }: TagListProps) {
       {shown.map(({ tag, count }) => (
         <Link
           key={tag}
-          href={`/posts/tag/${encodeURIComponent(tag)}`}
+          href={`/articles/tag/${encodeURIComponent(tag)}`}
           className="group rounded-full border border-border bg-muted/40 px-2 py-0.5 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
         >
           #{tag}

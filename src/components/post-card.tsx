@@ -84,7 +84,7 @@ function LatestBadge() {
 }
 
 export function PostCard({ post, variant = "default", className, locale = DEFAULT_LOCALE }: PostCardProps) {
-  const href = localePath(locale, `/posts/${post.slug}`);
+  const href = localePath(locale, `/articles/${post.slug}`);
 
   // /posts 최상단: 썸네일을 위로 크게 깔고 요약을 3줄까지 보여준다.
   if (variant === "feature") {

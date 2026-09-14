@@ -63,7 +63,7 @@ scripts/
 
 ## 다국어 (posts 한정)
 
-한국어가 기본이라 URL 에 접두사가 없고(`/posts/foo`), 영어만 `/en` 아래로 간다(`/en/posts/foo`).
+한국어가 기본이라 URL 에 접두사가 없고(`/articles/foo`), 영어만 `/en` 아래로 간다(`/en/articles/foo`).
 `src/app/(ko)` · `src/app/(en)` 두 개의 루트 레이아웃이 `<html lang>` 을 각각 잡는다.
 
 **한국어 글을 고칠 때는 `<slug>.en.mdx` 가 있는지 먼저 확인하고, 있으면 같이 고친다.**

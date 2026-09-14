@@ -19,9 +19,9 @@ export async function PostsIndex({ locale }: { locale: Locale }) {
       </Link>
 
       <header className="mb-10">
-        <p className="mb-3 font-mono text-xs text-primary">~/hovelopin/posts $ ls -lah</p>
+        <p className="mb-3 font-mono text-xs text-primary">~/hovelopin/articles $ ls -lah</p>
         <h1 className="mb-3 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-          posts
+          articles
         </h1>
         {ko && <TagList tags={tags} />}
       </header>
@@ -43,7 +43,7 @@ export async function PostsIndex({ locale }: { locale: Locale }) {
                 아직 글이 없습니다. <code>content/posts</code>에 마크다운 파일을 추가하세요.
               </>
             ) : (
-              <>No posts translated yet.</>
+              <>No articles translated yet.</>
             )}
           </p>
         )}

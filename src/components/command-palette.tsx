@@ -123,11 +123,11 @@ export function CommandPalette({ posts, tags, locale = DEFAULT_LOCALE }: Command
       {
         kind: "nav",
         id: "nav:posts",
-        label: "Posts",
+        label: "Articles",
         hint: "~/posts",
-        href: at("/posts"),
+        href: at("/articles"),
         icon: "blog",
-        keywords: "blog posts ls articles",
+        keywords: "blog articles posts ls",
       },
       {
         kind: "nav",
@@ -172,15 +172,15 @@ export function CommandPalette({ posts, tags, locale = DEFAULT_LOCALE }: Command
       id: `post:${p.slug}`,
       label: p.title,
       hint: p.date,
-      href: at(`/posts/${p.slug}`),
+      href: at(`/articles/${p.slug}`),
       keywords: `${p.title} ${p.description} ${(p.tags ?? []).join(" ")} ${p.slug}`,
     }));
     const tagItems: Item[] = tags.map(({ tag, count }) => ({
       kind: "tag",
       id: `tag:${tag}`,
       label: `#${tag}`,
-      hint: `${count} posts`,
-      href: at(`/posts/tag/${encodeURIComponent(tag)}`),
+      hint: `${count} articles`,
+      href: at(`/articles/tag/${encodeURIComponent(tag)}`),
       keywords: `tag ${tag}`,
     }));
     return [...nav, ...actions, ...postItems, ...tagItems];

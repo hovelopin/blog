@@ -55,8 +55,8 @@ export default async function Home() {
 
       <section className="mb-14 sm:mb-20">
         <div className="mb-6 flex items-baseline justify-between">
-          <h2 className="font-mono text-sm text-muted-foreground"># recent posts</h2>
-          <Link href="/posts" className="font-mono text-xs text-primary hover:underline">
+          <h2 className="font-mono text-sm text-muted-foreground"># recent articles</h2>
+          <Link href="/articles" className="font-mono text-xs text-primary hover:underline">
             see all ({posts.length}) →
           </Link>
         </div>

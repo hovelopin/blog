@@ -42,7 +42,7 @@ export function SeriesNav({ context }: SeriesNavProps) {
                 <span className="text-sm font-medium text-primary">{p.title}</span>
               ) : (
                 <Link
-                  href={`/posts/${p.slug}`}
+                  href={`/articles/${p.slug}`}
                   className="text-sm text-foreground transition-colors hover:text-primary"
                 >
                   {p.title}

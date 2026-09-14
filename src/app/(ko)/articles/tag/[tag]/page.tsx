@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
   return {
     title: `#${decoded}`,
     description: `태그 '${decoded}'로 필터링된 글 모음.`,
-    alternates: { canonical: `/posts/tag/${tag}` },
+    alternates: { canonical: `/articles/tag/${tag}` },
   };
 }
 
@@ -32,7 +32,7 @@ export default async function TagPage({ params }: TagPageProps) {
   return (
     <div className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-6 sm:py-16">
       <Link
-        href="/posts"
+        href="/articles"
         className="mb-10 inline-flex items-center font-mono text-xs text-muted-foreground transition-colors hover:text-primary"
       >
         ← cd ~/posts
@@ -40,7 +40,7 @@ export default async function TagPage({ params }: TagPageProps) {
 
       <header className="mb-10">
         <p className="mb-3 font-mono text-xs text-primary">
-          ~/hovelopin/posts $ grep -l &apos;#{decoded}&apos;
+          ~/hovelopin/articles $ grep -l &apos;#{decoded}&apos;
         </p>
         <h1 className="mb-3 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
           #{decoded}

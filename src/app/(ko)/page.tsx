@@ -55,7 +55,7 @@ export default async function Home() {
 
       <section className="mb-14 sm:mb-20">
         <div className="mb-6 flex items-baseline justify-between">
-          <h2 className="font-mono text-sm text-muted-foreground"># recent articles</h2>
+          <h2 className="font-mono text-sm text-muted-foreground"># articles</h2>
           <Link href="/articles" className="font-mono text-xs text-primary hover:underline">
             see all ({posts.length}) →
           </Link>
@@ -113,7 +113,7 @@ export default async function Home() {
 
       <section>
         <div className="mb-6 flex items-baseline justify-between">
-          <h2 className="font-mono text-sm text-muted-foreground"># recent diary</h2>
+          <h2 className="font-mono text-sm text-muted-foreground"># diary</h2>
           <Link href="/diary" className="font-mono text-xs text-primary hover:underline">
             see all →
           </Link>

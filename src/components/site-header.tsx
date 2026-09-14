@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CommandPaletteTrigger } from "@/components/command-palette-trigger";
+import { DEFAULT_LOCALE, localePath, type Locale } from "@/lib/locale";
 
 interface NavItem {
   href: string;
@@ -14,28 +15,28 @@ interface NavItem {
   match: (pathname: string) => boolean;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  {
-    href: "/",
-    command: "cd ~",
-    match: (p) => p === "/",
-  },
-  {
-    href: "/posts",
-    command: "cd ~/posts",
-    match: (p) => p.startsWith("/posts"),
-  },
-  {
-    href: "/research",
-    command: "cd ~/research",
-    match: (p) => p.startsWith("/research"),
-  },
-  {
-    href: "/diary",
-    command: "cd ~/diary",
-    match: (p) => p.startsWith("/diary"),
-  },
-];
+/**
+ * 언어별 네비게이션.
+ * 영어는 글(posts)만 번역하므로 research·diary 를 넣지 않는다.
+ */
+function navItemsFor(locale: Locale): NavItem[] {
+  const at = (path: string) => localePath(locale, path);
+  const home = at("/");
+  const items: NavItem[] = [
+    { href: home, command: "cd ~", match: (p) => p === home },
+    {
+      href: at("/posts"),
+      command: "cd ~/posts",
+      match: (p) => p.startsWith(at("/posts")),
+    },
+  ];
+  if (locale !== DEFAULT_LOCALE) return items;
+  return [
+    ...items,
+    { href: "/research", command: "cd ~/research", match: (p) => p.startsWith("/research") },
+    { href: "/diary", command: "cd ~/diary", match: (p) => p.startsWith("/diary") },
+  ];
+}
 
 function promptPathFor(pathname: string): string {
   if (pathname === "/") return "~";
@@ -53,8 +54,9 @@ function promptPathFor(pathname: string): string {
   return pathname;
 }
 
-export function SiteHeader() {
+export function SiteHeader({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   const pathname = usePathname();
+  const navItems = navItemsFor(locale);
   const promptPath = promptPathFor(pathname);
   const [open, setOpen] = useState(false);
 
@@ -77,7 +79,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-[60px] w-full max-w-5xl items-center justify-between gap-3 px-4 sm:h-[65px] sm:px-6">
         <Link
-          href="/"
+          href={localePath(locale, "/")}
           aria-label="home"
           title={`~/${promptPath}`}
           className="group flex min-w-0 shrink items-center gap-1 font-mono text-[13px] text-foreground transition-opacity hover:opacity-80 sm:text-sm"
@@ -99,7 +101,7 @@ export function SiteHeader() {
 
           {/* 데스크톱: 인라인 네비게이션 */}
           <div className="hidden items-center gap-2 lg:flex">
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const isActive = item.match(pathname);
               return (
                 <Link
@@ -160,7 +162,7 @@ export function SiteHeader() {
             className="relative z-40 border-t border-border/60 bg-background/95 backdrop-blur-md lg:hidden"
           >
             <nav className="mx-auto flex w-full max-w-5xl flex-col gap-1 px-4 py-3 sm:px-6">
-              {NAV_ITEMS.map((item) => {
+              {navItems.map((item) => {
                 const isActive = item.match(pathname);
                 return (
                   <Link

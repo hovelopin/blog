@@ -47,6 +47,3 @@ next-env.d.ts
 
 # Local temp files
 temp/
-
-# 링크 미리보기 스크린샷 (빌드 시 생성)
-public/images/link-previews/

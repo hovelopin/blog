@@ -168,7 +168,7 @@ TanStack Query의 GC는 Garbage Collection을 의미하며, 사용되지 않는 
 
 <MemoryGrowthDemo preset="gctime" />
 
-오른쪽처럼 오르내리는 톱니가 나와야 회수가 실제로 일어나고 있다는 뜻이다.
+**오른쪽처럼 오르내리는 톱니가 나와야 회수가 실제로 일어나고 있다는 뜻이다.**
 
 **Before**
 
@@ -333,7 +333,7 @@ Home 화면에서 `react-slick` 기반 슬라이더 컴포넌트에서 심각한
 
 ![react-slick 누수 2](/imports/memory-leak-2-client-rendering/image-008.png)
 
-Home에서 아무 동작을 하지 않을 때도 Heap이 계속 증가했고, 세부 지표를 보면 `inner-slider` 인스턴스의 Retained Size가 시간이 지날수록 지속적으로 커졌다.
+**Home에서 아무 동작을 하지 않을 때도 Heap이 계속 증가했고**, 세부 지표를 보면 `inner-slider` 인스턴스의 Retained Size가 시간이 지날수록 지속적으로 커졌다.
 
 ![Heap 증가 1](/imports/memory-leak-2-client-rendering/image-012.png)
 
@@ -343,7 +343,7 @@ Home에서 아무 동작을 하지 않을 때도 Heap이 계속 증가했고, �
 
 ![Heap 증가 4](/imports/memory-leak-2-client-rendering/image-004.png)
 
-분 단위로 Retained Size가 증가했고, 참조하는 인스턴스 수도 함께 늘었다. 반면 홈 화면이 아닌 Nova 기능에서는 5분 단위로 측정해도 Heap Size가 일정했다.
+분 단위로 Retained Size가 증가했고, 참조하는 인스턴스 수도 함께 늘었다. 반면 **홈 화면이 아닌 Nova 기능에서는 5분 단위로 측정해도 Heap Size가 일정했다.**
 
 ![Nova 영역 측정](/imports/memory-leak-2-client-rendering/image-010.png)
 
@@ -353,10 +353,10 @@ Timeline 분석에서는 `InnerSlide`가 리렌더링될 때마다 Heap이 튀�
 
 ![InnerSlide 리렌더링 2](/imports/memory-leak-2-client-rendering/image-005.png)
 
-이는 라이브러리 자체 이슈로, 관련 GitHub 이슈에서도 동일한 현상이 보고되어 있다 — [react-slick #1257](https://github.com/akiran/react-slick/issues/1257). 자체 코드로는 회피가 불가능하다고 판단해, 슬라이더 자체를 다른 솔루션으로 교체하는 작업은 별도 트랙으로 분리해 진행했다.
+이는 **라이브러리 자체 이슈**로, 관련 GitHub 이슈에서도 동일한 현상이 보고되어 있다 — [react-slick #1257](https://github.com/akiran/react-slick/issues/1257). 자체 코드로는 회피가 불가능하다고 판단해, 슬라이더 자체를 다른 솔루션으로 교체하는 작업은 별도 트랙으로 분리해 진행했다.
 
 ## 마치며
 
 여기까지가 클라이언트에서 잡아낸 누수 후보들이다. Chat scroll의 observer 정리, TanStack Query GC 주기 단축, Header 리렌더링 throttle, 그리고 react-slick 교체까지 적용한 뒤 클라이언트 측 Heap은 안정화됐다.
 
-하지만 운영 환경의 서버 메모리는 여전히 우상향을 그리고 있었다. 클라이언트에서 끊을 수 있는 누수는 다 끊었는데 서버 RSS가 계속 늘어난다면, 원인은 다른 층에 있다는 뜻이다. [3편 — 서버사이드 편](/posts/memory-leak-3-server-side)에서는 운영과 똑같은 OOM을 재현할 수 있는 부하 테스트 환경을 만들고, 그 안에서 진짜 원인 한 점을 좁혀 가는 과정을 다룬다.
+하지만 **운영 환경의 서버 메모리는 여전히 우상향을 그리고 있었다.** 클라이언트에서 끊을 수 있는 누수는 다 끊었는데 서버 RSS가 계속 늘어난다면, 원인은 다른 층에 있다는 뜻이다. [3편 — 서버사이드 편](/posts/memory-leak-3-server-side)에서는 운영과 똑같은 OOM을 재현할 수 있는 부하 테스트 환경을 만들고, 그 안에서 진짜 원인 한 점을 좁혀 가는 과정을 다룬다.

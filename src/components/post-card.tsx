@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { PostSummary } from "@/types/content";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { DEFAULT_LOCALE, localePath, type Locale } from "@/lib/locale";
 
 /**
  * feature — /posts 최상단 큰 카드 (썸네일 위, 본문 아래)
@@ -14,6 +15,7 @@ type Variant = "feature" | "default" | "bento" | "compact";
 
 interface PostCardProps {
   post: PostSummary;
+  locale?: Locale;
   variant?: Variant;
   className?: string;
 }
@@ -81,8 +83,8 @@ function LatestBadge() {
   );
 }
 
-export function PostCard({ post, variant = "default", className }: PostCardProps) {
-  const href = `/posts/${post.slug}`;
+export function PostCard({ post, variant = "default", className, locale = DEFAULT_LOCALE }: PostCardProps) {
+  const href = localePath(locale, `/posts/${post.slug}`);
 
   // /posts 최상단: 썸네일을 위로 크게 깔고 요약을 3줄까지 보여준다.
   if (variant === "feature") {

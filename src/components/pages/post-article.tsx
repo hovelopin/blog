@@ -1,67 +1,31 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { Metadata } from "next";
 import {
   getAdjacentPosts,
-  getAllPostSlugs,
   getPostBySlug,
   getRelatedPosts,
   getSeriesContext,
+  hasPostTranslation,
 } from "@/lib/content";
 import { formatDate } from "@/lib/format";
-import { AUTHOR, SITE_LANG, absoluteUrl } from "@/lib/site";
+import { AUTHOR, absoluteUrl } from "@/lib/site";
+import { LOCALE_META, localePath, type Locale } from "@/lib/locale";
 import { DynamicIslandTOC } from "@/components/dynamic-island-toc";
 import { PostContent } from "@/components/post-content";
 import { ViewCount } from "@/components/view-count";
 import { MdxContent } from "@/components/mdx-content";
 import { PostFooterNav } from "@/components/post-footer-nav";
 import { PostComments } from "@/components/post-comments";
+import { PostLocaleSwitch } from "@/components/post-locale-switch";
 import { SeriesNav } from "@/components/series-nav";
 import { JsonLd } from "@/components/json-ld";
 
-interface PostPageProps {
-  params: Promise<{ slug: string }>;
-}
-
-export async function generateStaticParams() {
-  const slugs = await getAllPostSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
-
-export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const post = await getPostBySlug(slug);
-  if (!post) return {};
-  const url = `/posts/${slug}`;
-  const images = post.cover ? [{ url: post.cover, alt: post.coverAlt ?? post.title }] : undefined;
-  return {
-    title: post.title,
-    description: post.description,
-    alternates: { canonical: url },
-    openGraph: {
-      type: "article",
-      url,
-      title: post.title,
-      description: post.description,
-      publishedTime: post.date,
-      modifiedTime: post.date,
-      authors: [post.author ?? AUTHOR.name],
-      tags: post.tags,
-      images,
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: post.title,
-      description: post.description,
-      images: post.cover ? [post.cover] : undefined,
-    },
-  };
-}
-
-export default async function PostPage({ params }: PostPageProps) {
-  const { slug } = await params;
-  const post = await getPostBySlug(slug);
+export async function PostArticle({ slug, locale }: { slug: string; locale: Locale }) {
+  const post = await getPostBySlug(slug, locale);
   if (!post) notFound();
+  const other: Locale = locale === "ko" ? "en" : "ko";
+  const hasOther = await hasPostTranslation(slug, other);
+  const at = (path: string) => localePath(locale, path);
 
   const [{ prev, next }, related, series] = await Promise.all([
     getAdjacentPosts(slug),
@@ -69,7 +33,7 @@ export default async function PostPage({ params }: PostPageProps) {
     getSeriesContext(slug),
   ]);
 
-  const postUrl = absoluteUrl(`/posts/${slug}`);
+  const postUrl = absoluteUrl(at(`/posts/${slug}`));
   const blogPostingJsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -77,7 +41,7 @@ export default async function PostPage({ params }: PostPageProps) {
     description: post.description,
     datePublished: post.date,
     dateModified: post.date,
-    inLanguage: SITE_LANG,
+    inLanguage: LOCALE_META[locale].lang,
     author: {
       "@type": "Person",
       name: post.author ?? AUTHOR.name,
@@ -93,12 +57,12 @@ export default async function PostPage({ params }: PostPageProps) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl(at("/")) },
       {
         "@type": "ListItem",
         position: 2,
         name: "Posts",
-        item: absoluteUrl("/posts"),
+        item: absoluteUrl(at("/posts")),
       },
       { "@type": "ListItem", position: 3, name: post.title, item: postUrl },
     ],
@@ -109,7 +73,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <JsonLd data={[blogPostingJsonLd, breadcrumbJsonLd]} />
       {post.headings.length > 0 && <DynamicIslandTOC headings={post.headings} />}
       <Link
-        href="/"
+        href={at("/")}
         className="mb-10 inline-flex items-center font-mono text-xs text-muted-foreground transition-colors hover:text-primary"
       >
         ← back to index
@@ -128,6 +92,11 @@ export default async function PostPage({ params }: PostPageProps) {
           )}
           <ViewCount slug={post.slug} />
         </div>
+        {hasOther && (
+          <div className="mb-4">
+            <PostLocaleSwitch slug={slug} current={locale} other={other} />
+          </div>
+        )}
         <h1 className="mb-4 text-[28px] font-semibold leading-tight tracking-tight text-foreground sm:text-[32px]">
           {post.title}
         </h1>
@@ -139,7 +108,7 @@ export default async function PostPage({ params }: PostPageProps) {
             {post.tags.map((tag) => (
               <Link
                 key={tag}
-                href={`/posts/tag/${encodeURIComponent(tag)}`}
+                href={at(`/posts/tag/${encodeURIComponent(tag)}`)}
                 className="rounded-full border border-border bg-muted/50 px-2.5 py-1 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
               >
                 #{tag}
@@ -160,8 +129,8 @@ export default async function PostPage({ params }: PostPageProps) {
       <PostComments slug={post.slug} title={post.title} />
 
       <footer className="mt-12 border-t border-border/60 pt-8">
-        <Link href="/posts" className="font-mono text-xs text-primary hover:underline">
-          ← 다른 글 보기
+        <Link href={at("/posts")} className="font-mono text-xs text-primary hover:underline">
+          {locale === "ko" ? "← 다른 글 보기" : "← Browse all posts"}
         </Link>
       </footer>
     </article>

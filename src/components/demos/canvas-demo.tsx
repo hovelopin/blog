@@ -83,20 +83,33 @@ function CanvasDemoView({
     let start = 0;
     let pausedAt = 0;
 
+    // draw() 는 항상 이 폭 이상의 논리 좌표계를 받는다. 컨테이너가 더 좁으면
+    // 장면을 이 폭으로 그린 뒤 transform 으로 통째로 축소한다. 그래서 17개 데모의
+    // 레이아웃 코드를 하나도 안 고치고 모바일에서도 같은 구도가 나온다.
+    const MIN_LOGICAL_WIDTH = 600;
+    let logicalW = MIN_LOGICAL_WIDTH;
+    let scale = 1;
+    let lastElapsed = 0;
+
+    const paint = (elapsed: number) => {
+      lastElapsed = elapsed;
+      ctx.clearRect(0, 0, logicalW, height);
+      draw({ ctx, width: logicalW, height, elapsed, palette });
+    };
+
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const w = wrap.clientWidth;
+      logicalW = Math.max(w, MIN_LOGICAL_WIDTH);
+      scale = w / logicalW;
       canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(height * dpr);
+      canvas.height = Math.round(height * scale * dpr);
       canvas.style.width = `${w}px`;
-      canvas.style.height = `${height}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-
-    const paint = (elapsed: number) => {
-      const w = wrap.clientWidth;
-      ctx.clearRect(0, 0, w, height);
-      draw({ ctx, width: w, height, elapsed, palette });
+      canvas.style.height = `${height * scale}px`;
+      ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+      // canvas.width 대입은 캔버스를 비운다. 다음 프레임까지 빈 채로 두면
+      // 리사이즈 중 깜빡이므로 같은 틱에 바로 다시 그린다.
+      paint(lastElapsed);
     };
 
     const frame = (now: number) => {
@@ -131,10 +144,7 @@ function CanvasDemoView({
     );
     io.observe(wrap);
 
-    const ro = new ResizeObserver(() => {
-      resize();
-      if (reduceMotion) paint(duration - 1);
-    });
+    const ro = new ResizeObserver(() => resize());
     ro.observe(wrap);
 
     // 테마 토글에 맞춰 색을 다시 읽는다.

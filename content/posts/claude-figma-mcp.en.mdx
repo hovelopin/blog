@@ -1,0 +1,136 @@
+---
+title: "From a Figma link to code"
+description: "A setup guide for wiring Figma designs into Claude, Cursor, or Windsurf through the Figma-MCP protocol, so a single link turns into code."
+date: "2025-03-28"
+tags: ["ai", "claude", "figma", "mcp"]
+author: "hovelopin"
+cover: "/covers/claude-figma-mcp.png"
+coverAlt: "Thumbnail for connecting Claude with the Figma MCP server"
+---
+
+The Figma-MCP protocol lets AI tools like Claude, Cursor, and Windsurf work directly with the design elements in a Figma file. The basic loop is simple: run a Figma-MCP server, connect it to the AI tool, paste a Figma link, and get back code generated from the analyzed design.
+
+## Issue a Figma API token
+
+Open Figma, click your profile, and go to Settings.
+
+![Opening Figma Settings](/imports/claude-figma-mcp/image-002.png)
+
+Under **Security → Generate new token**, create an API key.
+
+![Generating an API token](/imports/claude-figma-mcp/image-008.png)
+
+## Install the Figma-MCP server
+
+You need an AI tool that speaks MCP (Claude, Cursor, Windsurf, and so on). This guide uses Claude.
+
+First, install the Figma-MCP server by cloning the [GLips/Figma-Context-MCP](https://github.com/GLips/Figma-Context-MCP) repository.
+
+```bash
+git clone https://github.com/GLips/Figma-Context-MCP.git
+```
+
+Install the dependencies.
+
+```bash
+pnpm install
+```
+
+In `.env.sample`, set `FIGMA_API_KEY` to the token you issued in the previous step.
+
+```dotenv
+# Your Figma API access token
+# Get it from your Figma account settings: https://www.figma.com/developers/api#access-tokens
+FIGMA_API_KEY=<발급받은 API KEY>
+
+# Server configuration
+PORT=3333
+```
+
+Rename `.env.sample` to `.env` and start the server.
+
+```bash
+pnpm run dev
+```
+
+If the server is up, you will see a log like this in the console.
+
+![Server startup log](/imports/claude-figma-mcp/image-003.png)
+
+Before going further, here is what actually happens between pasting a Figma link and getting code back.
+
+<PipelineDemo preset="figma" />
+
+MCP handles the two steps in the middle. You only touch the two ends: hand over the link, then check the result.
+
+## Connect Claude Desktop
+
+To use Figma-MCP with Claude you need the desktop app. Grab the build for your OS from [Claude Desktop Download](https://claude.ai/download).
+
+Install it, launch it, and open the settings tab.
+
+![Opening Claude settings](/imports/claude-figma-mcp/image-006.png)
+
+Pick **Developer** in the left-hand tab and open the config editor.
+
+![Developer tab](/imports/claude-figma-mcp/image-011.png)
+
+Click `claude_desktop_config.json`.
+
+![Opening the config file](/imports/claude-figma-mcp/image-014.png)
+
+Add the following to the config file.
+
+> ⚠️ Some setups work intermittently after configuring Claude. If that happens, try both variants below.
+
+**Option A — figma-mcp**
+
+```json
+{
+  "mcpServers": {
+    "figma-mcp": {
+      "command": "npx",
+      "args": ["figma-mcp"],
+      "env": {
+        "FIGMA_API_KEY": "<발급받은 API KEY>"
+      }
+    }
+  }
+}
+```
+
+**Option B — figma-developer-mcp**
+
+```json
+{
+  "mcpServers": {
+    "figma-developer-mcp": {
+      "command": "npx",
+      "args": ["-y", "figma-developer-mcp", "--stdio"],
+      "env": {
+        "FIGMA_API_KEY": "<발급받은 API KEY>"
+      }
+    }
+  }
+}
+```
+
+Once that is in place, use **Copy link to selection** in Figma, then give Claude the link together with the styling tool you want (styled-components, for example) and the framework or libraries you are using.
+
+![Copying a Figma link](/imports/claude-figma-mcp/image-001.png)
+
+Claude analyzes the link and returns the design converted to code, like this.
+
+![Conversion result — main](/imports/claude-figma-mcp/image-005.png)
+
+| Figma source | Converted design |
+|---|---|
+| ![Conversion result — code 1](/imports/claude-figma-mcp/image-012.png) | ![Conversion result — preview 1](/imports/claude-figma-mcp/image-007.png) |
+{/* | ![Conversion result — code 2](/imports/claude-figma-mcp/image-013.png) | ![Conversion result — preview 2](/imports/claude-figma-mcp/image-010.png) | */}
+{/* | ![Conversion result — code 3](/imports/claude-figma-mcp/image-009.png) | ![Conversion result — preview 3](/imports/claude-figma-mcp/image-004.png) | */}
+
+## Closing thoughts
+
+The generated output was surprisingly complete. With the defined icons and a bit of detail CSS on top, it looks like this can cut the cost of UI plumbing and leave more room for the core business logic.
+
+An AI tool that plugs straight into the IDE, like Cursor, should be even more useful here, since it also understands the structure of the project you are already working in.

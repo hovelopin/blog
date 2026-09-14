@@ -7,6 +7,7 @@ import { visit } from "unist-util-visit";
 import type { Root, Element } from "hast";
 import type { MDXRemoteProps } from "next-mdx-remote/rsc";
 import { previewFor } from "@/lib/link-previews";
+import { SITE_URL } from "@/lib/site";
 
 /**
  * 본문 링크에 data-preview-src 를 붙인다. PostContent 가 이 속성을 보고 hover 카드를 띄운다.
@@ -28,6 +29,30 @@ function linkPreviewPlugin(overrides: Record<string, string> | undefined) {
   };
 }
 
+/**
+ * 본문의 바깥 링크를 새 탭에서 열게 한다.
+ *
+ * rel 은 컴포넌트 쪽(research 표지 등)과 같은 값으로 맞춘다.
+ * noopener 는 열린 페이지가 window.opener 로 원래 탭을 건드리는 걸 막는다.
+ */
+function externalLinkPlugin() {
+  return () => (tree: Root) => {
+    visit(tree, "element", (node: Element) => {
+      if (node.tagName !== "a") return;
+      const href = node.properties?.href;
+      if (typeof href !== "string") return;
+      // 상대 경로와 내 도메인, 그리고 #앵커·mailto: 는 그대로 둔다.
+      if (!/^https?:\/\//.test(href)) return;
+      if (href.startsWith(SITE_URL)) return;
+      node.properties = {
+        ...node.properties,
+        target: "_blank",
+        rel: "noreferrer noopener",
+      };
+    });
+  };
+}
+
 type MdxOptions = NonNullable<MDXRemoteProps["options"]>;
 
 /**
@@ -42,6 +67,7 @@ export function mdxOptions(linkPreviews?: Record<string, string>): MdxOptions {
       rehypePlugins: [
         rehypeSlug,
         linkPreviewPlugin(linkPreviews),
+        externalLinkPlugin(),
         [
           rehypePrettyCode,
           {

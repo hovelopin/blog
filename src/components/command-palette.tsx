@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Home,
@@ -13,6 +13,7 @@ import {
   Tag as TagIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DEFAULT_LOCALE, localePath, type Locale } from "@/lib/locale";
 
 interface PalettePost {
   slug: string;
@@ -23,6 +24,7 @@ interface PalettePost {
 }
 
 interface CommandPaletteProps {
+  locale?: Locale;
   posts: PalettePost[];
   tags: { tag: string; count: number }[];
 }
@@ -88,7 +90,8 @@ function IconFor({ name }: { name: "home" | "blog" | "research" | "diary" | "rss
   return <Rss size={14} aria-hidden="true" />;
 }
 
-export function CommandPalette({ posts, tags }: CommandPaletteProps) {
+export function CommandPalette({ posts, tags, locale = DEFAULT_LOCALE }: CommandPaletteProps) {
+  const at = useCallback((path: string) => localePath(locale, path), [locale]);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -113,7 +116,7 @@ export function CommandPalette({ posts, tags }: CommandPaletteProps) {
         id: "nav:home",
         label: "Home",
         hint: "~/",
-        href: "/",
+        href: at("/"),
         icon: "home",
         keywords: "home root cd ~",
       },
@@ -122,7 +125,7 @@ export function CommandPalette({ posts, tags }: CommandPaletteProps) {
         id: "nav:posts",
         label: "Posts",
         hint: "~/posts",
-        href: "/posts",
+        href: at("/posts"),
         icon: "blog",
         keywords: "blog posts ls articles",
       },
@@ -169,7 +172,7 @@ export function CommandPalette({ posts, tags }: CommandPaletteProps) {
       id: `post:${p.slug}`,
       label: p.title,
       hint: p.date,
-      href: `/posts/${p.slug}`,
+      href: at(`/posts/${p.slug}`),
       keywords: `${p.title} ${p.description} ${(p.tags ?? []).join(" ")} ${p.slug}`,
     }));
     const tagItems: Item[] = tags.map(({ tag, count }) => ({
@@ -177,11 +180,11 @@ export function CommandPalette({ posts, tags }: CommandPaletteProps) {
       id: `tag:${tag}`,
       label: `#${tag}`,
       hint: `${count} posts`,
-      href: `/posts/tag/${encodeURIComponent(tag)}`,
+      href: at(`/posts/tag/${encodeURIComponent(tag)}`),
       keywords: `tag ${tag}`,
     }));
     return [...nav, ...actions, ...postItems, ...tagItems];
-  }, [posts, tags]);
+  }, [posts, tags, at]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) {

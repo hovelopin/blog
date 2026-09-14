@@ -97,7 +97,14 @@ async function collectLinks() {
   return [...urls].toSorted();
 }
 
-/** 설치 없이 쓸 수 있는 Chrome 을 먼저 찾고, 없으면 번들 크로미움을 쓴다. */
+/**
+ * 로컬에 설치된 Chrome 을 찾는다. 없으면 null.
+ *
+ * 번들 크로미움(@sparticuz/chromium)은 쓰지 않는다. 그건 AWS Lambda *런타임*
+ * 전용이라 Vercel 빌드 컨테이너에서는 공유 라이브러리를 풀지도, LD_LIBRARY_PATH
+ * 를 잡지도 않는다. 실제로 그렇게 붙였다가 프로덕션에서 47장이 전부 실패했다.
+ * 그래서 촬영은 개발자 머신에서만 하고, 결과 파일을 저장소에 커밋한다.
+ */
 async function resolveChrome() {
   const candidates = [
     process.env.CHROME_PATH,
@@ -114,10 +121,7 @@ async function resolveChrome() {
       /* 다음 후보로 */
     }
   }
-
-  // Vercel 빌드 컨테이너에는 Chrome 이 없다. 서버리스용 크로미움을 푼다.
-  const { default: chromium } = await import("@sparticuz/chromium");
-  return chromium.executablePath();
+  return null;
 }
 
 async function capture(chrome, url, dest) {
@@ -142,6 +146,10 @@ async function capture(chrome, url, dest) {
   if (size < 3000) throw new Error(`too small (${size}B)`);
 }
 
+function manifestAdd(manifest, urls, name) {
+  for (const u of urls) manifest[u] = `/images/link-previews/${name}`;
+}
+
 async function main() {
   const urls = await collectLinks();
   if (urls.length === 0) {
@@ -159,6 +167,10 @@ async function main() {
   const failed = [];
 
   chrome = await resolveChrome();
+  if (!chrome) {
+    // Vercel 빌드 컨테이너 등 Chrome 이 없는 곳. 이미 커밋된 파일만 쓰고 넘어간다.
+    console.log("[link-previews] Chrome 없음 — 커밋된 스크린샷만 사용한다");
+  }
 
   // 앵커만 다른 주소는 한 장을 공유하므로 촬영 단위로 먼저 묶는다.
   const byKey = new Map();
@@ -177,23 +189,34 @@ async function main() {
       const name = `${key}.png`;
       const cachePath = path.join(CACHE_DIR, name);
 
+      const outPath = path.join(OUT_DIR, name);
       let ok = true;
+      try {
+        // 저장소에 커밋된 파일이 있으면 그걸 그대로 쓴다(빌드 환경).
+        await fs.access(outPath);
+        manifestAdd(manifest, sameShot, name);
+        cached++;
+        continue;
+      } catch {
+        /* 없으면 캐시·촬영으로 */
+      }
       try {
         await fs.access(cachePath);
         cached++;
       } catch {
+        if (!chrome) continue; // 촬영할 수단이 없으면 그 링크는 미리보기 없이 간다
         try {
           await capture(chrome, sameShot[0], cachePath);
           fresh++;
         } catch (e) {
-          failed.push(`${shotUrl(sameShot[0])} — ${e.message.split("\n")[0]}`);
+          failed.push(`${shotUrl(sameShot[0])} — ${(e.stderr || e.message).split("\n").slice(0, 2).join(" ").slice(0, 200)}`);
           ok = false;
         }
       }
       if (!ok) continue;
 
-      await fs.copyFile(cachePath, path.join(OUT_DIR, name));
-      for (const u of sameShot) manifest[u] = `/images/link-previews/${name}`;
+      await fs.copyFile(cachePath, outPath);
+      manifestAdd(manifest, sameShot, name);
     }
   };
 

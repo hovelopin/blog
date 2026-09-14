@@ -50,7 +50,7 @@ src/
     utils.ts        # cn() utility
   types/            # TypeScript 인터페이스
 content/
-  posts/            # 기술 글
+  posts/            # 기술 글. <slug>.mdx = 한국어, <slug>.en.mdx = 영어판
   research/         # 리서치 시리즈
   diary/            # 다이어리
 public/
@@ -60,6 +60,16 @@ public/
 scripts/
   import-docx.mjs   # docx → 마크다운 변환 스크립트
 ```
+
+## 다국어 (posts 한정)
+
+한국어가 기본이라 URL 에 접두사가 없고(`/posts/foo`), 영어만 `/en` 아래로 간다(`/en/posts/foo`).
+`src/app/(ko)` · `src/app/(en)` 두 개의 루트 레이아웃이 `<html lang>` 을 각각 잡는다.
+
+**한국어 글을 고칠 때는 `<slug>.en.mdx` 가 있는지 먼저 확인하고, 있으면 같이 고친다.**
+한쪽만 바꾸면 두 언어가 어긋난다. 상세 규칙은 `.claude/skills/blog-tone` 에 있다.
+
+영어판이 있는 글에만 본문 안에 언어 전환 링크가 뜬다. research 와 diary 는 한국어만 지원한다.
 
 ## 블로그 글 작성 규칙 (말투)
 

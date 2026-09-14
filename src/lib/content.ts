@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 import GithubSlugger from "github-slugger";
 import { visit } from "unist-util-visit";
 import type { Root as MdastRoot, Heading as MdastHeading } from "mdast";
+import { DEFAULT_LOCALE, localeSuffix, type Locale } from "@/lib/locale";
 import type {
   Book,
   BookFrontmatter,
@@ -50,11 +51,21 @@ function isPostVisible(fm: Pick<PostFrontmatter, "draft">): boolean {
   return !fm.draft;
 }
 
-async function listMarkdownFiles(dir: string): Promise<string[]> {
+/**
+ * 해당 언어의 마크다운 파일만 고른다.
+ * 한국어는 `foo.mdx`, 영어는 `foo.en.mdx` 처럼 접미사로 구분한다.
+ */
+async function listMarkdownFiles(dir: string, locale: Locale = DEFAULT_LOCALE): Promise<string[]> {
   try {
     const entries = await fs.readdir(dir, { withFileTypes: true });
+    const suffix = `${localeSuffix(locale)}.mdx`;
     return entries
-      .filter((entry) => entry.isFile() && entry.name.endsWith(".mdx"))
+      .filter((entry) => entry.isFile() && entry.name.endsWith(suffix))
+      .filter((entry) => {
+        // 기본 언어는 접미사가 없으므로 다른 언어 파일을 직접 걸러낸다.
+        if (locale !== DEFAULT_LOCALE) return true;
+        return !/\.[a-z]{2}\.mdx$/.test(entry.name);
+      })
       .map((entry) => entry.name);
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
@@ -63,7 +74,12 @@ async function listMarkdownFiles(dir: string): Promise<string[]> {
 }
 
 function slugFromFilename(filename: string): string {
-  return filename.replace(/\.mdx$/, "");
+  return filename.replace(/(\.[a-z]{2})?\.mdx$/, "");
+}
+
+/** 글 파일 경로. 그 언어의 파일이 없으면 null — 목록에서 빠진다. */
+function postFile(slug: string, locale: Locale): string {
+  return path.join(postsDir, `${slug}${localeSuffix(locale)}.mdx`);
 }
 
 /**
@@ -89,8 +105,8 @@ function extractHeadings(source: string): Heading[] {
   return headings;
 }
 
-export async function getAllPostSummaries(): Promise<PostSummary[]> {
-  const files = await listMarkdownFiles(postsDir);
+export async function getAllPostSummaries(locale: Locale = DEFAULT_LOCALE): Promise<PostSummary[]> {
+  const files = await listMarkdownFiles(postsDir, locale);
   const summaries: (PostSummary | null)[] = await Promise.all(
     files.map(async (filename): Promise<PostSummary | null> => {
       const raw = await fs.readFile(path.join(postsDir, filename), "utf8");
@@ -119,8 +135,11 @@ export async function getAllPostSummaries(): Promise<PostSummary[]> {
     .sort((a, b) => b.date.localeCompare(a.date));
 }
 
-export async function getPostBySlug(slug: string): Promise<Post | null> {
-  const filePath = path.join(postsDir, `${slug}.mdx`);
+export async function getPostBySlug(
+  slug: string,
+  locale: Locale = DEFAULT_LOCALE,
+): Promise<Post | null> {
+  const filePath = postFile(slug, locale);
   let raw: string;
   try {
     raw = await fs.readFile(filePath, "utf8");
@@ -152,8 +171,18 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   } satisfies Post;
 }
 
-export async function getAllPostSlugs(): Promise<string[]> {
-  const posts = await getAllPostSummaries();
+/** 그 글의 해당 언어 번역본이 있는지. 글 안의 언어 전환 링크를 띄울지 정한다. */
+export async function hasPostTranslation(slug: string, locale: Locale): Promise<boolean> {
+  try {
+    await fs.access(postFile(slug, locale));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function getAllPostSlugs(locale: Locale = DEFAULT_LOCALE): Promise<string[]> {
+  const posts = await getAllPostSummaries(locale);
   return posts.map((p) => p.slug);
 }
 

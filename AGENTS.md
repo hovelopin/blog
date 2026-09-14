@@ -14,7 +14,7 @@ Next.js 기반 개인 블로그. 글은 `content/` 아래 마크다운으로 관
 
 ## Tech Stack
 - **Framework:** Next.js 16 (App Router, React 19, TypeScript strict)
-- **UI:** shadcn/ui (Base UI primitives, Tailwind CSS v4, `cn()` utility)
+- **UI:** Tailwind CSS v4 + 직접 만든 컴포넌트 (`cn()` utility)
 - **Icons:** Lucide React
 - **Content:** Markdown + gray-matter, remark/rehype 파이프라인, Shiki 코드 하이라이팅
 - **Package manager:** pnpm
@@ -44,13 +44,11 @@ Next.js 기반 개인 블로그. 글은 `content/` 아래 마크다운으로 관
 src/
   app/              # Next.js 라우트 (posts, research, diary, rss.xml, llms.txt, sitemap, robots)
   components/       # React 컴포넌트
-    ui/             # shadcn/ui primitives
   lib/
     content.ts      # 마크다운 로딩/파싱
     site.ts         # 사이트 메타데이터
     utils.ts        # cn() utility
   types/            # TypeScript 인터페이스
-  hooks/            # 커스텀 훅
 content/
   posts/            # 기술 글
   research/         # 리서치 시리즈

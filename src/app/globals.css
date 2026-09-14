@@ -217,15 +217,53 @@
   margin-top: 1.25rem;
   margin-bottom: 1.25rem;
 }
-.prose-blog a {
+/*
+  본문 링크 밑줄.
+
+  text-decoration 은 폭을 애니메이션할 수 없어서 배경 그라디언트로 그린다.
+  두 겹이다 — 항상 보이는 흐린 선(아래 레이어)과, 호버 때 가운데에서
+  양옆으로 퍼지는 선(위 레이어). background-position 이 center 라
+  background-size 를 0%→100% 로 늘리면 가운데에서 밖으로 자란다.
+
+  padding-bottom 은 밑줄을 글자에서 떨어뜨리는 용도다. 인라인 요소의
+  세로 padding 은 줄 높이에 영향을 주지 않으므로 행간은 그대로다.
+  box-decoration-break 는 링크가 줄바꿈될 때 두 줄 모두에 밑줄을 남긴다.
+*/
+.prose-blog a,
+.diary-content a {
   color: var(--primary);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-color: color-mix(in oklch, var(--primary) 40%, transparent);
-  transition: text-decoration-color 0.2s ease;
+  text-decoration: none;
+  padding-bottom: 3px;
+  background-image:
+    linear-gradient(var(--primary), var(--primary)),
+    linear-gradient(
+      color-mix(in oklch, var(--primary) 35%, transparent),
+      color-mix(in oklch, var(--primary) 35%, transparent)
+    );
+  background-position:
+    center bottom,
+    center bottom;
+  background-size:
+    0% 1px,
+    100% 1px;
+  background-repeat: no-repeat;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-size 480ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-.prose-blog a:hover {
-  text-decoration-color: var(--primary);
+.prose-blog a:hover,
+.prose-blog a:focus-visible,
+.diary-content a:hover,
+.diary-content a:focus-visible {
+  background-size:
+    100% 1px,
+    100% 1px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .prose-blog a,
+  .diary-content a {
+    transition: none;
+  }
 }
 .prose-blog strong {
   font-weight: 600;
@@ -418,15 +456,6 @@
 }
 .diary-content p:last-child {
   margin-bottom: 0;
-}
-.diary-content a {
-  color: var(--primary);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-color: color-mix(in oklch, var(--primary) 40%, transparent);
-}
-.diary-content a:hover {
-  text-decoration-color: var(--primary);
 }
 .diary-content code {
   border-radius: 4px;

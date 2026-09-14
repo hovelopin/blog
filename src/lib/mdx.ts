@@ -6,19 +6,22 @@ import rehypeSlug from "rehype-slug";
 import { visit } from "unist-util-visit";
 import type { Root, Element } from "hast";
 import type { MDXRemoteProps } from "next-mdx-remote/rsc";
+import { previewFor } from "@/lib/link-previews";
 
 /**
- * frontmatter 의 linkPreviews 에 등록된 링크에 data-preview-src 를 붙인다.
- * PostContent 가 이 속성을 보고 hover 카드를 띄운다.
+ * 본문 링크에 data-preview-src 를 붙인다. PostContent 가 이 속성을 보고 hover 카드를 띄운다.
+ *
+ * 스크린샷은 빌드 전에 capture-link-previews 스크립트가 찍어 둔다.
+ * frontmatter 의 linkPreviews 를 같이 넘기면 그 값이 스크린샷보다 우선한다 —
+ * 특정 링크만 직접 만든 이미지로 덮고 싶을 때 쓴다.
  */
-function linkPreviewPlugin(map: Record<string, string> | undefined) {
+function linkPreviewPlugin(overrides: Record<string, string> | undefined) {
   return () => (tree: Root) => {
-    if (!map || Object.keys(map).length === 0) return;
     visit(tree, "element", (node: Element) => {
       if (node.tagName !== "a") return;
       const href = node.properties?.href;
       if (typeof href !== "string") return;
-      const src = map[href];
+      const src = overrides?.[href] ?? previewFor(href);
       if (!src) return;
       node.properties = { ...node.properties, dataPreviewSrc: src };
     });

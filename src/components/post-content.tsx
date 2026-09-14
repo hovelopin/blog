@@ -10,7 +10,8 @@ interface PostContentProps {
   className?: string;
 }
 
-const CARD_WIDTH = 248;
+// 스크린샷이 600x375(=1.6)로 찍히므로 카드도 같은 비율로 맞춘다.
+const CARD_WIDTH = 256;
 const CARD_HEIGHT = 160;
 const GAP = 10;
 const HIDE_DELAY = 120;

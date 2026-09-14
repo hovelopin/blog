@@ -22,16 +22,20 @@ function drawLane(
   ctx.fillStyle = palette.fg;
   ctx.fillText(title, x, 18);
 
-  // 렌더가 진행되며 콜백이 바뀐다
+  // 렌더가 진행되며 콜백이 바뀐다.
+  // 레인 안의 요소는 모두 같은 내용 폭(w - 12)을 쓴다. 칩 줄만 w 를 꽉 채우면
+  // 오른쪽 레인에서 카드 테두리에 붙어 잘린 것처럼 보인다.
   const rowY = 42;
-  const cellW = (w - 12) / RENDERS.length;
+  const CHIP_GAP = 6;
+  const laneW = w - 12;
+  const cellW = (laneW - CHIP_GAP * (RENDERS.length - 1)) / RENDERS.length;
   RENDERS.forEach((r, i) => {
     const active = i <= step;
     const now = i === step;
     const alpha = active ? (now ? Math.min(1, local * 2.4) : 1) : 0.2;
     ctx.globalAlpha = alpha;
     ctx.beginPath();
-    ctx.roundRect(x + i * (cellW + 6), rowY, cellW, 24, 4);
+    ctx.roundRect(x + i * (cellW + CHIP_GAP), rowY, cellW, 24, 4);
     ctx.fillStyle = palette.primary;
     ctx.globalAlpha = alpha * 0.14;
     ctx.fill();
@@ -41,7 +45,7 @@ function drawLane(
     ctx.font = `11px ${MONO}`;
     ctx.fillStyle = palette.fg;
     ctx.textAlign = "center";
-    ctx.fillText(`onCancel ${r}`, x + i * (cellW + 6) + cellW / 2, rowY + 12);
+    ctx.fillText(`onCancel ${r}`, x + i * (cellW + CHIP_GAP) + cellW / 2, rowY + 12);
     ctx.textAlign = "left";
     ctx.globalAlpha = 1;
   });
@@ -55,7 +59,7 @@ function drawLane(
 
   const color = fresh ? palette.primary : palette.danger;
   ctx.beginPath();
-  ctx.roundRect(x, boxY, w - 12, 28, 5);
+  ctx.roundRect(x, boxY, laneW, 28, 5);
   ctx.fillStyle = color;
   ctx.globalAlpha = 0.16;
   ctx.fill();

@@ -267,12 +267,15 @@
 .prose-blog hr {
   display: none;
 }
-/* 본문 속 인라인 코드. 본문 색과 같으면 묻혀서 강조색으로 띄운다. */
+/*
+  본문 속 인라인 코드. 본문 색과 같으면 묻혀서 강조색으로 띄우되,
+  테두리와 세로 여백은 두지 않는다. 칩이 줄 높이를 거의 채우면
+  여러 줄에 걸쳐 나올 때 글이 블록으로 쪼개져 보인다.
+*/
 .prose-blog :not(pre) > code {
   border-radius: calc(var(--radius) * 0.6);
-  border: 1px solid color-mix(in oklch, var(--primary) 22%, transparent);
   background: color-mix(in oklch, var(--primary) 10%, transparent);
-  padding: 0.1rem 0.4rem;
+  padding: 0.08em 0.35em;
   font-family: var(--font-mono);
   font-size: 0.88em;
   color: var(--code-inline);
@@ -427,9 +430,8 @@
 }
 .diary-content code {
   border-radius: 4px;
-  border: 1px solid color-mix(in oklch, var(--primary) 22%, transparent);
   background: color-mix(in oklch, var(--primary) 10%, transparent);
-  padding: 0.05rem 0.3rem;
+  padding: 0.08em 0.32em;
   font-family: var(--font-mono);
   font-size: 0.85em;
   color: var(--code-inline);

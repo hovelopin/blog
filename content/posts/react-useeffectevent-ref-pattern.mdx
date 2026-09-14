@@ -15,36 +15,46 @@ React 컴포넌트에서 effect 안에 콜백 prop을 넣다 보면 `useRef`로 
 effect 안에서 부모가 내려준 콜백 prop을 호출해야 할 때 아래와 같은 패턴을 종종 만난다.
 
 ```tsx
-const onCancelRef = useRef(onCancel)
-const onOpenChangeRef = useRef(onOpenChange)
+type DialogProps = {
+  open: boolean;
+  onCancel?: () => void;
+  onOpenChange: (open: boolean) => void;
+};
 
-useEffect(() => {
-  onCancelRef.current = onCancel
-  onOpenChangeRef.current = onOpenChange
-}, [onCancel, onOpenChange])
+function Dialog({ open, onCancel, onOpenChange }: DialogProps) {
+  const onCancelRef = useRef(onCancel);
+  const onOpenChangeRef = useRef(onOpenChange);
 
-useEffect(() => {
-  if (!open) return
+  useEffect(() => {
+    onCancelRef.current = onCancel;
+    onOpenChangeRef.current = onOpenChange;
+  }, [onCancel, onOpenChange]);
 
-  const handleEscape = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      onCancelRef.current?.()
-      onOpenChangeRef.current(false)
-    }
-  }
+  useEffect(() => {
+    if (!open) return;
 
-  document.addEventListener('keydown', handleEscape)
-  return () => document.removeEventListener('keydown', handleEscape)
-}, [open])
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onCancelRef.current?.();
+        onOpenChangeRef.current(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [open]);
+
+  return null;
+}
 ```
 
 `onCancel`과 `onOpenChange`는 부모에서 내려준 콜백 prop이다. ESC 리스너를 등록하는 `useEffect`의 의존성 배열에 이 콜백들을 넣으면, 부모가 리렌더될 때마다 함수 참조가 바뀌어 effect가 다시 실행되고, `keydown` 이벤트 리스너를 매번 해제했다가 다시 등록하게 된다. 의존성에서 빼면 재구독은 막을 수 있지만, 클로저에 갇힌 옛날 콜백만 호출하는 stale closure 문제가 생긴다.
 
-| 방법 | 구독 안정성 | 최신 콜백 |
-|---|---|---|
-| 의존성에 콜백 포함 | ❌ 매번 재구독 | ✅ 항상 최신 |
-| 의존성에서 콜백 제거 | ✅ 한 번만 | ❌ stale closure |
-| **콜백을 ref에 저장** | ✅ 한 번만 | ✅ 항상 최신 |
+| 방법                  | 구독 안정성    | 최신 콜백        |
+| --------------------- | -------------- | ---------------- |
+| 의존성에 콜백 포함    | ❌ 매번 재구독 | ✅ 항상 최신     |
+| 의존성에서 콜백 제거  | ✅ 한 번만     | ❌ stale closure |
+| **콜백을 ref에 저장** | ✅ 한 번만     | ✅ 항상 최신     |
 
 콜백을 ref에 담고 별도 `useEffect`로 `current`를 최신값으로 맞추는 패턴은 이 둘을 동시에 만족시키는 절충안이다. `handlerRef.current`는 매 렌더마다 최신 콜백으로 갱신되고(최신 보장), effect 의존성 배열에는 ref가 들어가지 않으니(구독 안정) 양쪽을 다 잡는다.
 
@@ -64,54 +74,58 @@ ref 패턴의 동작은 정확하다. 다만 **의도를 가리는 보일러플�
 왼쪽은 렌더가 세 번 돌아도 첫 번째 콜백을 부른다. ref 를 끼우는 이유가 바로 이 간극을 메우기
 위해서다.
 
-React 19.2부터 정식 합류한 [`useEffectEvent`](https://react.dev/learn/separating-events-from-effects)가 정확히 이 패턴을 위한 API다. **항상 최신 props/state를 읽으면서도 그 값이 effect를 재실행시키지 않는** 함수를 만들어 주는데, 내부적으로는 ref에 최신 콜백을 담아둔다.
+React 19.2부터 사용할 수 있는 [`useEffectEvent`](https://react.dev/learn/separating-events-from-effects)가 정확히 이 패턴을 위한 API다. **항상 최신 props/state를 읽으면서도 그 값이 effect를 재실행시키지 않는** 함수를 만들어 주는데, 내부적으로는 ref에 최신 콜백을 담아둔다.
 
 ### ref 두 개와 동기화 effect
 
 ```tsx
-const onCancelRef = useRef(onCancel)
-const onOpenChangeRef = useRef(onOpenChange)
+function Dialog({ open, onCancel, onOpenChange }: DialogProps) {
+  const onCancelRef = useRef(onCancel);
+  const onOpenChangeRef = useRef(onOpenChange);
 
-useEffect(() => {
-  onCancelRef.current = onCancel
-  onOpenChangeRef.current = onOpenChange
-}, [onCancel, onOpenChange])
+  useEffect(() => {
+    onCancelRef.current = onCancel;
+    onOpenChangeRef.current = onOpenChange;
+  }, [onCancel, onOpenChange]);
 
-useEffect(() => {
-  if (!open) return
+  useEffect(() => {
+    if (!open) return;
 
-  const handleEscape = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      onCancelRef.current?.()
-      onOpenChangeRef.current(false)
-    }
-  }
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onCancelRef.current?.();
+        onOpenChangeRef.current(false);
+      }
+    };
 
-  document.addEventListener('keydown', handleEscape)
-  return () => document.removeEventListener('keydown', handleEscape)
-}, [open])
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [open]);
+
+  return null;
+}
 ```
 
 ### useEffectEvent 한 줄
 
 ```tsx
-import { useEffectEvent } from 'react'
+import { useEffectEvent } from "react";
 
 const onEscape = useEffectEvent(() => {
-  onCancel?.()
-  onOpenChange(false)
-})
+  onCancel?.();
+  onOpenChange(false);
+});
 
 useEffect(() => {
-  if (!open) return
+  if (!open) return;
 
   const handleEscape = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') onEscape()
-  }
+    if (e.key === "Escape") onEscape();
+  };
 
-  document.addEventListener('keydown', handleEscape)
-  return () => document.removeEventListener('keydown', handleEscape)
-}, [open])
+  document.addEventListener("keydown", handleEscape);
+  return () => document.removeEventListener("keydown", handleEscape);
+}, [open]);
 ```
 
 ---
@@ -126,17 +140,17 @@ React 소스([`react-reconciler`의 `ReactFiberHooks.js`](https://github.com/fac
 
 ```js
 function mountEvent(callback) {
-  const hook = mountWorkInProgressHook()
-  const ref = { impl: callback }      // ← 우리가 만들던 handlerRef
-  hook.memoizedState = ref
+  const hook = mountWorkInProgressHook();
+  const ref = { impl: callback }; // ← 우리가 만들던 handlerRef
+  hook.memoizedState = ref;
   return function eventFn() {
     if (isInvalidExecutionContextForEventFunction()) {
       throw new Error(
-        "A function wrapped in useEffectEvent can't be called during rendering.",
-      )
+        "A function wrapped in useEffectEvent can't be called during rendering."
+      );
     }
-    return ref.impl.apply(undefined, arguments)   // ← 호출하는 순간에 ref.impl을 읽음
-  }
+    return ref.impl.apply(undefined, arguments); // ← 호출하는 순간에 ref.impl을 읽음
+  };
 }
 ```
 
@@ -150,10 +164,10 @@ function mountEvent(callback) {
 
 ```js
 function useEffectEventImpl(payload) {
-  currentlyRenderingFiber.flags |= UpdateEffect   // 커밋 때 처리할 게 있다고 표시
+  currentlyRenderingFiber.flags |= UpdateEffect; // 커밋 때 처리할 게 있다고 표시
   // payload = { ref, nextImpl: 새 콜백 } 을 fiber의 updateQueue.events에 쌓아둠
   // ...
-  events.push(payload)
+  events.push(payload);
 }
 ```
 
@@ -164,8 +178,8 @@ function useEffectEventImpl(payload) {
 ```js
 // 커밋 단계(commitMutationEffectsOnFiber 등)에서
 for (let ii = 0; ii < eventPayloads.length; ii++) {
-  const { ref, nextImpl } = eventPayloads[ii]
-  ref.impl = nextImpl      // ← 여기서 최신 콜백이 ref에 꽂힌다
+  const { ref, nextImpl } = eventPayloads[ii];
+  ref.impl = nextImpl; // ← 여기서 최신 콜백이 ref에 꽂힌다
 }
 ```
 
@@ -177,11 +191,11 @@ for (let ii = 0; ii < eventPayloads.length; ii++) {
 
 그냥 "ref를 갱신한다"가 아니라 **언제** 갱신하느냐가 이 API의 정확성을 만든다. 커밋 단계의 실행 순서를 보면 이렇다.
 
-| 순서 | 단계 | 하는 일 |
-|---|---|---|
-| 1 | Before Mutation / Mutation | **`ref.impl = nextImpl` (Effect Event 갱신)** |
-| 2 | Layout | `useLayoutEffect` 실행 |
-| 3 | Passive | `useEffect` 실행 |
+| 순서 | 단계                       | 하는 일                                       |
+| ---- | -------------------------- | --------------------------------------------- |
+| 1    | Before Mutation / Mutation | **`ref.impl = nextImpl` (Effect Event 갱신)** |
+| 2    | Layout                     | `useLayoutEffect` 실행                        |
+| 3    | Passive                    | `useEffect` 실행                              |
 
 Effect Event의 ref 갱신이 `useLayoutEffect`·`useEffect`보다 **먼저** 끝난다. 그래서 우리의 ESC effect(`useEffect`)가 도는 시점엔 `ref.impl`이 이미 이번 렌더의 최신 콜백을 가리킨다. 손으로 짠 ref 패턴은 "동기화 effect와 구독 effect 중 누가 먼저 도느냐"를 신경 써야 했지만, React는 이 순서를 커밋 단계에 못 박아 두어 stale이 끼어들 틈을 없앴다.
 
@@ -195,11 +209,11 @@ Effect Event의 ref 갱신이 `useLayoutEffect`·`useEffect`보다 **먼저** �
 
 결국 우리가 짜던 코드와 한 줄씩 대응한다.
 
-| 손으로 짠 ref 패턴 | React 내부 |
-|---|---|
-| `const handlerRef = useRef(handler)` | `const ref = { impl: callback }` |
-| 동기화용 `useEffect`로 `ref.current = handler` | 커밋 단계에서 `ref.impl = nextImpl` |
-| effect 안에서 `handlerRef.current(e)` | `eventFn`이 `ref.impl.apply(...)` 호출 |
+| 손으로 짠 ref 패턴                             | React 내부                             |
+| ---------------------------------------------- | -------------------------------------- |
+| `const handlerRef = useRef(handler)`           | `const ref = { impl: callback }`       |
+| 동기화용 `useEffect`로 `ref.current = handler` | 커밋 단계에서 `ref.impl = nextImpl`    |
+| effect 안에서 `handlerRef.current(e)`          | `eventFn`이 `ref.impl.apply(...)` 호출 |
 
 달라진 건 **갱신을 우리 effect가 아니라 React 커밋 단계가 책임진다**는 점뿐이다. 그 덕에 갱신 타이밍이 effect보다 먼저로 보장되고, 보일러플레이트가 사라지고, "렌더 중 호출 금지"가 런타임에서 강제된다.
 

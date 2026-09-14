@@ -1,18 +1,18 @@
 ---
-title: "AI가 자꾸 만드는 useRef 패턴, useEffectEvent로 걷어내기"
-description: "AI가 콜백 prop을 useRef로 감싸고 useEffect로 동기화하는 패턴을 useEffectEvent로 정리한 과정을 공유하고, React가 useEffectEvent를 내부에서 어떻게 구현했는지 소스까지 따라가 본다."
+title: "useRef 패턴, useEffectEvent로 걷어내기"
+description: "콜백 prop을 useRef로 감싸고 useEffect로 동기화하는 패턴을 useEffectEvent로 정리한 과정을 공유하고, React가 useEffectEvent를 내부에서 어떻게 구현했는지 소스까지 따라가 본다."
 date: "2026-06-29"
-tags: ["react", "hooks", "useeffectevent", "ai", "refactoring"]
+tags: ["react", "hooks", "useeffectevent", "refactoring"]
 author: "hovelopin"
 cover: "/covers/react-useeffectevent-ref-pattern.png"
 coverAlt: "useRef 패턴을 useEffectEvent로 리팩토링하는 썸네일"
 ---
 
-AI로 React 컴포넌트를 만들다 보면 콜백 prop을 `useRef`로 감싸고 `useEffect`로 동기화하는 패턴이 자꾸 끼어든다. 이 패턴이 왜 필요했는지 짚어보고, 같은 코드를 `useEffectEvent`로 정리한 뒤, React가 이 훅을 내부에서 어떻게 구현했는지까지 소스로 따라가 본다.
+React 컴포넌트에서 effect 안에 콜백 prop을 넣다 보면 `useRef`로 감싸고 `useEffect`로 동기화하는 패턴이 자주 등장한다. 이 패턴이 왜 필요했는지 짚어보고, 같은 코드를 `useEffectEvent`로 정리한 뒤, React가 이 훅을 내부에서 어떻게 구현했는지까지 소스로 따라가 본다.
 
 ## 시작하며
 
-요즘 AI를 활용해 컴포넌트를 작성하다 보면 아래와 같은 패턴이 자주 나온다.
+effect 안에서 부모가 내려준 콜백 prop을 호출해야 할 때 아래와 같은 패턴을 종종 만난다.
 
 ```tsx
 const onCancelRef = useRef(onCancel)
@@ -209,7 +209,7 @@ Effect Event의 ref 갱신이 `useLayoutEffect`·`useEffect`보다 **먼저** �
 
 정리하면 이렇다.
 
-- AI가 콜백을 `useRef`로 감싸고 `useEffect`로 동기화하던 패턴은, **"effect 구독은 한 번만, 콜백은 항상 최신"** 이라는 충돌하는 두 요구사항을 ref로 절충한 결과였고, 동작 자체는 정확했다.
+- 콜백을 `useRef`로 감싸고 `useEffect`로 동기화하던 패턴은, **"effect 구독은 한 번만, 콜백은 항상 최신"** 이라는 충돌하는 두 요구사항을 ref로 절충한 결과였고, 동작 자체는 정확했다.
 - 다만 콜백마다 ref와 동기화 effect가 늘어나 의도가 묻혔고, React 19.2의 `useEffectEvent`가 이 패턴을 정식 API로 흡수하면서 보일러플레이트 없이 같은 결과를 얻을 수 있게 됐다.
 - 소스를 까보면 `{ impl: callback }` ref 하나와 커밋 단계의 `ref.impl = nextImpl` 대입이 전부로, 우리가 손으로 짜던 패턴과 1:1로 겹친다. 다른 점은 갱신을 React 커밋 단계가 맡아 effect보다 먼저 끝낸다는 것뿐이다.
-- AI가 만든 코드가 _"왜 이렇게 짰지"_ 싶을 때, 한 겹 더 들어가 동작 원리와 더 나은 대안을 함께 따져보면 코드를 더 깔끔하게 줄일 수 있다.
+- 익숙한 패턴이라도 _"왜 이렇게 짰지"_ 싶을 때, 한 겹 더 들어가 동작 원리와 더 나은 대안을 함께 따져보면 코드를 더 깔끔하게 줄일 수 있다.

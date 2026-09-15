@@ -41,23 +41,42 @@ function draw({ ctx, width, height, elapsed, palette }: DrawArgs) {
     const lit = leafIndex >= 0 && leafIndex < step;
     const lighting = leafIndex >= 0 && leafIndex === step;
 
+    const text = `${"  ".repeat(node.depth)}${node.depth > 0 ? "└ " : ""}${node.label}`;
     ctx.font = `11px ${MONO}`;
     ctx.fillStyle = node.leaf ? (lit || lighting ? palette.primary : palette.fg) : palette.muted;
     ctx.globalAlpha = node.leaf ? 1 : 0.75;
-    ctx.fillText(`${"  ".repeat(node.depth)}${node.depth > 0 ? "└ " : ""}${node.label}`, pad, y);
+    ctx.fillText(text, pad, y);
     ctx.globalAlpha = 1;
 
-    // 리프에서 오른쪽으로 이어지는 선
+    // 리프에서 오른쪽 union 항목으로 이어지는 선.
+    // 글자 바로 뒤에서 시작해 `|` 바로 앞에서 끝나야 둘이 이어져 보인다.
+    // (예전엔 왼쪽 열 끝에서 시작해 글자와 선 사이가 비어 공중에 뜬 선처럼 보였다)
     if (lighting || lit) {
-      const alpha = lighting ? Math.min(1, local * 2) : 0.35;
-      ctx.strokeStyle = palette.primary;
+      const alpha = lighting ? Math.min(1, local * 2) : 0.6;
+      const x1 = pad + ctx.measureText(text).width + 6;
+      const x2 = rightX - 6;
+      const y2 = 40 + leafIndex * 26;
+      const midX = (x1 + x2) / 2;
+
       ctx.globalAlpha = alpha;
+      ctx.strokeStyle = palette.primary;
       ctx.setLineDash([2, 3]);
       ctx.beginPath();
-      ctx.moveTo(pad + colW - 6, y);
-      ctx.lineTo(rightX - 6, 40 + leafIndex * 26);
+      ctx.moveTo(x1, y);
+      // 양 끝이 수평으로 들고 나는 곡선이라 행 높이가 달라도 연결선으로 읽힌다
+      ctx.bezierCurveTo(midX, y, midX, y2, x2, y2);
       ctx.stroke();
       ctx.setLineDash([]);
+
+      ctx.fillStyle = palette.primary;
+      for (const [cx, cy] of [
+        [x1, y],
+        [x2, y2],
+      ]) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.globalAlpha = 1;
     }
   });

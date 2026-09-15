@@ -12,7 +12,7 @@ coverAlt: "Playwright MCP + Shadcn 디자인 시스템 썸네일"
 
 ## Playwright MCP 셋팅
 
-Playwright는 웹 페이지를 자동화·분석할 수 있는 도구다. MCP 버전은 Microsoft 공식 패키지가 있지만 설정 과정에서 문제가 있어, 동일한 기능을 제공하는 [`executeautomation/mcp-playwright`](https://github.com/executeautomation/mcp-playwright)를 대신 사용했다.
+Playwright는 웹 페이지를 자동화·분석할 수 있는 도구다. MCP 버전은 Microsoft 공식 패키지가 있지만 설정 과정에서 문제가 있어, 동일한 기능을 제공하는 [executeautomation/mcp-playwright](https://github.com/executeautomation/mcp-playwright)를 대신 사용했다.
 
 Cursor의 MCP Tools Setting에 다음을 추가한다.
 
@@ -45,17 +45,17 @@ AI 모델은 자유 형식 텍스트보다 **태그로 명시적으로 구조화
 
 추출한 XML을 Shadcn MCP에 넘겨 디자인 시스템 컴포넌트를 만든다.
 
-> @lovable-design-system.xml 이 디자인 시스템을 기반으로 `/ui-components` 페이지를 만들어줘.
+> @lovable-design-system.xml 이 디자인 시스템을 기반으로 /ui-components 페이지를 만들어줘.
 >
 > - 이 페이지에서는 디자인 시스템에 표현된 모든 컴포넌트를 한눈에 확인할 수 있어야 해.
 > - 이 컴포넌트들을 이용해서 다른 페이지들의 UI/UX를 구현할 거니까 잘 모듈화해줘.
-> - Shadcn MCP로 만들 거고, 나만의 테마를 만들고 싶으니 `globals.css`를 적절히 수정/추가하면서 구현해줘.
+> - Shadcn MCP로 만들 거고, 나만의 테마를 만들고 싶으니 globals.css를 적절히 수정/추가하면서 구현해줘.
 
 명령을 받으면 Playwright로 분석한 페이지 정보를 바탕으로 필요한 컴포넌트 목록을 추리고, Shadcn MCP가 실제 코드를 생성한다.
 
 ![Shadcn MCP가 컴포넌트 생성하는 모습](/imports/playwright-mcp-shadcn-design-system/image-006.png)
 
-구성이 끝나면 `/ui-components` 페이지에 컴포넌트들이 한 화면에 모인다.
+구성이 끝나면 /ui-components 페이지에 컴포넌트들이 한 화면에 모인다.
 
 ![UI Components — 갤러리 1](/imports/playwright-mcp-shadcn-design-system/image-004.png)
 
@@ -81,7 +81,7 @@ AI 모델은 자유 형식 텍스트보다 **태그로 명시적으로 구조화
 
 만들어진 컴포넌트들을 가지고 처음 분석했던 페이지를 참고해 한 페이지를 조립해 봤다.
 
-> 현재 만든 컴포넌트들의 조합으로 Playwright MCP를 활용해서 https://lovable.dev/ 페이지를 동일하게 구성해줘. `/lovable` 페이지로 만들면 돼.
+> 현재 만든 컴포넌트들의 조합으로 Playwright MCP를 활용해서 https://lovable.dev/ 페이지를 동일하게 구성해줘. /lovable 페이지로 만들면 돼.
 
 **AI 결과**
 

@@ -8,7 +8,7 @@ cover: "/covers/react-useeffectevent-ref-pattern.png"
 coverAlt: "useRef 패턴을 useEffectEvent로 리팩토링하는 썸네일"
 ---
 
-React 컴포넌트에서 effect 안에 콜백 prop을 넣다 보면 `useRef`로 감싸고 `useEffect`로 동기화하는 패턴이 자주 등장한다. 이 패턴이 왜 필요했는지 짚어보고, 같은 코드를 `useEffectEvent`로 정리한 뒤, React가 이 훅을 내부에서 어떻게 구현했는지까지 소스로 따라가 본다.
+React 컴포넌트에서 effect 안에 콜백 prop을 넣다 보면 useRef로 감싸고 useEffect로 동기화하는 패턴이 자주 등장한다. 이 패턴이 왜 필요했는지 짚어보고, 같은 코드를 useEffectEvent로 정리한 뒤, React가 이 훅을 내부에서 어떻게 구현했는지까지 소스로 따라가 본다.
 
 ## 시작하며
 
@@ -48,7 +48,7 @@ function Dialog({ open, onCancel, onOpenChange }: DialogProps) {
 }
 ```
 
-`onCancel`과 `onOpenChange`는 부모에서 내려준 콜백 prop이다. ESC 리스너를 등록하는 `useEffect`의 의존성 배열에 이 콜백들을 넣으면, 부모가 리렌더될 때마다 함수 참조가 바뀌어 effect가 다시 실행되고, `keydown` 이벤트 리스너를 매번 해제했다가 다시 등록하게 된다. 의존성에서 빼면 재구독은 막을 수 있지만, 클로저에 갇힌 옛날 콜백만 호출하는 stale closure 문제가 생긴다.
+onCancel과 onOpenChange는 부모에서 내려준 콜백 prop이다. ESC 리스너를 등록하는 useEffect의 의존성 배열에 이 콜백들을 넣으면, 부모가 리렌더될 때마다 함수 참조가 바뀌어 effect가 다시 실행되고, keydown 이벤트 리스너를 매번 해제했다가 다시 등록하게 된다. 의존성에서 빼면 재구독은 막을 수 있지만, 클로저에 갇힌 옛날 콜백만 호출하는 stale closure 문제가 생긴다.
 
 | 방법                  | 구독 안정성    | 최신 콜백        |
 | --------------------- | -------------- | ---------------- |
@@ -56,15 +56,15 @@ function Dialog({ open, onCancel, onOpenChange }: DialogProps) {
 | 의존성에서 콜백 제거  | ✅ 한 번만     | ❌ stale closure |
 | **ref 동기화 패턴**   | ✅ 한 번만     | ✅ 항상 최신     |
 
-콜백을 ref에 담고 별도 `useEffect`로 `current`를 최신값으로 맞추는 패턴은 이 둘을 동시에 만족시키는 절충안이다. 이 글에서는 이 방식을 **ref 동기화 패턴**이라고 부르겠다. `handlerRef.current`는 매 렌더마다 최신 콜백으로 갱신되고(최신 보장), effect 의존성 배열에는 ref가 들어가지 않으니(구독 안정) 양쪽을 다 잡는다.
+콜백을 ref에 담고 별도 useEffect로 ref의 current를 최신값으로 맞추는 패턴은 이 둘을 동시에 만족시키는 절충안이다. 이 글에서는 이 방식을 **ref 동기화 패턴**이라고 부르겠다. handlerRef.current는 매 렌더마다 최신 콜백으로 갱신되고(최신 보장), effect 의존성 배열에는 ref가 들어가지 않으니(구독 안정) 양쪽을 다 잡는다.
 
-> 참고로 `onClick={handleCancel}`처럼 **렌더 본문에서 직접 호출**하는 핸들러는 ref가 필요 없다. 매 렌더마다 새 클로저가 만들어지고 그게 곧바로 JSX에 박히기 때문에 항상 최신이다. ref가 필요한 건 어디까지나 **effect 클로저에 갇히는 콜백**뿐이다.
+> 참고로 JSX에 바로 넘기는 onClick 핸들러처럼 **렌더 본문에서 직접 호출**하는 핸들러는 ref가 필요 없다. 매 렌더마다 새 클로저가 만들어지고 그게 곧바로 JSX에 박히기 때문에 항상 최신이다. ref가 필요한 건 어디까지나 **effect 클로저에 갇히는 콜백**뿐이다.
 
 ---
 
 ## useEffectEvent로 정리하기
 
-ref 동기화 패턴의 동작은 정확하다. 다만 **의도를 가리는 보일러플레이트**가 따라온다. 콜백 하나당 `useRef` 선언이 하나씩 늘고, ref를 동기화하는 `useEffect`가 통째로 하나 더 생기고, 정작 하고 싶은 일("ESC 누르면 닫기")은 `onCancelRef.current?.()` 같은 `.current` 접근에 묻힌다. ESC 한 줄을 처리하려고 ref 두 개와 effect 하나가 붙는 셈이고, 콜백이 늘면 이 비용도 같이 늘어난다.
+ref 동기화 패턴의 동작은 정확하다. 다만 **의도를 가리는 보일러플레이트**가 따라온다. 콜백 하나당 useRef 선언이 하나씩 늘고, ref를 동기화하는 useEffect가 통째로 하나 더 생기고, 정작 하고 싶은 일("ESC 누르면 닫기")은 `.current` 접근 뒤에 묻힌다. ESC 한 줄을 처리하려고 ref 두 개와 effect 하나가 붙는 셈이고, 콜백이 늘면 이 비용도 같이 늘어난다.
 
 그런데 애초에 왜 ref 를 끼워야 했을까. 구독을 한 번만 걸어두면 effect 는 그때 잡은 콜백을
 계속 붙들고 있기 때문이다.
@@ -74,7 +74,7 @@ ref 동기화 패턴의 동작은 정확하다. 다만 **의도를 가리는 보
 왼쪽은 렌더가 세 번 돌아도 첫 번째 콜백을 부른다. ref 를 끼우는 이유가 바로 이 간극을 메우기
 위해서다.
 
-React 19.2부터 사용할 수 있는 [`useEffectEvent`](https://react.dev/learn/separating-events-from-effects)가 정확히 이 패턴을 위한 API다. **항상 최신 props/state를 읽으면서도 그 값이 effect를 재실행시키지 않는** 함수를 만들어 주는데, 내부적으로는 ref에 최신 콜백을 담아둔다.
+React 19.2부터 사용할 수 있는 [useEffectEvent](https://react.dev/learn/separating-events-from-effects)가 정확히 이 패턴을 위한 API다. **항상 최신 props/state를 읽으면서도 그 값이 effect를 재실행시키지 않는** 함수를 만들어 주는데, 내부적으로는 ref에 최신 콜백을 담아둔다.
 
 ### ref 두 개와 동기화 effect
 
@@ -132,11 +132,11 @@ useEffect(() => {
 
 ## React는 이걸 어떻게 구현했나
 
-React 소스([`react-reconciler`의 `ReactFiberHooks.js`](https://github.com/facebook/react/blob/v19.2.0/packages/react-reconciler/src/ReactFiberHooks.js#L2703-L2755))를 열어보며, `useEffectEvent`가 값을 어떻게 갱신하는지 살펴보자.
+React 소스([react-reconciler의 ReactFiberHooks.js](https://github.com/facebook/react/blob/v19.2.0/packages/react-reconciler/src/ReactFiberHooks.js#L2703-L2755))를 열어보며, useEffectEvent가 값을 어떻게 갱신하는지 살펴보자.
 
 ### 마운트 시 만들어지는 것
 
-첫 렌더에서 `useEffectEvent`는 `mountEvent`를 부른다.
+첫 렌더에서 useEffectEvent는 `mountEvent`를 부른다.
 
 ```js
 function mountEvent(callback) {
@@ -154,13 +154,13 @@ function mountEvent(callback) {
 }
 ```
 
-> 🔗 [`ReactFiberHooks.js`의 `mountEvent`·`updateEvent`](https://github.com/facebook/react/blob/v19.2.0/packages/react-reconciler/src/ReactFiberHooks.js#L2723-L2755)
+> 🔗 [ReactFiberHooks.js의 mountEvent·updateEvent](https://github.com/facebook/react/blob/v19.2.0/packages/react-reconciler/src/ReactFiberHooks.js#L2723-L2755)
 
-핵심이 두 군데에 다 들어 있다. `{ impl: callback }`은 ref 동기화 패턴의 `handlerRef`와 같은 ref이고, 반환되는 `eventFn`은 그 ref를 클로저로 붙잡는다. 이 `eventFn`은 **마운트 때 한 번 만들어진 뒤로 다시 만들어지지 않으니** 매 렌더에서 같은 참조다. effect 의존성 배열에 넣어도 재구독이 안 일어나는 이유가 여기 있다. 그러면서 실제 호출 순간엔 `ref.impl`을 그제야 읽으니 값은 늘 최신이다. ref 동기화 패턴으로 잡으려던 **"안정된 참조 + 최신 값"** 이 그대로다.
+핵심이 두 군데에 다 들어 있다. `{ impl: callback }`은 ref 동기화 패턴의 handlerRef와 같은 ref이고, 반환되는 `eventFn`은 그 ref를 클로저로 붙잡는다. 이 함수는 **마운트 때 한 번 만들어진 뒤로 다시 만들어지지 않으니** 매 렌더에서 같은 참조다. effect 의존성 배열에 넣어도 재구독이 안 일어나는 이유가 여기 있다. 그러면서 실제 호출 순간엔 ref.impl을 그제야 읽으니 값은 늘 최신이다. ref 동기화 패턴으로 잡으려던 **"안정된 참조 + 최신 값"** 이 그대로다.
 
 ### 최신 콜백은 언제 ref에 꽂히나
 
-부모가 매 렌더마다 새 콜백을 넘기면 그 값이 `ref.impl`에 반영돼야 한다. 손으로 짤 땐 별도 `useEffect`가 하던 일이다. React는 `updateEvent`에서 `useEffectEventImpl`을 부른다.
+부모가 매 렌더마다 새 콜백을 넘기면 그 값이 ref.impl에 반영돼야 한다. 손으로 짤 땐 별도 useEffect가 하던 일이다. React는 updateEvent에서 `useEffectEventImpl`을 부른다.
 
 ```js
 function useEffectEventImpl(payload) {
@@ -171,7 +171,7 @@ function useEffectEventImpl(payload) {
 }
 ```
 
-> 🔗 [`ReactFiberHooks.js`의 `useEffectEventImpl`](https://github.com/facebook/react/blob/v19.2.0/packages/react-reconciler/src/ReactFiberHooks.js#L2703-L2721)
+> 🔗 [ReactFiberHooks.js의 useEffectEventImpl](https://github.com/facebook/react/blob/v19.2.0/packages/react-reconciler/src/ReactFiberHooks.js#L2703-L2721)
 
 여기서 곧바로 갱신하지 않고 `{ ref, nextImpl }`을 **fiber의 큐에 쌓아두기만** 한다는 점이 중요하다. 실제 대입은 커밋 단계로 미뤄진다.
 
@@ -183,9 +183,9 @@ for (let ii = 0; ii < eventPayloads.length; ii++) {
 }
 ```
 
-> 🔗 [`ReactFiberCommitWork.js`의 커밋 단계 처리](https://github.com/facebook/react/blob/v19.2.0/packages/react-reconciler/src/ReactFiberCommitWork.js#L496-L507)
+> 🔗 [ReactFiberCommitWork.js의 커밋 단계 처리](https://github.com/facebook/react/blob/v19.2.0/packages/react-reconciler/src/ReactFiberCommitWork.js#L496-L507)
 
-손으로 짜던 `ref.current = handler` 한 줄이, React에선 커밋 단계의 `ref.impl = nextImpl`로 옮겨간 셈이다.
+손으로 짜던 ref.current 대입 한 줄이, React에선 커밋 단계의 ref.impl 대입으로 옮겨간 셈이다.
 
 ### effect보다 먼저 갱신한다
 
@@ -193,17 +193,17 @@ for (let ii = 0; ii < eventPayloads.length; ii++) {
 
 | 순서 | 단계                       | 하는 일                                       |
 | ---- | -------------------------- | --------------------------------------------- |
-| 1    | Before Mutation / Mutation | **`ref.impl = nextImpl` (Effect Event 갱신)** |
+| 1    | Before Mutation / Mutation | **Effect Event의 ref.impl 갱신** |
 | 2    | Layout                     | `useLayoutEffect` 실행                        |
 | 3    | Passive                    | `useEffect` 실행                              |
 
-Effect Event의 ref 갱신이 `useLayoutEffect`·`useEffect`보다 **먼저** 끝난다. 그래서 우리의 ESC effect(`useEffect`)가 도는 시점엔 `ref.impl`이 이미 이번 렌더의 최신 콜백을 가리킨다. ref 동기화 패턴은 "동기화 effect와 구독 effect 중 누가 먼저 도느냐"를 신경 써야 했지만, React는 이 순서를 커밋 단계에 못 박아 두어 stale이 끼어들 틈을 없앴다.
+Effect Event의 ref 갱신이 useLayoutEffect·useEffect보다 **먼저** 끝난다. 그래서 우리의 ESC effect가 도는 시점엔 ref.impl이 이미 이번 렌더의 최신 콜백을 가리킨다. ref 동기화 패턴은 "동기화 effect와 구독 effect 중 누가 먼저 도느냐"를 신경 써야 했지만, React는 이 순서를 커밋 단계에 못 박아 두어 stale이 끼어들 틈을 없앴다.
 
 <EffectTimingDemo />
 
 ### 렌더 도중 호출이 막히는 이유
 
-`eventFn` 첫 줄의 `isInvalidExecutionContextForEventFunction()` 검사가 바로 "렌더 중 호출 금지" 규칙의 정체다. `ref.impl`은 **커밋 단계에서야** 이번 렌더 값으로 갱신되므로, 아직 커밋 전인 렌더 도중에 부르면 직전 렌더의 콜백, 즉 한 박자 늦은 값을 읽게 된다. React는 그 위험을 아예 에러로 막는다. 앞 절에서 "Effect Event는 effect 안에서만 호출하라"고 한 제약이, 실은 이 구현에서 강제되고 있던 것이다.
+eventFn 첫 줄의 실행 컨텍스트 검사가 바로 "렌더 중 호출 금지" 규칙의 정체다. ref.impl은 **커밋 단계에서야** 이번 렌더 값으로 갱신되므로, 아직 커밋 전인 렌더 도중에 부르면 직전 렌더의 콜백, 즉 한 박자 늦은 값을 읽게 된다. React는 그 위험을 아예 에러로 막는다. 앞 절에서 "Effect Event는 effect 안에서만 호출하라"고 한 제약이, 실은 이 구현에서 강제되고 있던 것이다.
 
 ### ref 동기화 패턴과 1:1로 겹친다
 
@@ -223,7 +223,7 @@ Effect Event의 ref 갱신이 `useLayoutEffect`·`useEffect`보다 **먼저** �
 
 정리하면 이렇다.
 
-- 콜백을 `useRef`로 감싸고 `useEffect`로 동기화하던 패턴은, **"effect 구독은 한 번만, 콜백은 항상 최신"** 이라는 충돌하는 두 요구사항을 ref로 절충한 결과였고, 동작 자체는 정확했다.
-- 다만 콜백마다 ref와 동기화 effect가 늘어나 의도가 묻혔고, React 19.2의 `useEffectEvent`가 이 패턴을 정식 API로 흡수하면서 보일러플레이트 없이 같은 결과를 얻을 수 있게 됐다.
-- 소스를 까보면 `{ impl: callback }` ref 하나와 커밋 단계의 `ref.impl = nextImpl` 대입이 전부로, ref 동기화 패턴과 1:1로 겹친다. 다른 점은 갱신을 React 커밋 단계가 맡아 effect보다 먼저 끝낸다는 것뿐이다.
+- 콜백을 useRef로 감싸고 useEffect로 동기화하던 패턴은, **"effect 구독은 한 번만, 콜백은 항상 최신"** 이라는 충돌하는 두 요구사항을 ref로 절충한 결과였고, 동작 자체는 정확했다.
+- 다만 콜백마다 ref와 동기화 effect가 늘어나 의도가 묻혔고, React 19.2의 useEffectEvent가 이 패턴을 정식 API로 흡수하면서 보일러플레이트 없이 같은 결과를 얻을 수 있게 됐다.
+- 소스를 까보면 `{ impl: callback }` ref 하나와 커밋 단계의 ref.impl 대입이 전부로, ref 동기화 패턴과 1:1로 겹친다. 다른 점은 갱신을 React 커밋 단계가 맡아 effect보다 먼저 끝낸다는 것뿐이다.
 - 익숙한 패턴이라도 _"왜 이렇게 짰지"_ 싶을 때, 한 겹 더 들어가 동작 원리와 더 나은 대안을 함께 따져보면 코드를 더 깔끔하게 줄일 수 있다.

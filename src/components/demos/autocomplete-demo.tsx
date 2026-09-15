@@ -102,7 +102,7 @@ function draw(args: DrawArgs) {
     },
     // 오른쪽 — selector 는 프로퍼티를 타고 내려간다
     (x, w, laneH) => {
-      drawPanel(args, x, 18, w, "selector 방식 — 프로퍼티 탐색", `t(${s.typed}`, s.options, Math.min(1, local * 2.2));
+      drawPanel(args, x, 18, w, "selector 방식 — 프로퍼티 탐색", `t($ => ${s.typed}`, s.options, Math.min(1, local * 2.2));
       footnote("한 단계씩 객체를 타고 내려간다", x, laneH);
     },
   );

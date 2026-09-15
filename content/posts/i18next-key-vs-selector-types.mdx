@@ -682,6 +682,17 @@ selector 전환은 그 다음 문제다. 복수형 count 강제, go-to-definitio
 
 ---
 
+## 읽다 보니 고치게 된 것
+
+이 시리즈를 쓰려고 타입 정의를 따라가다 보니, 위에서 "selector 쪽에만 추가되고 있다"고 적은 `keyPrefix`가 `enableSelector: 'strict'`에서는 타입이 막혀 있었다. 런타임은 받아주는데 타입만 거부하는 상태였다. 소스를 읽던 김에 두 저장소에 고쳐 보냈고, 둘 다 머지됐다.
+
+- [i18next #2446](https://github.com/i18next/i18next/pull/2446) — `getFixedT`에서 strict 모드일 때 selector keyPrefix 타입 허용
+- [react-i18next #1930](https://github.com/i18next/react-i18next/pull/1930) — 같은 문제를 `useTranslation` 쪽에서 허용
+
+필자는 최근 들어 궁금한 점을 문서보다 오픈소스 코드부터 확인하는 편이다. 이번 시리즈를 쓰며 그 습관 덕에 위 수정까지 이어질 수 있었다.
+
+---
+
 ## 함께 보기
 
 **i18next 타입 안전성 탐구** 시리즈의 3편이다.

@@ -16,7 +16,7 @@ const { t } = useTranslation();
 <h1>{t(($) => $.pages.notFound.title)}</h1>;
 ```
 
-1편에서는 문자열 key에 i18next 타입을 연결해 오타와 삭제된 key를 컴파일 단계에서 잡는 방법을 정리했다. 그 다음으로 마주치는 선택지가 `enableSelector`다. 이 옵션을 설정하면 번역 key를 문자열로 직접 작성하지 않고 함수 형태로 표현할 수 있다.
+1편에서는 문자열 key에 i18next 타입을 연결해 오타와 삭제된 key를 컴파일 단계에서 잡는 방법을 정리했다. 그 다음으로 마주치는 선택지가 `enableSelector`다. `enableSelector`를 설정하면 번역 key를 문자열로 직접 작성하지 않고 함수 형태로 표현할 수 있다.
 
 **문자열 key 방식**
 
@@ -44,7 +44,7 @@ t(($) => $.pages.notFound.title);
 "pages.notFound.title";
 ```
 
-그 이후의 번역 과정은 기존 i18next와 동일하다. 이 글에서는 타입 선언이 아니라 런타임 동작을 따라간다. `useTranslation()`에서 받은 `t`가 어떻게 만들어지고, selector 함수가 어떤 과정을 거쳐 문자열 키가 되는지 내부 구현 흐름으로 확인해보자.
+그 이후의 번역 과정은 기존 i18next와 동일하다. 아래에서는 타입 선언이 아니라 런타임 동작을 따라간다. `useTranslation()`에서 받은 `t`가 어떻게 만들어지고, selector 함수가 어떤 과정을 거쳐 문자열 키가 되는지 내부 구현 흐름으로 확인해보자.
 
 ---
 
@@ -65,7 +65,7 @@ t(($) => $.pages.notFound.title);
 
 ![selector 호출의 전체 흐름](/imports/i18next-selector-runtime/selector-overall-flow.png)
 
-핵심은 중간에 selector를 문자열 키로 변환하는 단계가 하나 추가되었다는 점이다. 이 변환이 어디서 시작되는지 보려면 먼저 `t`가 어떤 함수인지부터 봐야 한다.
+핵심은 중간에 selector를 문자열 키로 변환하는 단계가 하나 추가되었다는 점이다. selector → 문자열 key 변환이 어디서 시작되는지 보려면 먼저 `t`가 어떤 함수인지부터 봐야 한다.
 
 ---
 
@@ -83,13 +83,13 @@ t(($) => $.pages.notFound.title);
 ($) => $.pages.notFound.title;
 ```
 
-위 값은 아직 실행되지 않은 함수일 뿐이다. 나중에 i18next가 이 함수를 실행하면서 `$` 자리에 자신이 만든 Proxy 객체를 넣는다.
+위 값은 아직 실행되지 않은 함수일 뿐이다. 나중에 i18next가 selector 함수를 실행하면서 `$` 자리에 자신이 만든 Proxy 객체를 넣는다.
 
 ```tsx
 selector(createProxy());
 ```
 
-즉, 개념적으로는 이런 형태다.
+즉, 개념적으로는 다음 형태다.
 
 ```tsx
 const selector = ($) => $.pages.notFound.title;
@@ -99,23 +99,21 @@ const proxy = createProxy();
 selector(proxy);
 ```
 
-이때부터 `$`가 실제 값을 갖는다. 이제 이 함수를 호출하는 `t`가 어디서 만들어지는지 살펴보자.
+이때부터 `$`가 실제 값을 갖는다. 이제 selector를 호출하는 `t`가 어디서 만들어지는지 살펴보자.
 
 ---
 
 ## useTranslation()이 반환하는 t
 
-먼저 한 가지 짚고 넘어갈 부분이 있다.
-
 ```tsx
 const { t } = useTranslation();
 ```
 
-여기서 받은 `t`는 단순히 전역 `i18next.t`를 그대로 반환한 것이 아니다. `useTranslation()`은 현재 컴포넌트의 상태에 맞는 **전용 `t` 함수**를 만들어 돌려준다.
+`useTranslation()`이 돌려주는 `t`는 단순히 전역 `i18next.t`를 그대로 반환한 것이 아니다. `useTranslation()`은 현재 컴포넌트의 상태에 맞는 **전용 `t` 함수**를 만들어 돌려준다.
 
 ### useTranslation()에서 하는 일
 
-`react-i18next/src/useTranslation.js`에서는 대략 다음 과정을 거친다.
+[`react-i18next` v16.6.1의 `useTranslation.js`](https://github.com/i18next/react-i18next/blob/v16.6.1/src/useTranslation.js)에서는 대략 다음 과정을 거친다.
 
 ```tsx
 export const useTranslation = (
@@ -158,7 +156,7 @@ export const useTranslation = (
 };
 ```
 
-여기서 중요한 지점이 `getFixedT()`다.
+중요한 지점은 [`getFixedT()`](https://github.com/i18next/i18next/blob/v26.4.0/src/i18next.js#L420)다.
 
 ---
 
@@ -199,7 +197,7 @@ language  = ko
 keyPrefix = ...
 ```
 
-이 정보를 매 호출마다 넘기는 대신 미리 묶어 둔 함수가 필요하고, 그 역할을 `getFixedT()`가 맡는다.
+namespace·language 정보를 매 호출마다 넘기는 대신 미리 묶어 둔 함수가 필요하고, 그 역할을 `getFixedT()`가 맡는다.
 
 ```tsx
 const calculatedT = i18n.getFixedT(
@@ -218,7 +216,7 @@ const { t } = useTranslation("common");
 t("hello");
 ```
 
-위 로직을 실행하면 내부적으로는 `common` namespace를 기본값으로 사용하는 `t`가 동작하며, selector 함수도 바로 이 전용 `t` 안으로 들어온다.
+위 로직을 실행하면 내부적으로는 `common` namespace를 기본값으로 사용하는 `t`가 동작하며, selector 함수도 바로 전용 `t` 안으로 들어온다.
 
 ### ns와 scopeNs를 나눈 이유
 
@@ -246,7 +244,7 @@ i18n.getFixedT(
 useTranslation(["a", "b"]);
 ```
 
-이 경우 개념적으로는 다음과 같이 동작한다.
+개념적으로는 다음과 같이 동작한다.
 
 ![ns와 scopeNs가 나뉘어 전달되는 구조](/imports/i18next-selector-runtime/ns-scopens-split.png)
 
@@ -268,7 +266,7 @@ t(($) => $.b.foo);
 
 ## fixedT가 selector 함수를 받는다
 
-이제 `getFixedT()`가 만든 전용 `t` 안으로 들어가 보자. 함수는 대략 이런 형태다.
+이제 [`getFixedT()`](https://github.com/i18next/i18next/blob/v26.4.0/src/i18next.js#L420)가 만든 전용 `t` 안으로 들어가 보자. [원본 구현](https://github.com/i18next/i18next/blob/v26.4.0/src/i18next.js#L422-L462)을 단순화하면 대략 이런 형태다.
 
 ```tsx
 const fixedT = (key, opts, ...rest) => {
@@ -300,7 +298,7 @@ const fixedT = (key, opts, ...rest) => {
 };
 ```
 
-여기서 가장 중요한 부분은 이것이다.
+핵심 분기는 아래 코드다.
 
 ```tsx
 if (typeof key === "function") {
@@ -314,19 +312,106 @@ if (typeof key === "function") {
 t(($) => $.pages.notFound.title);
 ```
 
-따라서 이 시점에서 다음 함수가 호출된다.
+따라서 `typeof key === 'function'` 분기에서 [`keysFromSelector`](https://github.com/i18next/i18next/blob/v26.4.0/src/selector.js#L18)가 호출된다.
 
 ```tsx
 keysFromSelector(($) => $.pages.notFound.title);
 ```
 
-이 함수 안에서 selector가 실행되고 문자열 키로 변환된다. 다음 단계의 핵심은 Proxy다.
+[`keysFromSelector`](https://github.com/i18next/i18next/blob/v26.4.0/src/selector.js#L18) 안에서 selector가 실행되고 문자열 키로 변환된다. 다음 단계의 핵심은 Proxy다.
+
+---
+
+## Proxy를 먼저 이해하자
+
+i18next 구현으로 들어가기 전에 Proxy를 먼저 짚고 가자. Proxy는 원본 객체에 바로 접근하지 않고, 앞에 가로채는 객체를 세우는 JavaScript 기능이다. 원본 객체를 `target`, 앞에서 접근을 가로채는 규칙을 `handler`라고 부른다.
+
+```ts
+const proxy = new Proxy(target, handler);
+```
+
+`handler`에 들어가는 함수는 **trap**이라고 부른다. 값 읽기, 값 쓰기, `in` 연산자, 함수 호출 같은 동작을 가로챌 수 있다. 그중 가장 자주 보는 trap은 `get`과 `set`이다.
+
+`get`은 값을 읽을 때 실행된다.
+
+```ts
+const user = { name: "지은" };
+
+const safeUser = new Proxy(user, {
+  get(target, key) {
+    return key in target ? target[key] : "정보 없음";
+  },
+});
+
+console.log(safeUser.name); // "지은"
+console.log(safeUser.age); // "정보 없음"
+```
+
+`safeUser.age`를 읽으면 원본 객체에는 `age`가 없지만 바로 `undefined`가 나오지 않는다. 먼저 `get` trap이 실행되고, handler가 정한 규칙에 따라 `"정보 없음"`이 반환된다. 원본 객체를 고치지 않고 읽기 동작만 바꾼 셈이다.
+
+`set`은 값을 쓸 때 실행된다.
+
+```ts
+const person = new Proxy(
+  {},
+  {
+    set(target, key, value) {
+      if (key === "age" && typeof value !== "number") {
+        throw new TypeError("나이는 숫자여야 한다");
+      }
+
+      target[key] = value;
+      return true;
+    },
+  }
+);
+
+person.age = 20; // OK
+person.age = "스무살"; // TypeError
+```
+
+`person.age = 20`을 실행하면 `set` trap에는 `target`, `key`, `value`가 차례대로 들어온다. 위 예시에서는 `key`가 `"age"`이고 `value`가 `20`이다. 값이 숫자이면 원본 객체에 저장하고 `true`를 반환한다. `set` trap은 쓰기 성공 여부를 불리언으로 알려줘야 한다.
+
+Proxy가 유용한 이유는 원본 객체 코드를 바꾸지 않고도 접근 방식을 바꿀 수 있기 때문이다. i18next selector도 같은 성질을 이용한다. `$`가 실제 번역 리소스가 아니어도, `$.pages.notFound.title`처럼 접근하는 순간을 Proxy가 가로채 경로를 기록할 수 있다.
+
+하나 더 알아둘 API가 있다. `Proxy.revocable`이다.
+
+```ts
+const { proxy, revoke } = Proxy.revocable(target, handler);
+```
+
+일반 Proxy는 한 번 만들면 계속 접근할 수 있다. 반면 `Proxy.revocable`은 `proxy`와 함께 `revoke` 함수를 반환한다. `revoke()`를 호출하면 Proxy를 통하는 통로가 끊긴다.
+
+```ts
+const user = { name: "지은" };
+
+const { proxy, revoke } = Proxy.revocable(user, {
+  get(target, key) {
+    return target[key];
+  },
+});
+
+console.log(proxy.name); // "지은"
+
+revoke();
+
+console.log(proxy.name);
+// TypeError: Cannot perform 'get' on a proxy that has been revoked
+```
+
+취소된 Proxy는 읽기, 쓰기, `in` 연산자 같은 접근에서 모두 `TypeError`를 낸다. `revoke()`를 여러 번 호출해도 추가 에러는 나지 않는다. 끊긴 것은 Proxy를 통하는 통로일 뿐이라 원본 객체는 그대로 남는다.
+
+```ts
+console.log(user.name); // "지은"
+```
+
+i18next는 이 성질을 이용해 중간 Proxy가 다시 쓰이지 못하게 만든다. 경로가 오염돼도 엉뚱한 key가 그대로 만들어지지 않도록, 폐기된 Proxy에 접근하는 순간 TypeError를 낸다.
 
 ---
 
 ## Proxy가 접근 경로를 기록한다
 
-`selector.js`의 핵심은 Proxy다. selector가 실제 리소스 객체를 받는 것은 아니지만, Proxy를 받으면 프로퍼티 접근을 모두 기록할 수 있다. 구조를 단순화하면 다음과 같다.
+[`selector.js`](https://github.com/i18next/i18next/blob/v26.4.0/src/selector.js)의 핵심은 Proxy다. selector가 실제 리소스 객체를 받는 것은 아니지만, Proxy를 받으면 프로퍼티 접근을 모두 기록할 수 있다. `createProxy` 구현을 단순화하면 다음과 같다.
 
 ```tsx
 const PATH_KEY = Symbol("i18next/PATH_KEY");
@@ -459,13 +544,13 @@ P3
 ($) => $.pages.notFound.title;
 ```
 
-이 함수가 실제로 반환하는 것은 최종 Proxy다. 하지만 i18next는 **반환값 자체가 아니라, Proxy를 거치며 기록된 경로를 사용한다.**
+selector 함수가 실제로 반환하는 것은 최종 Proxy다. 하지만 i18next는 **반환값 자체가 아니라, Proxy를 거치며 기록된 경로를 사용한다.**
 
 ```plaintext
 ['pages', 'notFound', 'title']
 ```
 
-이제 이 배열만 꺼내면 된다.
+이제 기록된 경로 배열만 꺼내면 된다.
 
 ---
 
@@ -511,7 +596,7 @@ aidraft.service.title
 
 ![Proxy 재사용으로 경로가 오염되는 상황과 revoke](/imports/i18next-selector-runtime/proxy-revoke.png)
 
-이 문제는 조용히 발생하기 때문에 오히려 위험하다. i18next가 이전 Proxy를 즉시 폐기하는 이유도 여기에 있다.
+경로 오염은 조용히 발생하기 때문에 오히려 위험하다. i18next가 이전 Proxy를 즉시 폐기하는 이유도 `createProxy`의 `revoke` 호출에 있다.
 
 ```tsx
 proxy?.revoke?.();
@@ -531,9 +616,6 @@ that has been revoked
 
 <RevokeDemo />
 
-왼쪽은 아무 일도 없었다는 듯 `aidraft.service.title`이라는 엉뚱한 키를 만들어낸다.
-오른쪽은 그 자리에서 멈춘다. 조용히 틀리는 것보다 시끄럽게 실패하는 편이 낫다는 선택이다.
-
 ---
 
 ## 기록한 경로는 어떻게 꺼낼까?
@@ -544,9 +626,7 @@ that has been revoked
 ["pages", "notFound", "title"];
 ```
 
-하지만 Proxy는 모든 프로퍼티 접근을 가로챈다.
-
-예를 들어 다음처럼 일반적인 문자열 프로퍼티를 사용하면,
+하지만 Proxy는 모든 프로퍼티 접근을 가로챈다. 예를 들어 다음처럼 일반적인 문자열 프로퍼티를 사용하면,
 
 ```tsx
 result.path;
@@ -558,7 +638,7 @@ Proxy는 이것도 경로 접근으로 인식해서 `'path'`를 state에 추가�
 result.path;
 ```
 
-**경로를 기록하는 접근과 내부 상태를 꺼내는 접근은 구분되어야 한다.** 그래서 Symbol을 사용한다.
+**경로를 기록하는 접근과 내부 상태를 꺼내는 접근은 구분되어야 한다.** 그래서 `PATH_KEY` Symbol을 사용한다.
 
 ```tsx
 const PATH_KEY = Symbol("i18next/PATH_KEY");
@@ -661,7 +741,7 @@ b:foo
 
 ### namespace 판정
 
-관련 코드는 대략 다음과 같다.
+관련 코드는 [selector.js의 namespace 판정 로직](https://github.com/i18next/i18next/blob/v26.4.0/src/selector.js#L36-L54)과 대략 같다.
 
 ```tsx
 const keySeparator = opts?.keySeparator ?? ".";
@@ -719,7 +799,7 @@ pages.notFound.title
 
 ## 여기부터는 기존 i18next와 동일하다
 
-여기까지 오면 selector와 관련된 특별한 동작은 거의 끝난다. 최종적으로는 다음 호출과 동일해진다.
+여기까지 오면 selector와 관련된 특별한 동작은 거의 끝난다. `fixedT`가 `this.t()`를 호출하면 결국 [`Translator.translate`](https://github.com/i18next/i18next/blob/v26.4.0/src/Translator.js#L100)로 이어진다. 최종적으로는 다음 호출과 동일해진다.
 
 ```tsx
 t("pages.notFound.title");
@@ -768,18 +848,18 @@ data["ko"]["translation"]["pages"]["notFound"]["title"];
 t(($) => $.pages.notFound.title);
 ```
 
-실제로는 다음 순서로 동작한다.
+실제로는 다음 순서로 동작한다. 아래 표는 i18next v26.4.0 · react-i18next v16.6.1 소스 기준이다.
 
-| 단계 | 위치               | 역할                               |
-| ---- | ------------------ | ---------------------------------- |
-| 1    | `useTranslation`   | i18n 상태와 namespace를 준비       |
-| 2    | `getFixedT`        | 현재 컴포넌트에 맞는 전용 `t` 생성 |
-| 3    | `fixedT`           | selector 함수인지 확인             |
-| 4    | `keysFromSelector` | Proxy를 selector에 전달            |
-| 5    | `Proxy`            | 프로퍼티 접근 경로 기록            |
-| 6    | `Symbol`           | 기록된 경로 회수                   |
-| 7    | selector 변환      | 배열을 문자열 키로 변환            |
-| 8    | `Translator`       | 기존 i18next 방식으로 번역 조회    |
+| 단계 | 위치                                                                                            | 역할                               |
+| ---- | ----------------------------------------------------------------------------------------------- | ---------------------------------- |
+| 1    | [`useTranslation`](https://github.com/i18next/react-i18next/blob/v16.6.1/src/useTranslation.js) | i18n 상태와 namespace를 준비       |
+| 2    | [`getFixedT`](https://github.com/i18next/i18next/blob/v26.4.0/src/i18next.js#L420)              | 현재 컴포넌트에 맞는 전용 `t` 생성 |
+| 3    | [`fixedT`](https://github.com/i18next/i18next/blob/v26.4.0/src/i18next.js#L422)                 | selector 함수인지 확인             |
+| 4    | [`keysFromSelector`](https://github.com/i18next/i18next/blob/v26.4.0/src/selector.js#L18)       | Proxy를 selector에 전달            |
+| 5    | [`createProxy`](https://github.com/i18next/i18next/blob/v26.4.0/src/selector.js#L3)             | 프로퍼티 접근 경로 기록            |
+| 6    | [`PATH_KEY`](https://github.com/i18next/i18next/blob/v26.4.0/src/selector.js#L1)                | 기록된 경로 회수                   |
+| 7    | [namespace 판정](https://github.com/i18next/i18next/blob/v26.4.0/src/selector.js#L36-L54)       | 배열을 문자열 키로 변환            |
+| 8    | [`Translator`](https://github.com/i18next/i18next/blob/v26.4.0/src/Translator.js#L100)          | 기존 i18next 방식으로 번역 조회    |
 
 이 흐름에서 중요한 점은 `$ => $.pages.notFound.title`를 지원하기 위해 번역 엔진 자체가 크게 바뀐 것은 아니라는 데 있다. 기존 번역 엔진 앞에 다음과 같은 변환 단계가 하나 추가되었다.
 
@@ -795,86 +875,19 @@ t(($) => $.pages.notFound.title);
 
 ---
 
-## Proxy, revoke, Symbol의 역할
-
-이 기능을 지탱하는 장치는 세 가지다.
-
-**Proxy**
-
-프로퍼티 접근을 가로채서 경로를 기록한다.
-
-```plaintext
-$.pages.notFound
-      ↓
-['pages','notFound']
-```
-
-**revoke**
-
-중간 Proxy의 재사용을 막아 경로 오염을 방지한다.
-
-```plaintext
-재사용 시도
-   ↓
-즉시 에러
-```
-
-**Symbol**
-
-사용자 번역 키와 충돌하지 않는 방식으로 기록된 경로를 회수한다.
-
-```plaintext
-PATH_KEY
-   ↓
-state 반환
-```
-
----
-
 ## 마무리
 
-처음에는 다음 코드가 낯설게 보인다.
+`t(($) => $.pages.notFound.title)`는 번역 엔진을 갈아엎은 API가 아니다. selector 함수를 문자열 key로 바꾸는 레이어가 앞에 하나 더 붙었을 뿐이다.
 
-```tsx
-t(($) => $.pages.notFound.title);
-```
+런타임에서 추가되는 것은 Proxy·revoke·Symbol 세 가지다. 경로를 기록하고, 오염을 막고, 기록된 배열을 꺼낸다. 이 변환이 끝나면 흐름은 다시 `t('pages.notFound.title')`와 같아진다.
 
-문자열이 아니라 함수를 넘겼는데 번역이 되고, `$`에서는 자동완성까지 제공된다. 하지만 런타임만 놓고 보면 구조는 단순하다.
-
-```plaintext
-      함수를 전달한다
-             ↓
-i18next가 Proxy를 넣어 실행한다
-             ↓
-   프로퍼티 접근을 기록한다
-             ↓
-  경로를 문자열 키로 바꾼다
-             ↓
-기존 i18next 번역 엔진에 전달한다
-```
-
-결국 selector API는 기존 번역 방식을 완전히 새로 만든 기능이라기보다, **문자열로 작성하던 번역 키를 Proxy와 TypeScript를 이용해 코드 형태로 표현하게 만든 레이어**에 가깝다.
-
-그 레이어를 안전하게 만들기 위해 `Proxy`, `revoke`, `Symbol`이 각각 역할을 나눈다.
-
-```plaintext
-Proxy
-→ 경로를 기록하고
-
-revoke
-→ 경로 오염을 막고
-
-Symbol
-→ 안전하게 경로를 회수한다
-```
-
-이 과정을 알고 나면 `t($ => $.pages.notFound.title)`은 낯선 호출이 아니다. 내부에서는 결국 우리가 익숙하게 사용하던 문자열 키로 돌아가기 때문이다.
+다음 글에서는 같은 selector가 TypeScript 타입 레벨에서 어떻게 다르게 보이는지 본다.
 
 ---
 
 ## 함께 보기
 
-이 글은 **i18next 타입 안전성 탐구** 시리즈의 2편이다.
+**i18next 타입 안전성 탐구** 시리즈의 2편이다.
 
 - 1편: [i18next 문자열 key에 타입을 붙이는 과정](/articles/i18next-typescript-setup)
 - 3편: [문자열 key vs selector: i18next 타입은 어떻게 만들어질까](/articles/i18next-key-vs-selector-types)

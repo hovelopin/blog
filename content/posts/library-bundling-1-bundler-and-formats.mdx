@@ -1,6 +1,6 @@
 ---
 title: "번들러는 무엇을 하는가"
-description: "파일 여러 개를 하나로 합치는 일이 왜 라이브러리에서는 유독 어려운지, CommonJS와 ESM이 어디서 갈라지는지를 직접 빌드하고 재서 확인한다."
+description: "파일 여러 개를 하나로 합치는 일이 왜 라이브러리에서는 유독 어려운지, CommonJS와 ESM이 어디서 갈라지는지를 직접 빌드하고 확인한다."
 date: "2026-08-10"
 tags: ["bundling", "tsdown", "esm", "commonjs", "library"]
 author: "hovelopin"
@@ -11,19 +11,15 @@ coverAlt: "어두운 창가 책장에서 묶인 책과 패키지가 석양빛을
 draft: false
 ---
 
-최근 필자는 사내에서 생산성을 높이는 도구를 여럿 만들었다. 처음엔 프로젝트 안의 폴더 하나였던 코드가 두 번째, 세 번째 프로젝트에서도 필요해지면서 자연스럽게 라이브러리로 묶는 일이 잦아졌다. 그렇게 라이브러리 형태의 코드를 자주 만들다 보니 문득 의문이 생겼다. 코드를 따로 떼어내는 것만으로 충분할까? 누군가의 프로젝트 안에서 무리 없이 쓰이려면 파일을 어떻게 묶고, 어떤 형식으로 내보내야 할까?
+최근 필자는 사내에서 생산성을 높이는 도구를 여럿 만들었다. 처음에는 한 프로젝트의 폴더에 불과했던 코드가 두 번째, 세 번째 프로젝트에서도 필요해지자 공통 코드를 라이브러리로 분리하는 일이 잦아졌다. 그러자 한 가지 의문이 생겼다. 코드를 프로젝트 밖으로 떼어내기만 하면 라이브러리가 되는 것일까? 다른 프로젝트에서도 문제없이 사용하려면 파일을 어떻게 묶고 어떤 형식으로 내보내야 할까? 이 질문을 따라가다 만난 첫 번째 주제가 번들링이었다.
 
-"번들링"이라고 하면 무엇이 떠오르는가? 아마 `vite build` 나 `next build` 한 줄일 것이다. 앱을 만들 때 번들러는 배경에 있는 도구다. 설정을 만질 일이 거의 없고, 결과물은 브라우저가 알아서 받아 간다.
+라이브러리의 번들링은 산출물을 만드는 일로 끝나지 않는다. 만들어진 파일은 곧바로 브라우저에 전달되는 대신 **라이브러리를 사용하는 프로젝트의 도구**를 거친다. Next.js의 webpack, Vite의 Rollup, Node의 모듈 로더가 저마다의 규칙으로 라이브러리의 `dist/`를 해석한다.
 
-보통 라이브러리도 같다고 생각한다. tsc 로 컴파일해서 dist/ 에 넣고 npm publish 하면 끝이라고. 실제로 처음엔 그렇게 동작한다. 문제는 그렇게 올린 산출물을 **누가** 쓰느냐에서 시작된다.
-
-라이브러리의 산출물은 사용자의 브라우저가 아니라 **다른 프로젝트의 번들러**가 읽는다. Next.js 의 웹팩이, Vite 의 rollup 이, Node 의 모듈 로더가, 테스트 러너의 변환기가 각자의 규칙으로 내 dist/ 를 해석한다. 앱 번들링에서는 존재하지 않던 변수가 여기서 생긴다.
-
-그래서 이 시리즈의 첫 편은 번들러가 하는 가장 기본적인 일부터 다시 본다. 파일을 합치는 것이 무엇을 바꾸는지, CommonJS 와 ESM 이 어디서 갈라지는지, 그리고 그 차이가 라이브러리를 쓰는 쪽에 어떤 값으로 돌아오는지를 직접 빌드하고 재서 확인한다. 이 글의 모든 수치는 예시 저장소 `library-bundling-examples` 의 `episodes/01-bundler-and-formats/` 에서 그대로 재현할 수 있다.
+시리즈의 첫 편에서는 번들러가 하는 가장 기본적인 일부터 살펴본다. 파일을 하나로 합치면 무엇이 달라지는지, CommonJS와 ESM은 어디서 갈라지는지, 그 차이가 라이브러리를 사용하는 프로젝트에 어떤 영향을 주는지 직접 빌드하며 확인한다. 이 글의 모든 수치는 예시 저장소 [library-bundling-examples](https://github.com/hovelopin/library-bundling-examples)의 `episodes/01-bundler-and-formats/`에서 그대로 재현할 수 있다.
 
 ## 번들러가 하는 일
 
-번들러는 **모듈 그래프를 파일 하나(또는 몇 개)로 합치는 도구**다. main.ts 에서 시작해 import 를 따라가며 필요한 파일을 전부 찾아낸 다음, 그 파일들을 하나의 스코프 안에 순서대로 이어 붙인다. 그 과정에서 TypeScript 를 JavaScript 로 바꾸고, 쓰이지 않는 코드를 잘라내고(tree-shaking), 필요하면 압축까지 하지만, 본질은 "합치기"다.
+번들러는 **모듈 그래프를 파일 하나(또는 몇 개)로 합치는 도구**다. main.ts 에서 시작해 import 를 따라가며 필요한 파일을 전부 찾아낸 다음, 그 파일들을 하나의 스코프 안에 순서대로 이어 붙인다. 그 과정에서 TypeScript 를 JavaScript 로 바꾸고, 쓰이지 않는 코드를 잘라내고(tree-shaking), 필요하면 압축까지 한다.
 
 이 시리즈에서는 [tsdown](https://tsdown.dev) 을 쓴다. Rust 로 만든 번들러 rolldown 위에 라이브러리 빌드에 필요한 기본값을 얹은 도구로, 설정 파일 하나로 ESM·CJS·타입 선언을 한 번에 낸다. 어떤 번들러를 쓰든 이 글의 원리는 같다.
 
@@ -329,7 +325,7 @@ instanceof cjs?   true
 - CommonJS 는 실행해야 알 수 있고, ESM 은 파싱만으로 알 수 있다. 그 차이가 함수 하나만 가져온 소비자 번들에서 **364 B 대 2,450 B** 로 나타났다.
 - Node 20.19 / 22.12 부터 CommonJS 코드도 ESM 패키지를 require 할 수 있어 **ESM only 가 기본값**이 됐다. 최상위 await, `module: node16` 소비자, Jest 중 하나라도 해당한다면 두 포맷을 내고 **dual package hazard** 를 감수한다.
 
-여기까지 재현하려면 예시 저장소 루트에서 다음을 실행하면 된다.
+여기까지 재현하려면 예시 저장소 루트에서 다음을 실행하면 된다. 편별 실행법과 확인 포인트는 [episodes/01-bundler-and-formats](https://github.com/hovelopin/library-bundling-examples/tree/main/episodes/01-bundler-and-formats) 의 README 에 정리해 뒀다.
 
 ```bash
 pnpm install && pnpm --filter "@ep1/*" build
@@ -342,6 +338,7 @@ node episodes/01-bundler-and-formats/hazard/run.mjs
 
 ## 참고
 
+- [library-bundling-examples — 이 시리즈의 예시 코드와 측정 스크립트](https://github.com/hovelopin/library-bundling-examples)
 - [Node.js 20.19.0 릴리스 노트 — require(esm) 기본 활성화](https://nodejs.org/en/blog/release/v20.19.0)
 - [Node.js — End-of-Life 일정](https://nodejs.org/en/about/eol)
 - [require(esm) Backported to Node.js 20 — Socket](https://socket.dev/blog/require-esm-backported-to-node-js-20)

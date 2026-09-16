@@ -19,7 +19,7 @@ draft: true
 
 하지만 d.ts 는 JS 와 별개의 산출물이고, TypeScript 는 d.ts 를 JS 와 **같은 규칙으로** 해석한다. 파일 확장자가 .d.ts 냐 .d.cts 냐가 ESM 이냐 CommonJS 냐를 결정하고, package.json 의 exports 조건이 어느 타입 파일을 줄지 결정한다. 1편과 2편에서 JS 산출물에 적용됐던 모든 규칙이 타입에도 그대로 적용된다.
 
-**타입 선언은 두 번째 배포물이다.** 이 글에서는 타입이 잘못 배포되는 세 가지 형태를 재현하고, tsdown 이 tsc 를 어디까지 대신하는지 재고, 배포 전에 이 모든 것을 기계적으로 검사하는 방법을 정리한다. 수치는 예시 저장소 `library-bundling-examples` 의 `episodes/03-types-and-publish/` 에서 재현할 수 있다.
+**타입 선언은 두 번째 배포물이다.** 이 글에서는 타입이 잘못 배포되는 세 가지 형태를 재현하고, tsdown 이 tsc 를 어디까지 대신하는지 재고, 배포 전에 이 모든 것을 기계적으로 검사하는 방법을 정리한다. 수치는 예시 저장소 [library-bundling-examples](https://github.com/hovelopin/library-bundling-examples) 의 `episodes/03-types-and-publish/` 에서 재현할 수 있다.
 
 ## 타입도 모듈 포맷을 탄다
 
@@ -257,7 +257,7 @@ $ node smoke/run.mjs
 - tsdown 은 트랜스파일·d.ts·번들을 대신하지만 **타입 검사는 하지 않는다.** `tsc --noEmit` 은 남는다. isolatedDeclarations 를 켜면 d.ts 생성이 타입 검사 없이 파일 단위로 돌아간다.
 - 배포 전에 publint, attw, npm pack 스모크 세 가지를 돌린다. 세 줄이면 이 시리즈의 모든 문제가 걸린다.
 
-재현은 예시 저장소 루트에서 다음을 실행하면 된다.
+재현은 예시 저장소 루트에서 다음을 실행하면 된다. 편별 실행법과 확인 포인트는 [episodes/03-types-and-publish](https://github.com/hovelopin/library-bundling-examples/tree/main/episodes/03-types-and-publish) 의 README 에 정리해 뒀다.
 
 ```bash
 pnpm install && pnpm -r --filter "@ep3/*" build

@@ -1,6 +1,6 @@
 ---
 title: "타입과 배포 전 검증"
-description: "d.ts 는 별도의 산출물이고 별도의 해석 규칙을 탄다. 타입이 ESM 인 척하는 경우, 아예 없는 경우, 남의 패키지로 새는 경우를 재현하고 publint·attw·npm pack 스모크로 배포 전에 잡는 방법을 정리한다."
+description: "d.ts는 JS와 별도로 생성되지만 같은 모듈 해석 규칙이 적용된다. 모듈 형식 불일치, 타입 선언 파일 누락, 설치되지 않는 의존 패키지의 타입 참조를 배포 전에 검출하는 방법을 정리한다."
 date: "2026-08-24"
 tags: ["bundling", "tsdown", "typescript", "dts", "publint", "library"]
 author: "hovelopin"
@@ -11,23 +11,23 @@ coverAlt: "석양이 비치는 창가 책장에서 묶인 책과 패키지가 �
 draft: true
 ---
 
-타입 선언 파일이라고 하면 무엇이 떠오르는가? tsc 가 컴파일하면서 옆에 떨어뜨려 주는 부산물. JS 만 제대로 나오면 따라오는 것.
+타입 선언 파일이라고 하면 무엇이 떠오르는가? tsc가 컴파일할 때 JavaScript 파일과 함께 생성하는 부가 산출물, 또는 JavaScript 파일이 정상적으로 생성되면 자동으로 만들어지는 파일로 생각하기 쉽다.
 
-라이브러리를 설치했는데 자동완성이 안 뜨고 모든 것이 any 인 경험을 해봤을 것이다. 혹은 잘 되던 타입이 moduleResolution 을 node16 으로 바꾸는 순간 "Could not find a declaration file" 로 무너지는 경험도. 라이브러리 저자 쪽에서는 아무것도 바꾼 게 없는데 말이다.
+라이브러리를 설치했는데 내보낸 API에 자동완성이 표시되지 않고 타입이 모두 any로 추론된 경험이 있을 것이다. 혹은 moduleResolution을 node16으로 변경한 뒤 정상적으로 해석되던 타입 선언에서 "Could not find a declaration file" 오류가 발생한 경험도 있을 것이다. 라이브러리 코드가 바뀌지 않았는데도 소비자의 설정에 따라 결과가 달라진다.
 
-보통 이럴 때 소비자의 tsconfig 가 까다롭다고 생각한다. 실제로도 그렇게 답변이 달린 이슈가 많다.
+보통 이럴 때 소비자의 tsconfig 설정을 원인으로 지목한다. 실제 이슈에서도 소비자 설정을 변경하라는 답변을 쉽게 찾을 수 있다.
 
-하지만 d.ts 는 JS 와 별개의 산출물이고, TypeScript 는 d.ts 를 JS 와 **같은 규칙으로** 해석한다. 파일 확장자가 .d.ts 냐 .d.cts 냐가 ESM 이냐 CommonJS 냐를 결정하고, package.json 의 exports 조건이 어느 타입 파일을 줄지 결정한다. 1편과 2편에서 JS 산출물에 적용됐던 모든 규칙이 타입에도 그대로 적용된다.
+하지만 d.ts는 JavaScript 파일과 별개의 산출물이며, TypeScript는 d.ts에도 JavaScript 파일과 **같은 모듈 해석 규칙**을 적용한다. .d.ts와 .d.cts 확장자는 타입 선언의 모듈 형식을 결정하고, TypeScript는 package.json의 exports 조건에 따라 사용할 타입 선언 파일을 선택한다. 1편과 2편에서 JavaScript 산출물에 적용한 모듈 형식과 조건 분기 규칙이 타입 선언에도 적용된다.
 
-**타입 선언은 두 번째 배포물이다.** 이 글에서는 타입이 잘못 배포되는 세 가지 형태를 재현하고, tsdown 이 tsc 를 어디까지 대신하는지 재고, 배포 전에 이 모든 것을 기계적으로 검사하는 방법을 정리한다. 수치는 예시 저장소 [library-bundling-examples](https://github.com/hovelopin/library-bundling-examples) 의 `episodes/03-types-and-publish/` 에서 재현할 수 있다.
+**타입 선언 파일도 JavaScript 파일과 별도로 검증해야 하는 배포 산출물이다.** 이 글에서는 타입 선언이 잘못 배포되는 세 가지 경우를 재현하고, tsdown과 tsc가 각각 담당하는 작업을 구분한다. 이어서 배포 전에 산출물을 자동으로 검사하는 방법을 정리한다. 수치는 예시 저장소 [library-bundling-examples](https://github.com/hovelopin/library-bundling-examples)의 `episodes/03-types-and-publish/`에서 재현할 수 있다.
 
-## 타입도 모듈 포맷을 탄다
+## 타입에도 모듈 형식이 적용된다
 
-1편에서 tsdown 은 `dist/index.js` 와 `dist/index.cjs` 를 냈고, 그 옆에 index.d.ts 와 index.d.cts 도 함께 냈다. 왜 타입 파일이 둘인가.
+1편에서 tsdown은 `dist/index.js`와 `dist/index.cjs`를 생성했고, 각 JavaScript 산출물에 대응하는 index.d.ts와 index.d.cts도 생성했다. 타입 선언 파일이 두 개인 이유는 무엇일까?
 
-TypeScript 는 .d.ts 파일을 옆에 있는 `.js` 파일의 포맷으로 해석한다. package.json 이 `"type": "module"` 이면 .d.ts 는 ESM 모듈의 타입이다. CommonJS 산출물의 타입은 .d.cts 여야 한다. 확장자가 곧 포맷이다.
+TypeScript는 .d.ts 파일을 같은 패키지 범위의 `.js` 파일에 적용되는 모듈 형식으로 해석한다. package.json에 `"type": "module"`이 있으면 .d.ts는 ESM 모듈의 타입 선언으로 해석된다. CommonJS 산출물에는 .d.cts 타입 선언이 필요하다. 파일 확장자가 타입 선언의 모듈 형식을 결정한다.
 
-타입을 어디에 적을지 생각하면, types 를 블록 맨 위에 하나만 두는 형태가 가장 먼저 떠오른다.
+exports 객체에 타입 선언 경로를 지정할 때는 types 조건 하나를 객체 맨 위에 두는 형태가 먼저 떠오른다.
 
 ```json
 {
@@ -41,7 +41,7 @@ TypeScript 는 .d.ts 파일을 옆에 있는 `.js` 파일의 포맷으로 해석
 }
 ```
 
-조건은 위에서부터 매칭되니 types 를 맨 앞에 두면 어느 소비자든 타입을 찾을 것 같다. 직접 써봐도 문제가 드러나지 않는다. 그런데 이 package.json 을 **arethetypeswrong**(attw) 에 넣으면 이렇게 나온다.
+조건을 위에서부터 검사하므로 types를 맨 앞에 두면 모든 소비자가 타입 선언을 찾을 수 있을 것처럼 보인다. ESM 프로젝트나 bundler 해석만 테스트하면 이 모듈 형식 불일치가 나타나지 않는다. 그러나 이 package.json으로 구성한 패키지에 **arethetypeswrong**(attw)을 실행하면 다음 결과가 나온다.
 
 ```
 $ attw --pack .
@@ -56,7 +56,7 @@ $ attw --pack .
 └───────────────────┴─────────────────────────┘
 ```
 
-require() 로 들어온 소비자에게도 조건은 위에서부터 매칭된다. 첫 줄의 types 가 잡히고, 그 값은 index.d.ts, 즉 ESM 의 타입이다. JS 는 index.cjs 를 받았는데 타입은 ESM 것을 받은 것이다. TypeScript 는 이 모듈을 ESM 이라고 믿고, CommonJS 파일에서 require 하는 코드에 엉뚱한 에러를 낸다. attw 는 이 상태를 "ESM 인 척한다(Masquerading as ESM)" 고 부른다. publint 도 같은 것을 잡는다.
+require()를 사용하는 소비자도 조건을 위에서부터 검사한다. 분기 밖의 types 조건이 먼저 선택되므로 타입 해석에는 ESM 선언인 index.d.ts가 사용된다. 반면 JavaScript 해석에는 CommonJS 파일인 index.cjs가 사용되어 두 산출물의 모듈 형식이 일치하지 않는다. TypeScript는 타입 선언을 기준으로 패키지를 ESM으로 분류하므로 CommonJS 코드의 require 사용 지점에 모듈 형식 오류를 보고한다. attw는 이 상태를 "Masquerading as ESM"으로 분류하고 publint도 같은 불일치를 보고한다.
 
 ```
 pkg.exports["."].types types is interpreted as ESM when resolving with the
@@ -64,7 +64,7 @@ pkg.exports["."].types types is interpreted as ESM when resolving with the
 "import" and "require", and use the .cts extension
 ```
 
-고치는 방법은 포맷별로 types 를 **분기 안에** 넣는 것이다.
+해결 방법은 모듈 형식별로 types 조건을 **각 분기 안에** 배치하는 것이다.
 
 ```json
 {
@@ -86,11 +86,11 @@ pkg.exports["."].types types is interpreted as ESM when resolving with the
 }
 ```
 
-각 분기 안에서 types 가 default 보다 먼저 온다. 규칙은 그대로다. "처음 맞는 것이 이긴다" 를 분기마다 적용할 뿐이다. 포맷별 분기 형태로 바꾸면 attw 가 네 칸 모두 🟢 를 찍는다. 1편과 2편의 예시가 이 모양이었던 이유가 여기 있다.
+각 분기 안에서 types가 default보다 먼저 온다. 각 분기에서도 조건 목록의 첫 번째 일치 항목을 선택하기 때문이다. 모듈 형식별 분기로 바꾸면 attw의 네 소비자 환경이 모두 정상으로 표시된다. 이 types 분기 때문에 1편과 2편에서도 같은 exports 구조를 사용했다.
 
-맨 위의 main 과 types 는 exports 를 모르는 오래된 해석기(attw 의 node10 행)를 위한 폴백이다. 없어도 최신 도구는 다 동작하지만, 1편 라이브러리에 attw 를 돌리면 node10 행이 💀 로 찍힌다. 두 줄이면 끝나는 일이니 넣어두자.
+맨 위의 main과 types는 exports를 지원하지 않는 이전 모듈 해석 방식(attw의 node10 행)을 위한 폴백이다. 최신 모듈 해석 방식을 지원하는 도구에서는 두 필드가 없어도 동작한다. 다만 1편의 라이브러리에 attw를 실행하면 node10 환경에서 타입을 해석하지 못한 것으로 표시된다. main과 types 필드를 추가하면 이 환경에도 폴백을 제공할 수 있다.
 
-## 타입이 아예 없는 경우
+## CommonJS 타입 선언이 없는 경우
 
 더 흔한 경우는 다음과 같다.
 
@@ -106,20 +106,20 @@ pkg.exports["."].types types is interpreted as ESM when resolving with the
 }
 ```
 
-exports 에 types 가 없고, 최상위 types 만 있다. index.d.cts 는 만들지 않았다. 이 상태의 라이브러리(`lib-broken-types`)를 attw 에 넣으면 `node16 (from CJS)` 칸에 ❌ No types 가 찍힌다. exports 가 있으면 최상위 types 는 무시되고, require 분기에는 타입이 없으며, index.cjs 옆에 index.d.cts 도 없기 때문이다.
+exports에는 types 조건이 없고 최상위 types 필드만 있다. index.d.cts도 생성하지 않았다. 이 라이브러리(`lib-broken-types`)에 attw를 실행하면 `node16 (from CJS)` 환경에 ❌ No types가 표시된다. exports가 있으면 최상위 types 필드는 해석에 사용되지 않는다. require 분기에는 types 조건이 없고 index.cjs에 대응하는 index.d.cts도 생성되지 않았기 때문이다.
 
-문제는 이 라이브러리가 **대부분의 환경에서 멀쩡하다**는 점이다. bundler 해석에서는 import 분기가 잡혀 index.js 옆의 index.d.ts 를 찾는다. ESM 프로젝트에서도 같다. 저자가 Vite 나 Next.js 로 테스트했다면 문제를 볼 수 없다. CommonJS 프로젝트에서 node16 해석을 쓰는 소비자만 이 에러를 만난다.
+문제는 대부분의 테스트 환경에서 이 라이브러리의 타입 선언이 **정상적으로 해석된다**는 점이다. bundler 해석에서는 import 분기가 선택되고 index.js에 대응하는 index.d.ts를 찾는다. ESM 프로젝트에서도 같은 경로로 해석된다. 따라서 Vite나 Next.js만 사용해 테스트하면 오류를 재현할 수 없다. 이 오류는 node16 해석을 사용하는 CommonJS 소비자에게만 발생한다.
 
 ```
 error TS7016: Could not find a declaration file for module '@ep3/lib-broken-types'.
 '…/dist/index.cjs' implicitly has an 'any' type.
 ```
 
-한 환경에서 되는 것과 모든 환경에서 되는 것은 다르다. attw 의 표가 4행인 이유도 여기에 있다. 각 행이 실제로 존재하는 소비자 환경 하나씩이다.
+한 환경에서 타입 선언을 해석할 수 있다고 해서 모든 환경에서 가능한 것은 아니다. attw의 표가 4행인 이유도 여기에 있다. 각 행은 실제 소비자가 사용할 수 있는 해석 환경 하나에 대응한다.
 
-## 타입이 새는 경우
+## 설치되지 않은 패키지의 타입 참조
 
-세 번째 형태는 d.ts 안에서 일어난다. 2편의 작은 이벤트 이미터 tiny-dep 을 **devDependencies** 에 두고, 그 타입을 public API 에 노출하는 라이브러리를 만들었다.
+세 번째 문제는 d.ts가 소비자에게 설치되지 않는 패키지의 타입을 참조할 때 발생한다. 2편의 작은 이벤트 이미터 tiny-dep을 **devDependencies**에 두고, 그 타입을 public API에 포함하는 라이브러리를 만들었다.
 
 ```ts
 // lib-type-leak/src/index.ts
@@ -132,14 +132,14 @@ export function createBus(): Emitter<BusEvents> {
 }
 ```
 
-JS 산출물에는 Emitter 가 인라인되어 실행에 문제가 없다. 그런데 d.ts 의 첫 줄은 이렇다.
+JavaScript 산출물에는 Emitter 코드가 인라인되어 런타임에는 문제가 없다. 그러나 d.ts의 첫 줄은 tiny-dep의 타입을 가져온다.
 
 ```ts
 // lib-type-leak/dist/index.d.ts
 import { Emitter } from "@ep2/tiny-dep";
 ```
 
-소비자에게는 tiny-dep 이 없다. devDependencies 는 설치되지 않으니까. 소비자의 tsc 는 이렇게 무너진다.
+devDependencies는 소비자 환경에 설치되지 않으므로 tiny-dep을 해석할 수 없다. 소비자 프로젝트에서 tsc를 실행하면 다음 오류가 발생한다.
 
 ```
 node_modules/@ep3/lib-type-leak/dist/index.d.ts(1,25):
@@ -148,15 +148,15 @@ check.ts(2,28):
   error TS7006: Parameter 'm' implicitly has an 'any' type.
 ```
 
-두 번째 에러가 더 고약하다. 소비자가 skipLibCheck 를 켜두면(대부분 켠다) 첫 번째 에러는 조용히 사라지고 두 번째만 남는다. 소비자는 자기 코드에 any 가 생긴 이유를 라이브러리 d.ts 첫 줄에서 찾아야 한다.
+두 번째 오류는 원인을 소비자 코드의 문제처럼 보이게 한다. 소비자가 skipLibCheck를 활성화하면 첫 번째 라이브러리 검사 오류는 보고되지 않고 두 번째 오류만 남는다. 따라서 소비자는 자기 코드에서 발생한 any 추론의 원인을 라이브러리 d.ts의 첫 번째 import 문에서 찾아야 한다.
 
-대응은 둘 중 하나다. Emitter 타입이 public API 라면 패키지를 dependencies 로 올린다. 아니면 d.ts 를 번들해서 선언을 인라인한다. tsdown 은 후자를 기본으로 해준다. type-leak 실험에서는 일부러 `dts.neverBundle` 로 번들링을 껐다. tsc 로 d.ts 를 내면 항상 import 가 남는다. tsc 는 d.ts 를 번들하지 않는다.
+대응 방법은 두 가지다. 소비자가 tiny-dep을 함께 설치하도록 하려면 해당 패키지를 dependencies로 옮긴다. 외부 패키지 설치 없이 타입을 제공하려면 d.ts를 번들링해 Emitter 선언을 인라인한다. tsdown은 기본적으로 후자의 방식을 사용한다. type-leak 실험에서는 재현을 위해 `dts.neverBundle`로 번들링을 비활성화했다. tsc로 d.ts를 생성하면 외부 타입을 참조하는 import 문이 유지된다. tsc는 여러 d.ts 파일을 하나로 번들링하지 않는다.
 
 ## tsdown은 tsc를 어디까지 대신하나
 
-여기까지 오면 자연스럽게 묻게 된다. tsdown 을 쓰면 tsc 는 필요 없는 것 아닌가.
+여기까지 확인하면 한 가지 질문이 남는다. tsdown을 사용하면 tsc를 별도로 실행하지 않아도 될까?
 
-tsc 가 하는 일을 넷으로 쪼개면 답이 보인다.
+tsc의 기능을 네 가지로 구분하면 tsdown이 처리하는 범위를 확인할 수 있다.
 
 | tsc 의 일            | tsdown 이 대신하나           |
 | -------------------- | ---------------------------- |
@@ -165,11 +165,11 @@ tsc 가 하는 일을 넷으로 쪼개면 답이 보인다.
 | d.ts 생성            | 한다                         |
 | 번들링               | 한다 (tsc 는 애초에 못 한다) |
 
-첫 줄이 핵심이다. tsdown 을 포함한 고속 도구(oxc, esbuild, swc)는 **파일 하나만 보고 타입 문법을 잘라낸다.** 다른 파일을 읽지 않으니 빠르지만, 그래서 "이 함수에 넘긴 인자가 맞는 타입인가" 를 원리상 판단할 수 없다. 속도는 타입 검사를 포기해서 얻은 것이지 tsc 를 더 잘 만들어서 얻은 것이 아니다.
+첫 번째 행이 핵심이다. tsdown을 포함한 고속 도구(oxc, esbuild, swc)는 **각 파일을 독립적으로 변환하면서 타입 문법을 제거한다.** 프로그램 전체의 타입 관계를 분석하지 않으므로 함수에 전달한 인자가 매개변수 타입과 일치하는지 판단할 수 없다. 이 도구들의 속도 차이는 타입 검사를 수행하지 않는 데서 나온다.
 
-그런데 d.ts 생성은 타입 추론이 필요한 일이다. `function f(x: number) { return x + 1 }` 의 반환 타입이 number 라는 것을 알아야 `f(x: number): number` 를 쓸 수 있다. 파일 하나만 보고 지우는 도구가 어떻게 d.ts 를 만드는가.
+그러나 d.ts 생성에는 타입 추론이 필요하다. `function f(x: number) { return x + 1 }`의 반환 타입이 number라는 것을 알아야 `f(x: number): number`를 생성할 수 있다. 파일 단위로 타입 문법만 제거하는 도구가 타입 추론이 필요한 d.ts를 어떻게 생성할 수 있을까?
 
-두 가지 길이 있다. 하나는 내부에서 TypeScript 컴파일러 API 를 호출하는 것이다. 사실상 tsc 를 안에서 돌린다. 다른 하나는 **isolatedDeclarations** 다. TypeScript 5.5 가 추가한 옵션으로, 모든 export 에 반환 타입을 명시하도록 강제한다. 추론할 것이 없으면 파일 단위로 d.ts 를 뽑을 수 있다.
+구현 방법은 두 가지다. 첫 번째는 내부에서 TypeScript 컴파일러 API를 호출하는 방식으로, tsdown 프로세스에서 TypeScript의 선언 생성 기능을 실행한다. 두 번째는 **isolatedDeclarations**를 사용하는 방식이다. TypeScript 5.5가 추가한 옵션으로, 내보내는 선언에 필요한 타입을 명시하도록 강제한다. 공개 선언을 생성하는 데 필요한 타입 정보가 각 소스 파일에 명시되어 있으면 프로그램 전체를 분석하지 않고도 파일별 d.ts를 생성할 수 있다.
 
 ```ts
 // isolatedDeclarations 가 요구하는 형태 — 반환 타입이 전부 적혀 있다
@@ -178,11 +178,11 @@ export function make000(name: string, score: number = 0): Record000 {
 }
 ```
 
-두 길의 비용을 쟀다. 모듈 1,000개(각각 인터페이스 하나와 함수 넷)짜리 라이브러리를 생성해 다섯 가지 방법으로 빌드하고, 각 3회의 중앙값을 취했다.
+두 가지 d.ts 생성 방식의 실행 시간을 측정했다. 인터페이스 하나와 함수 네 개를 포함한 모듈 1,000개로 라이브러리를 생성해 다섯 가지 방법으로 빌드하고, 각각 세 번 실행한 결과의 중앙값을 사용했다.
 
 <DtsBenchDemo />
 
-| 방법                       | 중앙값   | d.ts 에 든 시간    |
+| 방법                       | 중앙값   | d.ts 생성 시간     |
 | -------------------------- | -------- | ------------------ |
 | tsc --emitDeclarationOnly  | 698 ms   | 698 ms (검사 포함) |
 | tsdown · generator: tsc    | 1,655 ms | 1,478 ms           |
@@ -190,9 +190,9 @@ export function make000(name: string, score: number = 0): Record000 {
 | tsdown · dts 없음 (기준선) | 177 ms   | —                  |
 | tsc --noEmit (검사만)      | 533 ms   | —                  |
 
-tsdown 행은 JS 번들(esm+cjs)까지 포함한 시간이라 기준선 177 ms 를 빼야 d.ts 비용이 나온다. TS 컴파일러 API 로 만들면 1,478 ms, oxc 로 만들면 864 ms 다. 그리고 tsdown 은 d.ts 1,000개를 파일 하나로 합치는 일까지 하므로 tsc 의 698 ms 와 나란히 놓을 수는 없다.
+tsdown 행은 JavaScript 번들(ESM+CJS) 생성 시간까지 포함하므로 기준선 177 ms를 빼서 d.ts 생성 시간을 계산했다. TypeScript 컴파일러 API를 사용하면 1,478 ms, oxc를 사용하면 864 ms가 걸렸다. tsdown은 d.ts 1,000개를 파일 하나로 번들링하는 작업도 수행하므로 tsc의 698 ms와 직접 비교할 수는 없다.
 
-숫자보다 중요한 것은 구조다. oxc 경로는 타입 검사를 **하지 않고** 864 ms 를 썼다. 타입 검사만 따로 하면 533 ms 가 더 든다. 즉 tsdown 으로 빌드하는 프로젝트는 타입 검사를 별도로 돌려야 하고, 그것이 곧 tsc 의 남은 역할이다.
+비교에서 핵심은 각 방식의 타입 검사 포함 여부다. oxc 방식은 타입 검사를 **수행하지 않은 상태로** d.ts 생성에 864 ms가 걸렸다. 별도의 타입 검사에는 533 ms가 더 필요하다. 따라서 tsdown으로 빌드하는 프로젝트에서도 타입 검사를 별도로 실행해야 하며, tsc는 이 검사를 담당한다.
 
 ```json
 {
@@ -204,19 +204,19 @@ tsdown 행은 JS 번들(esm+cjs)까지 포함한 시간이라 기준선 177 ms �
 }
 ```
 
-tsc 를 컴파일러가 아니라 **린터로 강등시켜 쓰는 것**이다. 에디터가 보여주는 빨간 줄과 CI 가 잡는 에러를 일치시키는 역할이고, 산출물은 tsdown 이 만든다.
+이 구성에서는 tsc를 산출물 생성기가 아니라 **정적 타입 검사기**로 사용한다. 에디터와 CI가 같은 tsconfig를 사용하면 tsc는 두 환경에서 같은 타입 오류를 보고한다. JavaScript와 d.ts 산출물은 tsdown이 생성한다.
 
-isolatedDeclarations 는 부수 효과도 있다. public API 의 타입이 전부 코드에 적혀 있으니, 리팩터링으로 반환 타입이 바뀌면 그 자리에서 드러난다. 추론에 기대던 API 는 저자도 모르는 사이에 바뀔 수 있다.
+isolatedDeclarations에는 추가 효과도 있다. public API의 타입이 코드에 명시되므로 리팩터링 결과가 선언한 반환 타입과 일치하지 않으면 해당 export 선언에서 타입 오류가 발생한다. 반환 타입을 추론에만 맡기면 저자가 변경을 의도하지 않았어도 public API의 타입이 달라질 수 있다.
 
-## 배포 전에 기계가 검사하는 것
+## 배포 전 자동 검사
 
-여기까지 세 가지 형태의 타입 문제와 두 가지 도구를 봤다. 배포 전 검증 절차로 정리하면 세 단계다.
+앞에서 세 가지 타입 문제를 확인했다. 이를 배포 전에 검출하는 절차는 세 단계로 구성된다.
 
-**publint** 는 package.json 의 정적 규칙을 본다. 조건 순서, 확장자와 포맷의 불일치, files 누락 같은 것을 배포물을 만들지 않고도 잡는다. 올바른 라이브러리에서는 `All good!` 한 줄이다.
+**publint**는 package.json을 정적으로 분석한다. 배포물을 생성하지 않고도 조건 순서, 확장자와 모듈 형식의 불일치, files 필드 누락을 보고한다. 문제가 없으면 `All good!`을 출력한다.
 
-**attw** 는 해석 매트릭스를 본다. 실제로 npm pack 한 tarball 을 네 가지 소비자 환경으로 해석해 각 칸에 결과를 찍는다. 위에서 본 표들이 attw 출력의 전형적인 예다. `--pack .` 으로 로컬에서 돌릴 수 있고, tsdown 은 `--attw` 플래그로 빌드 직후 자동으로 돌려준다(`--publint` 도 있다).
+**attw**는 npm pack으로 생성한 tarball을 네 가지 소비자 환경에서 해석하고 환경별 결과를 매트릭스로 표시한다. 위에서 본 표가 attw 출력의 전형적인 형태다. `--pack .`으로 로컬에서 실행할 수 있고, tsdown에 `--attw` 플래그를 지정하면 빌드 직후 attw가 자동으로 실행된다(`--publint`도 지원한다).
 
-**스모크 테스트** 는 소비자가 되어 본다. 워크스페이스 링크는 소비자의 환경이 아니다. devDependencies 가 전부 있고, 심볼릭 링크 너머로 이웃 패키지가 보인다. npm pack 으로 tarball 을 만들어 빈 프로젝트에 설치한 뒤 import, require, tsc 를 돌려보는 스크립트를 하나 두면 위의 세 문제가 전부 걸린다.
+**스모크 테스트**는 실제 소비자와 같은 설치 환경에서 패키지를 검증한다. 워크스페이스에는 모든 devDependencies가 설치되어 있고 심볼릭 링크를 통해 다른 워크스페이스 패키지를 해석할 수 있으므로 소비자 환경과 다르다. npm pack으로 tarball을 생성해 빈 프로젝트에 설치한 뒤 import, require, tsc를 실행하면 앞서 설명한 세 가지 문제를 모두 검출할 수 있다.
 
 ```
 $ node smoke/run.mjs
@@ -233,31 +233,31 @@ $ node smoke/run.mjs
   ✘ tsc bundler      error TS2307: Cannot find module '@ep2/tiny-dep' …
 ```
 
-마지막으로 npm pack --dry-run 을 눈으로 본다. 2편에서 말한 files 필드의 효과가 여기서 보인다. 예시 라이브러리는 `files: ["dist"]` 로 5개 파일이 올라간다. 지우면 12개가 된다. 벤치 스크립트, 생성기, tsconfig 여러 벌이 소비자에게 배달된다. npm 은 files 가 없으면 `.gitignore` 를 대신 읽는데, 그래서 소스 폴더는 빠지고 설정 파일은 남는 어중간한 결과가 나온다.
+마지막으로 npm pack --dry-run의 파일 목록을 확인한다. 이 목록에서 2편에서 설명한 files 필드의 효과를 확인할 수 있다. 예시 라이브러리는 `files: ["dist"]` 설정으로 다섯 개 파일만 tarball에 포함한다. files 설정을 제거하면 12개 파일이 포함되어 벤치마크 스크립트, 생성기, 여러 tsconfig 파일까지 배포된다. npm은 files 필드가 없으면 .gitignore를 배포 제외 기준으로 사용하므로 소스 디렉터리는 제외되지만 설정 파일은 포함된다.
 
 ## 배포 전 체크리스트
 
-세 편을 목록 하나로 접으면 이렇다.
+세 편의 배포 전 검증 항목을 하나의 목록으로 정리하면 다음과 같다.
 
-- 지원하는 런타임과 모듈 포맷을 정하고 README 에 적었다. 가능하면 ESM 만 낸다 (1편)
-- exports 로 열린 경로를 전부 적었고, 포맷별 분기 안에 types 를 먼저 두었다 (2·3편)
-- 최상위 main 과 types 폴백을 두었다 (3편)
-- sideEffects 를 정확히 적었고, 부작용은 배럴이 아니라 별도 진입점으로 낸다 (2편)
-- 인스턴스를 공유해야 하는 패키지는 peerDependencies 에 있다 (2편)
-- devDependencies 의 타입이 public d.ts 에 남지 않는다 (3편)
-- `tsc --noEmit` 이 CI 에서 돈다 (3편)
-- publint 와 attw 가 통과한다 (3편)
-- npm pack 한 tarball 로 import / require / tsc 스모크를 돌렸다 (3편)
-- files 로 배포 범위를 좁혔고 npm pack --dry-run 을 확인했다 (2·3편)
+- 지원하는 런타임과 모듈 형식을 정하고 README에 명시했다. 가능하면 ESM 모듈 형식만 제공했다 (1편)
+- exports에 공개할 서브패스를 모두 지정했고, 모듈 형식별 분기 안에 types 조건을 먼저 두었다 (2·3편)
+- 최상위 main과 types 폴백을 지정했다 (3편)
+- sideEffects를 정확히 지정했고, 부작용이 있는 모듈은 배럴 파일에서 내보내지 않고 별도 진입점으로 제공했다 (2편)
+- 인스턴스를 공유해야 하는 패키지는 peerDependencies에 지정했다 (2편)
+- devDependencies의 타입이 public d.ts에 남지 않는다 (3편)
+- `tsc --noEmit`을 CI에서 실행한다 (3편)
+- publint와 attw 검사를 통과한다 (3편)
+- npm pack으로 생성한 tarball에서 import, require, tsc 스모크 테스트를 실행했다 (3편)
+- files 필드로 배포 범위를 제한했고 npm pack --dry-run 결과를 확인했다 (2·3편)
 
 ## 정리
 
-- d.ts 는 JS 와 같은 해석 규칙을 탄다. .d.ts 는 ESM, .d.cts 는 CommonJS 의 타입이고, exports 의 조건은 타입에도 그대로 적용된다. types 조건 하나를 맨 위에 두면 require 소비자가 ESM 타입을 받는다.
-- 타입 문제는 **한 환경에서 보이지 않는다.** attw 의 4행 매트릭스가 소비자 환경을 대신 돌아준다.
-- tsdown 은 트랜스파일·d.ts·번들을 대신하지만 **타입 검사는 하지 않는다.** `tsc --noEmit` 은 남는다. isolatedDeclarations 를 켜면 d.ts 생성이 타입 검사 없이 파일 단위로 돌아간다.
-- 배포 전에 publint, attw, npm pack 스모크 세 가지를 돌린다. 세 줄이면 이 시리즈의 모든 문제가 걸린다.
+- TypeScript는 d.ts에도 JavaScript와 같은 모듈 해석 규칙을 적용한다. `"type": "module"` 패키지에서 .d.ts는 ESM, .d.cts는 CommonJS 타입 선언으로 해석되며 exports 조건은 타입에도 적용된다. types 조건 하나를 맨 위에 두면 require 소비자에게 ESM 타입 선언이 선택된다.
+- 타입 문제는 **특정 환경에서만 발생할 수 있다.** attw는 네 가지 소비자 환경에서 패키지의 타입 해석 결과를 각각 검사한다.
+- tsdown은 트랜스파일, d.ts 생성, 번들링을 수행하지만 **타입 검사는 하지 않는다.** 따라서 `tsc --noEmit`을 별도의 타입 검사 단계로 실행해야 한다. isolatedDeclarations를 활성화하면 타입 검사 없이 각 소스 파일에서 d.ts를 독립적으로 생성할 수 있다.
+- 배포 전에 publint, attw, npm pack 스모크 테스트를 실행한다. 이 세 가지 검사는 시리즈에서 다룬 배포 문제를 검출한다.
 
-재현은 예시 저장소 루트에서 다음을 실행하면 된다. 편별 실행법과 확인 포인트는 [episodes/03-types-and-publish](https://github.com/hovelopin/library-bundling-examples/tree/main/episodes/03-types-and-publish) 의 README 에 정리해 뒀다.
+이 글의 결과를 재현하려면 예시 저장소 루트에서 다음 명령을 실행하면 된다. 편별 실행 방법과 확인 포인트는 [episodes/03-types-and-publish](https://github.com/hovelopin/library-bundling-examples/tree/main/episodes/03-types-and-publish)의 README에 정리했다.
 
 ```bash
 pnpm install && pnpm -r --filter "@ep3/*" build
@@ -266,4 +266,4 @@ pnpm --filter "@ep3/lib*" attw
 pnpm --filter @ep3/smoke start
 ```
 
-세 편에 걸쳐 본 것은 결국 하나다. 라이브러리의 산출물은 내 코드가 아니라 **남의 빌드의 입력**이고, 그 형태를 정하는 것이 package.json 과 빌드 설정이다. 코드보다 package.json 과 빌드 설정을 먼저 잡으면 나머지는 도구가 검사해준다.
+라이브러리 산출물은 **소비자 프로젝트의 빌드 입력**으로 사용되며, package.json과 빌드 설정이 산출물의 형식을 결정한다. package.json과 빌드 설정에 지원 환경과 산출물 형식을 명시하면 publint, attw, 스모크 테스트로 설정과 실제 배포물의 일치 여부를 검사할 수 있다.

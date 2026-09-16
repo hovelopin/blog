@@ -6,7 +6,9 @@ tags: ["bundling", "tsdown", "typescript", "dts", "publint", "library"]
 author: "hovelopin"
 series: "라이브러리 번들링"
 seriesOrder: 3
-draft: false
+cover: "/covers/library-bundling-window-clean.png"
+coverAlt: "석양이 비치는 창가 책장에서 묶인 책과 패키지가 놓인 일러스트"
+draft: true
 ---
 
 타입 선언 파일이라고 하면 무엇이 떠오르는가? tsc 가 컴파일하면서 옆에 떨어뜨려 주는 부산물. JS 만 제대로 나오면 따라오는 것.
@@ -15,7 +17,7 @@ draft: false
 
 보통 이럴 때 소비자의 tsconfig 가 까다롭다고 생각한다. 실제로도 그렇게 답변이 달린 이슈가 많다.
 
-하지만 d.ts 는 JS 와 별개의 산출물이고, TypeScript 는 그 파일을 JS 와 **같은 규칙으로** 해석한다. 파일 확장자가 .d.ts 냐 .d.cts 냐가 ESM 이냐 CommonJS 냐를 결정하고, package.json 의 exports 조건이 어느 타입 파일을 줄지 결정한다. 1편과 2편에서 JS 산출물에 적용됐던 모든 규칙이 타입에도 그대로 적용된다.
+하지만 d.ts 는 JS 와 별개의 산출물이고, TypeScript 는 d.ts 를 JS 와 **같은 규칙으로** 해석한다. 파일 확장자가 .d.ts 냐 .d.cts 냐가 ESM 이냐 CommonJS 냐를 결정하고, package.json 의 exports 조건이 어느 타입 파일을 줄지 결정한다. 1편과 2편에서 JS 산출물에 적용됐던 모든 규칙이 타입에도 그대로 적용된다.
 
 **타입 선언은 두 번째 배포물이다.** 이 글에서는 타입이 잘못 배포되는 세 가지 형태를 재현하고, tsdown 이 tsc 를 어디까지 대신하는지 재고, 배포 전에 이 모든 것을 기계적으로 검사하는 방법을 정리한다. 수치는 예시 저장소 `library-bundling-examples` 의 `episodes/03-types-and-publish/` 에서 재현할 수 있다.
 
@@ -25,7 +27,7 @@ draft: false
 
 TypeScript 는 .d.ts 파일을 옆에 있는 `.js` 파일의 포맷으로 해석한다. package.json 이 `"type": "module"` 이면 .d.ts 는 ESM 모듈의 타입이다. CommonJS 산출물의 타입은 .d.cts 여야 한다. 확장자가 곧 포맷이다.
 
-이 시리즈의 1·2편 초고에서 필자는 exports 를 이렇게 적었다.
+타입을 어디에 적을지 생각하면, types 를 블록 맨 위에 하나만 두는 형태가 가장 먼저 떠오른다.
 
 ```json
 {
@@ -39,7 +41,7 @@ TypeScript 는 .d.ts 파일을 옆에 있는 `.js` 파일의 포맷으로 해석
 }
 ```
 
-"types 는 맨 위에" 라는 규칙을 지켰고, 직접 써봤을 때 아무 문제가 없었다. 그런데 이 package.json 을 **arethetypeswrong**(attw) 에 넣으면 이렇게 나온다.
+조건은 위에서부터 매칭되니 types 를 맨 앞에 두면 어느 소비자든 타입을 찾을 것 같다. 직접 써봐도 문제가 드러나지 않는다. 그런데 이 package.json 을 **arethetypeswrong**(attw) 에 넣으면 이렇게 나온다.
 
 ```
 $ attw --pack .
@@ -54,7 +56,7 @@ $ attw --pack .
 └───────────────────┴─────────────────────────┘
 ```
 
-require() 로 들어온 소비자에게도 조건은 위에서부터 매칭된다. 첫 줄의 types 가 잡히고, 그 값은 index.d.ts, 즉 ESM 의 타입이다. JS 는 index.cjs 를 받았는데 타입은 ESM 것을 받은 것이다. TypeScript 는 이 모듈을 ESM 이라고 믿고, CommonJS 파일에서 그것을 require 하는 코드에 엉뚱한 에러를 낸다. attw 는 이 상태를 "ESM 인 척한다(Masquerading as ESM)" 고 부른다. publint 도 같은 것을 잡는다.
+require() 로 들어온 소비자에게도 조건은 위에서부터 매칭된다. 첫 줄의 types 가 잡히고, 그 값은 index.d.ts, 즉 ESM 의 타입이다. JS 는 index.cjs 를 받았는데 타입은 ESM 것을 받은 것이다. TypeScript 는 이 모듈을 ESM 이라고 믿고, CommonJS 파일에서 require 하는 코드에 엉뚱한 에러를 낸다. attw 는 이 상태를 "ESM 인 척한다(Masquerading as ESM)" 고 부른다. publint 도 같은 것을 잡는다.
 
 ```
 pkg.exports["."].types types is interpreted as ESM when resolving with the
@@ -84,13 +86,13 @@ pkg.exports["."].types types is interpreted as ESM when resolving with the
 }
 ```
 
-각 분기 안에서 types 가 default 보다 먼저 온다. 규칙은 그대로다. "처음 맞는 것이 이긴다" 를 분기마다 적용할 뿐이다. 이 형태로 바꾸면 attw 가 네 칸 모두 🟢 를 찍는다. 1편과 2편의 예시도 이 형태로 고쳤다.
+각 분기 안에서 types 가 default 보다 먼저 온다. 규칙은 그대로다. "처음 맞는 것이 이긴다" 를 분기마다 적용할 뿐이다. 포맷별 분기 형태로 바꾸면 attw 가 네 칸 모두 🟢 를 찍는다. 1편과 2편의 예시가 이 모양이었던 이유가 여기 있다.
 
 맨 위의 main 과 types 는 exports 를 모르는 오래된 해석기(attw 의 node10 행)를 위한 폴백이다. 없어도 최신 도구는 다 동작하지만, 1편 라이브러리에 attw 를 돌리면 node10 행이 💀 로 찍힌다. 두 줄이면 끝나는 일이니 넣어두자.
 
 ## 타입이 아예 없는 경우
 
-더 흔한 형태는 이것이다.
+더 흔한 경우는 다음과 같다.
 
 ```json
 {
@@ -113,7 +115,7 @@ error TS7016: Could not find a declaration file for module '@ep3/lib-broken-type
 '…/dist/index.cjs' implicitly has an 'any' type.
 ```
 
-한 환경에서 되는 것과 모든 환경에서 되는 것은 다르다. attw 의 표가 4행인 이유가 이것이다. 각 행이 실제로 존재하는 소비자 환경 하나씩이다.
+한 환경에서 되는 것과 모든 환경에서 되는 것은 다르다. attw 의 표가 4행인 이유도 여기에 있다. 각 행이 실제로 존재하는 소비자 환경 하나씩이다.
 
 ## 타입이 새는 경우
 
@@ -148,7 +150,7 @@ check.ts(2,28):
 
 두 번째 에러가 더 고약하다. 소비자가 skipLibCheck 를 켜두면(대부분 켠다) 첫 번째 에러는 조용히 사라지고 두 번째만 남는다. 소비자는 자기 코드에 any 가 생긴 이유를 라이브러리 d.ts 첫 줄에서 찾아야 한다.
 
-대응은 둘 중 하나다. 그 타입이 public API 라면 패키지를 dependencies 로 올린다. 아니면 d.ts 를 번들해서 선언을 인라인한다. tsdown 은 후자를 기본으로 해준다. 이 실험에서는 일부러 `dts.neverBundle` 로 그것을 껐다. tsc 로 d.ts 를 내면 항상 이 상태다. tsc 는 d.ts 를 번들하지 않는다.
+대응은 둘 중 하나다. Emitter 타입이 public API 라면 패키지를 dependencies 로 올린다. 아니면 d.ts 를 번들해서 선언을 인라인한다. tsdown 은 후자를 기본으로 해준다. type-leak 실험에서는 일부러 `dts.neverBundle` 로 번들링을 껐다. tsc 로 d.ts 를 내면 항상 import 가 남는다. tsc 는 d.ts 를 번들하지 않는다.
 
 ## tsdown은 tsc를 어디까지 대신하나
 
@@ -156,12 +158,12 @@ check.ts(2,28):
 
 tsc 가 하는 일을 넷으로 쪼개면 답이 보인다.
 
-| tsc 의 일 | tsdown 이 대신하나 |
-|---|---|
-| 타입 검사 | 하지 않는다 |
-| 트랜스파일 (TS → JS) | 한다 |
-| d.ts 생성 | 한다 |
-| 번들링 | 한다 (tsc 는 애초에 못 한다) |
+| tsc 의 일            | tsdown 이 대신하나           |
+| -------------------- | ---------------------------- |
+| 타입 검사            | 하지 않는다                  |
+| 트랜스파일 (TS → JS) | 한다                         |
+| d.ts 생성            | 한다                         |
+| 번들링               | 한다 (tsc 는 애초에 못 한다) |
 
 첫 줄이 핵심이다. tsdown 을 포함한 고속 도구(oxc, esbuild, swc)는 **파일 하나만 보고 타입 문법을 잘라낸다.** 다른 파일을 읽지 않으니 빠르지만, 그래서 "이 함수에 넘긴 인자가 맞는 타입인가" 를 원리상 판단할 수 없다. 속도는 타입 검사를 포기해서 얻은 것이지 tsc 를 더 잘 만들어서 얻은 것이 아니다.
 
@@ -180,13 +182,13 @@ export function make000(name: string, score: number = 0): Record000 {
 
 <DtsBenchDemo />
 
-| 방법 | 중앙값 | d.ts 에 든 시간 |
-|---|---|---|
-| tsc --emitDeclarationOnly | 698 ms | 698 ms (검사 포함) |
-| tsdown · generator: tsc | 1,655 ms | 1,478 ms |
-| tsdown · generator: oxc | 1,041 ms | 864 ms |
-| tsdown · dts 없음 (기준선) | 177 ms | — |
-| tsc --noEmit (검사만) | 533 ms | — |
+| 방법                       | 중앙값   | d.ts 에 든 시간    |
+| -------------------------- | -------- | ------------------ |
+| tsc --emitDeclarationOnly  | 698 ms   | 698 ms (검사 포함) |
+| tsdown · generator: tsc    | 1,655 ms | 1,478 ms           |
+| tsdown · generator: oxc    | 1,041 ms | 864 ms             |
+| tsdown · dts 없음 (기준선) | 177 ms   | —                  |
+| tsc --noEmit (검사만)      | 533 ms   | —                  |
 
 tsdown 행은 JS 번들(esm+cjs)까지 포함한 시간이라 기준선 177 ms 를 빼야 d.ts 비용이 나온다. TS 컴파일러 API 로 만들면 1,478 ms, oxc 로 만들면 864 ms 다. 그리고 tsdown 은 d.ts 1,000개를 파일 하나로 합치는 일까지 하므로 tsc 의 698 ms 와 나란히 놓을 수는 없다.
 
@@ -212,7 +214,7 @@ isolatedDeclarations 는 부수 효과도 있다. public API 의 타입이 전�
 
 **publint** 는 package.json 의 정적 규칙을 본다. 조건 순서, 확장자와 포맷의 불일치, files 누락 같은 것을 배포물을 만들지 않고도 잡는다. 올바른 라이브러리에서는 `All good!` 한 줄이다.
 
-**attw** 는 해석 매트릭스를 본다. 실제로 npm pack 한 tarball 을 네 가지 소비자 환경으로 해석해 각 칸에 결과를 찍는다. 이 글의 표들이 전부 이것이다. `--pack .` 으로 로컬에서 돌릴 수 있고, tsdown 은 `--attw` 플래그로 빌드 직후 자동으로 돌려준다(`--publint` 도 있다).
+**attw** 는 해석 매트릭스를 본다. 실제로 npm pack 한 tarball 을 네 가지 소비자 환경으로 해석해 각 칸에 결과를 찍는다. 위에서 본 표들이 attw 출력의 전형적인 예다. `--pack .` 으로 로컬에서 돌릴 수 있고, tsdown 은 `--attw` 플래그로 빌드 직후 자동으로 돌려준다(`--publint` 도 있다).
 
 **스모크 테스트** 는 소비자가 되어 본다. 워크스페이스 링크는 소비자의 환경이 아니다. devDependencies 가 전부 있고, 심볼릭 링크 너머로 이웃 패키지가 보인다. npm pack 으로 tarball 을 만들어 빈 프로젝트에 설치한 뒤 import, require, tsc 를 돌려보는 스크립트를 하나 두면 위의 세 문제가 전부 걸린다.
 
@@ -264,4 +266,4 @@ pnpm --filter "@ep3/lib*" attw
 pnpm --filter @ep3/smoke start
 ```
 
-세 편에 걸쳐 본 것은 결국 하나다. 라이브러리의 산출물은 내 코드가 아니라 **남의 빌드의 입력**이고, 그 입력의 형태를 정하는 것이 package.json 과 빌드 설정이다. 코드보다 그것을 먼저 설계하면 나머지는 도구가 검사해준다.
+세 편에 걸쳐 본 것은 결국 하나다. 라이브러리의 산출물은 내 코드가 아니라 **남의 빌드의 입력**이고, 그 형태를 정하는 것이 package.json 과 빌드 설정이다. 코드보다 package.json 과 빌드 설정을 먼저 잡으면 나머지는 도구가 검사해준다.

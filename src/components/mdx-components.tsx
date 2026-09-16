@@ -20,6 +20,7 @@ import { ModuleGraphDemo } from "@/components/demos/module-graph-demo";
 import { TreeShakeDemo } from "@/components/demos/tree-shake-demo";
 import { SideEffectsDemo } from "@/components/demos/side-effects-demo";
 import { DuplicateReactDemo } from "@/components/demos/duplicate-react-demo";
+import { DtsBenchDemo } from "@/components/demos/dts-bench-demo";
 
 /**
  * MDX 본문에서 import 없이 바로 쓸 수 있는 컴포넌트 목록.
@@ -47,4 +48,5 @@ export const mdxComponents: MDXComponents = {
   TreeShakeDemo,
   SideEffectsDemo,
   DuplicateReactDemo,
+  DtsBenchDemo,
 };

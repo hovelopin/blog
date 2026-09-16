@@ -1,0 +1,308 @@
+---
+title: "번들러는 무엇을 하는가"
+description: "파일 여러 개를 하나로 합치는 일이 왜 라이브러리에서는 유독 어려운지, CommonJS와 ESM이 어디서 갈라지는지를 직접 빌드하고 재서 확인한다."
+date: "2026-09-16"
+tags: ["bundling", "tsdown", "esm", "commonjs", "library"]
+author: "hovelopin"
+series: "라이브러리 번들링"
+seriesOrder: 1
+draft: true
+---
+
+최근 필자는 생산성을 높이는 도구를 여럿 만들었다. 처음엔 프로젝트 안의 폴더 하나였던 코드가 두 번째, 세 번째 프로젝트에서도 필요해지면서 자연스럽게 라이브러리로 묶는 일이 잦아졌다. 그런데 막상 패키지로 떼어내고 나면 코드 자체보다 **"어떻게 내보낼 것인가"** 에서 훨씬 자주 발목이 잡혔다. `import` 는 되는데 `require` 는 안 되고, 함수 하나를 썼을 뿐인데 소비자 번들이 통째로 커지고, 어떤 프로젝트에서는 타입이 안 잡혔다.
+
+"번들링"이라고 하면 무엇이 떠오르는가? 아마 `vite build` 나 `next build` 한 줄일 것이다. 앱을 만들 때 번들러는 배경에 있는 도구다. 설정을 만질 일이 거의 없고, 결과물은 브라우저가 알아서 받아 간다.
+
+보통 라이브러리도 같다고 생각한다. `tsc` 로 컴파일해서 `dist/` 에 넣고 `npm publish` 하면 끝이라고. 실제로 처음엔 그렇게 동작한다. 문제는 그 산출물을 **누가** 쓰느냐에서 시작된다.
+
+라이브러리의 산출물은 사용자의 브라우저가 아니라 **다른 프로젝트의 번들러**가 읽는다. Next.js 의 웹팩이, Vite 의 rollup 이, Node 의 모듈 로더가, 테스트 러너의 변환기가 각자의 규칙으로 내 `dist/` 를 해석한다. 앱 번들링에서는 존재하지 않던 변수가 여기서 생긴다.
+
+그래서 이 시리즈의 첫 편은 번들러가 하는 가장 기본적인 일부터 다시 본다. 파일을 합치는 것이 무엇을 바꾸는지, CommonJS 와 ESM 이 어디서 갈라지는지, 그리고 그 차이가 라이브러리를 쓰는 쪽에 어떤 값으로 돌아오는지를 직접 빌드하고 재서 확인한다. 이 글의 모든 수치는 예시 저장소 `library-bundling-examples` 의 `episodes/01-bundler-and-formats/` 에서 그대로 재현할 수 있다.
+
+## 번들러가 하는 일
+
+번들러는 **모듈 그래프를 파일 하나(또는 몇 개)로 접는 도구**다. `main.ts` 에서 시작해 `import` 를 따라가며 필요한 파일을 전부 찾아낸 다음, 그 파일들을 하나의 스코프 안에 순서대로 이어 붙인다. 그 과정에서 TypeScript 를 JavaScript 로 바꾸고, 쓰이지 않는 코드를 잘라내고(tree-shaking), 필요하면 압축까지 하지만, 본질은 "합치기"다.
+
+이 시리즈에서는 [tsdown](https://tsdown.dev) 을 쓴다. Rust 로 만든 번들러 rolldown 위에 라이브러리 빌드에 필요한 기본값을 얹은 도구로, 설정 파일 하나로 ESM·CJS·타입 선언을 한 번에 낸다. 어떤 번들러를 쓰든 이 글의 원리는 같다.
+
+## 파일을 그대로 내보내면
+
+합치지 않으면 무슨 일이 생기는지부터 보자. 함수 5개짜리 유틸 라이브러리를 만들었다. `formatDate`, `slugify`, `clamp`, `debounce`, `deepEqual` 이 각자 파일 하나씩이고, `index.ts` 가 전부 다시 내보내는 배럴 파일이다.
+
+```ts
+// lib/src/index.ts
+export { formatDate } from "./format-date";
+export { slugify } from "./slugify";
+export { clamp } from "./clamp";
+export { debounce } from "./debounce";
+export { deepEqual, DeepEqualError } from "./deep-equal";
+```
+
+이 라이브러리를 번들 없이 파일 단위로 내보내고, 브라우저에서 `<script type="module">` 로 직접 불러온다. 앱 코드는 한 줄이다.
+
+```js
+// app-unbundled/main.js
+import { slugify } from "../lib/dist-unbundled/index.js";
+
+document.getElementById("out").textContent = slugify("Hello, Library Bundling!");
+```
+
+브라우저가 이 한 줄을 실행하기까지 어떤 요청을 보내는지 세어 봤다. 정적 서버를 띄우고, 브라우저가 하는 일을 그대로 흉내 내는 크롤러로 `main.js` 에서 출발해 `import` 를 따라갔다.
+
+```
+$ node app-unbundled/serve.mjs --crawl
+
+┌───────┬──────────────────────────────────────┬───────┐
+│ depth │ path                                 │ bytes │
+├───────┼──────────────────────────────────────┼───────┤
+│ 0     │ '/app-unbundled/main.js'             │ 345   │
+│ 1     │ '/lib/dist-unbundled/index.js'       │ 302   │
+│ 2     │ '/lib/dist-unbundled/format-date.js' │ 427   │
+│ 2     │ '/lib/dist-unbundled/slugify.js'     │ 293   │
+│ 2     │ '/lib/dist-unbundled/clamp.js'       │ 262   │
+│ 2     │ '/lib/dist-unbundled/debounce.js'    │ 335   │
+│ 2     │ '/lib/dist-unbundled/deep-equal.js'  │ 804   │
+└───────┴──────────────────────────────────────┴───────┘
+unbundled: 7 requests, 2768 bytes, 3 round-trips
+bundled:   2 requests, 2290 bytes, 2 round-trips
+```
+
+`depth` 는 "몇 번째 왕복에서 그 파일의 존재를 알게 됐는가"다. 브라우저는 `main.js` 를 받아 파싱한 뒤에야 `index.js` 가 필요하다는 걸 알고, `index.js` 를 받아 파싱한 뒤에야 나머지 다섯 파일을 알게 된다. 요청은 병렬로 나가지만 **발견은 순차적**이다. 이것이 워터폴이다.
+
+말로만 들으면 와닿지 않으니 시간축에 올려보자.
+
+<ModuleGraphDemo />
+
+왼쪽은 파일을 그대로 내보낸 경우다. 세로 점선이 왕복 한 번의 경계고, 다섯 개의 유틸 파일은 세 번째 왕복이 되어서야 요청이 시작된다. 오른쪽은 라이브러리를 파일 하나로 합친 경우다. 앱 파일과 라이브러리 파일, 두 번의 왕복으로 끝난다.
+
+| | 요청 수 | 전송 바이트 | 왕복 |
+|---|---|---|---|
+| 번들 없음 | 7 | 2,768 | 3 |
+| 번들 1개 | 2 | 2,290 | 2 |
+
+파일이 5개일 때 이 정도다. 실제 라이브러리는 파일이 수십에서 수백 개고, 서로를 가져오는 깊이도 훨씬 깊다. 왕복 하나가 수십 ms 인 모바일 네트워크에서 깊이가 곧 로딩 시간이 된다. **번들러의 첫 번째 일은 이 깊이를 1로 만드는 것이다.**
+
+## 앱 번들과 라이브러리 번들
+
+그렇다면 라이브러리도 앱처럼 최대한 합치고 압축하면 되는 것 아닌가? 여기서 두 번들링의 목적이 갈린다.
+
+앱 번들은 **최종 소비자**를 향한다. 브라우저가 받아서 실행하면 끝이므로, 모든 의존성을 안에 넣고, 코드를 최대한 압축하고, 결과물이 어떤 구조인지는 아무도 신경 쓰지 않는다.
+
+라이브러리 번들은 **다른 번들러의 입력**이다. 소비자의 번들러가 내 산출물을 다시 읽고, 다시 tree-shaking 하고, 다시 압축한다. 그래서 라이브러리는 정반대의 선택을 한다.
+
+- 의존성은 번들에 넣지 않는다. 소비자가 같은 패키지를 이미 쓰고 있을 수 있고, 두 벌이 들어가면 중복이 된다.
+- 압축하지 않는다. 소비자가 어차피 압축하고, 압축된 코드는 소비자 번들러가 tree-shaking 하기 어렵다.
+- 산출물의 **구조**가 곧 API 다. 어떤 포맷으로, 어떤 경로에, 어떤 필드를 붙여 내보내느냐가 소비자 쪽 코드가 되느냐 안 되느냐를 결정한다.
+
+마지막 항목이 이 시리즈의 주제다. 산출물의 구조는 한번 배포되면 계약이 된다. 서브패스 하나를 없애거나, CJS 를 그만 내거나, 타입 파일 위치를 옮기면 그건 전부 소비자를 깨뜨리는 변경이다. 앱에서는 마음대로 바꾸던 것들이 라이브러리에서는 메이저 버전을 올릴 사유가 된다.
+
+그리고 그 계약의 가장 밑바닥에 모듈 포맷이 있다.
+
+## CommonJS
+
+Node.js 가 처음부터 쓰던 모듈 시스템이다. `require` 로 가져오고 `module.exports` 로 내보낸다.
+
+```js
+// CommonJS
+const { slugify } = require("./slugify");
+module.exports = { slugify, clamp };
+```
+
+핵심은 `require` 가 **함수**라는 점이다. 함수이므로 실행해 봐야 무엇을 돌려주는지 알 수 있고, 실행 시점에 인자를 바꿀 수도 있다.
+
+```js
+const name = process.env.MODE === "dev" ? "./dev" : "./prod";
+const mod = require(name); // 실행하기 전엔 어느 파일인지 모른다
+```
+
+이 유연함이 대가를 만든다. 코드를 **실행하지 않고** 어떤 모듈이 어떤 이름을 내보내는지 알 방법이 없다. `module.exports` 는 그냥 객체라서 나중에 속성을 추가할 수도, 통째로 갈아끼울 수도 있다. 번들러 입장에서 CJS 모듈은 내부를 들여다볼 수 없는 상자다.
+
+tsdown 이 만든 CJS 산출물의 끝부분을 보면 그 모양이 드러난다.
+
+```js
+// lib/dist/index.cjs (끝부분)
+exports.DeepEqualError = DeepEqualError;
+exports.clamp = clamp;
+exports.debounce = debounce;
+exports.deepEqual = deepEqual;
+exports.formatDate = formatDate;
+exports.slugify = slugify;
+```
+
+`exports` 객체에 속성을 하나씩 대입한다. 이 대입문들은 코드를 실행해야 비로소 일어난다.
+
+## ESM
+
+ECMAScript 표준 모듈이다. `import` 로 가져오고 `export` 로 내보낸다. 브라우저가 네이티브로 지원하는 유일한 모듈 시스템이고, Node.js 도 지원한다.
+
+```js
+// ESM
+import { slugify } from "./slugify.js";
+export { slugify, clamp };
+```
+
+`import` 는 함수가 아니라 **문법**이다. 파일 최상위에만 올 수 있고, 경로는 문자열 리터럴이어야 하며, 조건문 안에 넣을 수 없다. 이 제약 덕분에 파일을 실행하지 않고 파싱만으로 모듈 그래프 전체와 각 모듈이 내보내는 이름을 알 수 있다. 이것을 **정적 구조**라고 부른다.
+
+내보낸 값은 복사가 아니라 **라이브 바인딩**이다. 내보낸 쪽에서 변수를 바꾸면 가져온 쪽에서도 바뀐 값이 보인다. CJS 는 `module.exports` 객체를 넘기므로 원시값은 그 시점의 복사본이다.
+
+같은 소스를 ESM 으로 빌드한 산출물은 끝이 이렇다.
+
+```js
+// lib/dist/index.js (끝부분)
+export { DeepEqualError, clamp, debounce, deepEqual, formatDate, slugify };
+```
+
+한 줄이다. 실행하지 않아도 이 파일이 여섯 개의 이름을 내보낸다는 것을 누구나, 어떤 도구나 알 수 있다.
+
+두 포맷의 차이를 한 표로 정리하면 이렇다.
+
+| | CommonJS | ESM |
+|---|---|---|
+| 문법 | `require()` / `module.exports` | `import` / `export` |
+| 해석 시점 | 실행 중 | 파싱 시점 (정적) |
+| 로딩 | 동기 | 비동기 (브라우저), 정적 분석 후 로드 |
+| 내보낸 값 | 객체 복사 | 라이브 바인딩 |
+| 브라우저 | 지원 안 함 | 네이티브 지원 |
+| 번들러가 내부를 알 수 있나 | 실행해야 안다 | 파싱만으로 안다 |
+
+마지막 줄이 라이브러리에서 가장 큰 차이를 만든다.
+
+## 함수 하나만 가져왔을 때
+
+라이브러리 사용자는 대개 그 안의 일부만 쓴다. 다섯 개 중 `slugify` 하나만 가져오는 소비자 앱을 만들고, 라이브러리의 ESM 산출물을 소비한 경우와 CJS 산출물을 소비한 경우로 나눠 빌드했다. 앱 코드는 둘 다 같다.
+
+```ts
+// app-esm/src/main.ts, app-cjs/src/main.ts
+import { slugify } from "@ep1/lib";
+
+console.log(slugify("Hello, Library Bundling!"));
+```
+
+```
+$ node scripts/size.mjs app-esm/dist/main.js app-cjs/dist/main.js
+
+┌──────────────────────┬──────┬──────┐
+│ file                 │ raw  │ gzip │
+├──────────────────────┼──────┼──────┤
+│ app-esm/dist/main.js │ 364  │ 312  │
+│ app-cjs/dist/main.js │ 2450 │ 1314 │
+└──────────────────────┴──────┴──────┘
+```
+
+같은 코드, 같은 번들러, 같은 설정인데 크기가 6.7배 차이 난다. 두 산출물에 무엇이 남았는지 보자.
+
+<TreeShakeDemo />
+
+위는 ESM 을 소비한 앱이다. 번들러가 `import { slugify }` 를 파싱하는 순간 나머지 넷이 쓰이지 않는다는 것을 확정할 수 있고, 그래서 잘라낸다. 아래는 CJS 를 소비한 앱이다. `require` 가 무엇을 돌려줄지는 실행해야 아는 일이라 번들러는 모듈을 통째로 남긴다.
+
+실제 CJS 쪽 산출물은 이렇게 생겼다.
+
+```js
+// app-cjs/dist/main.js (일부)
+var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod), cb = null), mod.exports);
+
+var import_dist = /* @__PURE__ */ __commonJSMin((exports) => {
+  function formatDate(date, withTime = false) { /* … */ }
+  function slugify(input) { /* … */ }
+  function clamp(value, min, max) { /* … */ }
+  function debounce(fn, wait) { /* … */ }
+  var DeepEqualError = class extends Error { /* … */ };
+  function deepEqual(a, b, seen) { /* … */ }
+  exports.DeepEqualError = DeepEqualError;
+  exports.clamp = clamp;
+  // …
+})();
+console.log((0, import_dist.slugify)("Hello, Library Bundling!"));
+```
+
+`__commonJSMin` 이라는 런타임 헬퍼가 붙고, 그 안에서 여섯 개의 내보내기가 전부 살아 있다. 번들러는 CJS 모듈을 "실행 시점에 `exports` 를 채우는 함수"로 감싸는 것 이상을 할 수 없다.
+
+ESM 이 tree-shaking 을 "가능하게" 하는 것이지 "보장"하는 건 아니다. 배럴 파일에 부작용이 섞이거나 `sideEffects` 표기가 틀리면 ESM 이어도 잘려 나가지 않는다. 그 이야기는 2편에서 다룬다. 여기서 확인할 것은 하나다. **CJS 만 배포하면 소비자는 tree-shaking 을 시작조차 할 수 없다.**
+
+## 둘 다 제공하기
+
+그럼 ESM 만 내면 되지 않나? 신규 라이브러리이고 Node 20 이상만 지원한다면 그게 정답이다. 하지만 아직 `require` 로 가져오는 소비자가 있다면 두 포맷을 함께 내야 한다. tsdown 에서는 설정 한 줄이다.
+
+```ts
+// lib/tsdown.config.ts
+import { defineConfig } from "tsdown";
+
+export default defineConfig({
+  entry: ["src/index.ts"],
+  format: ["esm", "cjs"],
+  platform: "neutral",
+  dts: true,
+});
+```
+
+빌드하면 `dist/index.js`(ESM), `dist/index.cjs`(CJS), 그리고 각각의 타입 선언 `index.d.ts`, `index.d.cts` 가 나온다. 이제 소비자가 어느 쪽을 받을지 `package.json` 이 정한다.
+
+```json
+{
+  "name": "@ep1/lib",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  }
+}
+```
+
+`import` 문으로 가져오면 `import` 조건이, `require()` 로 가져오면 `require` 조건이 선택된다. 이 `exports` 필드가 어떻게 동작하는지, 순서가 왜 중요한지는 2편의 첫 주제다.
+
+## 같은 라이브러리가 두 개가 되는 순간
+
+두 포맷을 함께 내는 순간 새로운 문제가 생긴다. 한 프로세스 안에서 누군가는 `import` 로, 누군가는 `require` 로 같은 패키지를 가져오면 어떻게 될까?
+
+```js
+// hazard/run.mjs
+import { createRequire } from "node:module";
+import { DeepEqualError as EsmError } from "@ep1/lib";
+
+const require = createRequire(import.meta.url);
+const { DeepEqualError: CjsError } = require("@ep1/lib");
+
+const err = new CjsError("from cjs");
+console.log("same class?      ", EsmError === CjsError);
+console.log("instanceof esm?  ", err instanceof EsmError);
+console.log("instanceof cjs?  ", err instanceof CjsError);
+```
+
+```
+$ node hazard/run.mjs
+same class?       false
+instanceof esm?   false
+instanceof cjs?   true
+```
+
+`import` 는 `dist/index.js` 를, `require` 는 `dist/index.cjs` 를 읽는다. Node 에게 이 둘은 경로가 다른 별개의 파일이고, 각각 따로 평가된다. 그래서 `DeepEqualError` 클래스가 두 벌 생기고, 한쪽에서 만든 에러는 다른 쪽의 `instanceof` 를 통과하지 못한다. 이것을 **dual package hazard** 라고 부른다.
+
+직접 두 방식을 섞어 쓸 일은 없어 보이지만, 의존성 트리 어딘가의 패키지 하나가 CJS 로 내 라이브러리를 `require` 하면 그것으로 충분하다. 모듈 스코프의 싱글턴(캐시, 레지스트리, 전역 설정)이 두 벌이 되고, `instanceof` 와 `Symbol` 비교가 조용히 실패한다.
+
+대응은 네 가지다.
+
+1. **상태를 갖지 않는다.** 순수 함수만 내보내면 두 벌이어도 문제가 없다.
+2. **상태를 얇은 CJS 코어 하나에 몰아넣고**, ESM 은 그 코어를 가져와 다시 내보내는 래퍼로 만든다. 그러면 평가되는 파일은 하나다.
+3. `globalThis` 에 싱글턴을 걸어 두 벌이 하나를 바라보게 한다. 최후의 수단이다.
+4. **ESM 만 낸다.** 가장 확실하다.
+
+## 정리
+
+- 번들러는 모듈 그래프를 접어 **왕복 깊이를 1로** 만든다. 파일 5개짜리 라이브러리도 그대로 내보내면 요청 7번, 왕복 3번이 됐다.
+- 라이브러리 산출물은 브라우저가 아니라 **다른 번들러가 읽는다.** 그래서 의존성을 넣지 않고, 압축하지 않고, 구조가 계약이 된다.
+- CommonJS 는 실행해야 알 수 있고, ESM 은 파싱만으로 알 수 있다. 그 차이가 함수 하나만 가져온 소비자 번들에서 **364 B 대 2,450 B** 로 나타났다.
+- 두 포맷을 함께 내면 `exports` 로 분기하되, 같은 모듈이 두 벌 평가되는 **dual package hazard** 를 감수해야 한다. 가능하면 ESM 만 낸다.
+
+여기까지 재현하려면 예시 저장소 루트에서 다음을 실행하면 된다.
+
+```bash
+pnpm install && pnpm --filter "@ep1/*" build
+node episodes/01-bundler-and-formats/app-unbundled/serve.mjs --crawl
+node scripts/size.mjs episodes/01-bundler-and-formats/app-{esm,cjs}/dist/main.js
+node episodes/01-bundler-and-formats/hazard/run.mjs
+```
+
+다음 편에서는 이 산출물을 소비자에게 어떻게 알려주는지, 즉 `package.json` 의 `exports`, `sideEffects`, `dependencies` 세 필드가 소비자 번들을 어떻게 바꾸는지를 같은 방식으로 잰다.

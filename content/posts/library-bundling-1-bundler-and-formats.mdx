@@ -177,7 +177,7 @@ console.log(slugify("Hello, Library Bundling!"));
 ```
 
 ```
-$ node scripts/size.mjs app-esm/dist/main.js app-cjs/dist/main.js
+$ node ../../scripts/size.mjs app-esm/dist/main.js app-cjs/dist/main.js
 
 ┌──────────────────────┬──────┬──────┐
 │ file                 │ raw  │ gzip │
@@ -229,7 +229,7 @@ console.log((0, import_dist.slugify)("Hello, Library Bundling!"));
 
 `__commonJSMin`이라는 런타임 헬퍼가 추가되고, 그 안에 여섯 개의 내보내기가 모두 포함된다. 번들러는 CJS 모듈을 실행 시점에 exports 객체를 구성하는 함수로 변환하지만, 사용하지 않는 내보내기를 안전하게 제거하지는 못한다.
 
-ESM은 tree-shaking에 필요한 정적 구조를 제공하지만 제거 결과까지 보장하지는 않는다. 배럴 파일에 부작용이 있거나 sideEffects 설정이 잘못되면 ESM이어도 사용하지 않는 코드가 제거되지 않는다. 이 내용은 2편에서 다룬다. 여기서 확인할 점은 하나다. **CJS만 배포하면 소비자 번들러가 내보내기 단위로 tree-shaking하기 어렵다.**
+ESM은 tree-shaking에 필요한 정적 구조를 제공하지만 제거 결과까지 보장하지는 않는다. 배럴 파일에 부작용이 있거나 sideEffects 설정이 잘못되면 ESM이어도 사용하지 않는 코드가 제거되지 않는다. 이 내용은 2편에서 다룬다. 여기서 확인할 점은 하나다. **라이브러리가 CJS 파일만 배포하면 소비자 번들러는 CJS 파일을 입력으로 받는다. 그래서 소비자가 사용하지 않는 내보내기만 골라 tree-shaking하기 어렵다.**
 
 ## ESM과 CJS 함께 제공하기
 
@@ -313,8 +313,14 @@ import는 `dist/index.js`를 읽고 require는 `dist/index.cjs`를 읽는다. No
 
 대응은 네 가지다.
 
-1. **상태를 갖지 않는다.** 순수 함수만 내보내면 모듈이 두 번 평가되어도 동작이 달라지지 않는다.
-2. **상태를 단일 CJS 모듈에 두고**, ESM 파일은 그 모듈을 가져와 다시 내보내도록 구성한다. 두 형식이 같은 CJS 모듈의 상태를 사용하게 된다.
+1. **파일 바깥에 함께 쓰는 값을 만들지 않는다.** slugify처럼 입력을 받아 결과만 돌려주는 함수만 내보내면, 파일이 두 번 실행되어도 결과가 같다. 다만 클래스도 파일이 실행될 때 만들어지는 값이다. 소비자가 instanceof로 검사할 클래스를 내보낸다면 이 방법만으로는 부족하다.
+2. **함께 쓰는 값은 CJS 파일 한 곳에서만 만든다.** ESM 파일은 설정 객체나 클래스를 새로 만들지 않고, CJS 파일을 가져와 그대로 다시 내보낸다. import로 불러오든 require로 불러오든 결국 같은 CJS 파일이 만든 값을 사용하게 된다.
+
+   ```js
+   // dist/index.js (ESM)
+   import lib from "./index.cjs";
+   export const { DeepEqualError, clamp } = lib;
+   ```
 3. 싱글턴을 globalThis에 저장해 두 모듈이 같은 인스턴스를 사용하도록 한다. 다른 방법을 적용할 수 없을 때 고려한다.
 4. **ESM만 제공한다.** 중복 인스턴스가 생길 가능성을 제거한다.
 
@@ -342,6 +348,7 @@ node episodes/01-bundler-and-formats/hazard/run.mjs
 - [Node.js 20.19.0 릴리스 노트 — require(esm) 기본 활성화](https://nodejs.org/en/blog/release/v20.19.0)
 - [Node.js — End-of-Life 일정](https://nodejs.org/en/about/eol)
 - [require(esm) Backported to Node.js 20 — Socket](https://socket.dev/blog/require-esm-backported-to-node-js-20)
-- [Node.js Docs — Modules: Packages (exports, dual package hazard)](https://nodejs.org/api/packages.html)
+- [Node.js Docs — Modules: Packages (exports 필드)](https://nodejs.org/api/packages.html)
+- [nodejs/package-examples — Dual package hazard](https://github.com/nodejs/package-examples/blob/main/guide/07-dual-packages/README.md)
 - [Jest — ECMAScript Modules](https://jestjs.io/docs/ecmascript-modules)
 - [tsdown 공식 문서](https://tsdown.dev)

@@ -4,6 +4,7 @@ import { BackToTop } from "@/components/back-to-top";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { CommandPalette } from "@/components/command-palette";
 import { PageTransition } from "@/components/page-transition";
+import { ColorWash } from "@/components/color-wash";
 import { getAllPostSummaries, getAllTags } from "@/lib/content";
 import { LOCALE_META, type Locale } from "@/lib/locale";
 // Pretendard 는 유니코드 구간별로 쪼갠 subset 을 쓴다.
@@ -66,7 +67,7 @@ export async function RootShell({
         <SiteFooter />
         <BackToTop />
         <CommandPalette posts={paletteItems} tags={tags} locale={locale} />
-        <div className="color-wash" aria-hidden="true" />
+        <ColorWash />
       </body>
     </html>
   );

@@ -231,9 +231,32 @@
     var(--wash-edge) 100%
   );
 }
+/* 다크 모드에선 페이지 배경도 검정에서 시작해 1.75초에 걸쳐 돌아온다.
+   오버레이의 검은 바깥 영역과 페이지 색이 같아져서 원이 지나갈 때 단차가 안 보인다.
+   오버레이가 DOM 에 있는 동안만 건다. */
+@keyframes color-wash-bg {
+  from {
+    background-color: #000;
+  }
+  to {
+    background-color: var(--wash-bg-target);
+  }
+}
+.dark body:has(.color-wash) {
+  --wash-bg-target: var(--background);
+  animation: color-wash-bg 1.75s linear both;
+}
+.dark body:has(.color-wash) > header {
+  --wash-bg-target: color-mix(in oklab, var(--background) 80%, transparent);
+  animation: color-wash-bg 1.75s linear both;
+}
 @media (prefers-reduced-motion: reduce) {
   .color-wash {
     display: none;
+  }
+  .dark body:has(.color-wash),
+  .dark body:has(.color-wash) > header {
+    animation: none;
   }
 }
 

@@ -66,6 +66,7 @@ export async function RootShell({
         <SiteFooter />
         <BackToTop />
         <CommandPalette posts={paletteItems} tags={tags} locale={locale} />
+        <div className="color-wash" aria-hidden="true" />
       </body>
     </html>
   );

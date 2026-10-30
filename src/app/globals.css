@@ -173,6 +173,70 @@
   }
 }
 
+/* 새로고침 때 한 번, 화면 아래 중앙에서 원이 커지며 무지개 테두리가 지나가고
+   지나간 자리부터 내용이 드러난다. screen 블렌드라 원 안쪽(검정)은 화면을 그대로
+   보여 주고 바깥쪽(흰색)은 가린다. 다크 모드는 색을 뒤집고 multiply 를 쓴다.
+   루트 레이아웃에 한 번만 두므로 페이지 이동 땐 뜨지 않는다. */
+@keyframes color-wash {
+  from {
+    background-size: 200vmax 200vmax;
+    background-position: 50% calc(50% + 50vh + 20vmax);
+  }
+  to {
+    background-size: 2400vmax 2400vmax;
+    background-position: 50% 50%;
+    visibility: hidden;
+  }
+}
+.color-wash {
+  --wash-center: #000;
+  --wash-edge: #fff;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background-color: var(--wash-edge);
+  background-image: radial-gradient(
+    circle closest-side at 50% 50%,
+    var(--wash-center) 0%,
+    var(--wash-center) 4.5%,
+    #00166d 6.8%,
+    #00aaff 8.9%,
+    #e1e1fe 9.9%,
+    #ffcb5c 10.9%,
+    #ff4400 11.9%,
+    #f384ff 12.9%,
+    var(--wash-edge) 14.3%,
+    var(--wash-edge) 100%
+  );
+  background-repeat: no-repeat;
+  animation: color-wash 2s linear -0.25s both;
+}
+.dark .color-wash {
+  --wash-center: #fff;
+  --wash-edge: #000;
+  mix-blend-mode: multiply;
+  background-image: radial-gradient(
+    circle closest-side at 50% 50%,
+    var(--wash-center) 0%,
+    var(--wash-center) 4.5%,
+    #f384ff 5.9%,
+    #ff4400 6.9%,
+    #ffcb5c 7.9%,
+    #e1e1fe 8.9%,
+    #00aaff 9.9%,
+    #00166d 12.1%,
+    var(--wash-edge) 14.3%,
+    var(--wash-edge) 100%
+  );
+}
+@media (prefers-reduced-motion: reduce) {
+  .color-wash {
+    display: none;
+  }
+}
+
 .prose-blog {
   font-size: 15px;
   line-height: 1.8;

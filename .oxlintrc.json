@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "unicorn", "oxc", "react", "nextjs", "jsx-a11y", "import"],
+  "plugins": ["typescript", "unicorn", "oxc", "react", "jsx-a11y", "import"],
   "categories": {
     "correctness": "error",
     "suspicious": "warn"
@@ -15,5 +15,13 @@
     "jsx-a11y/prefer-tag-over-role": "off",
     "import/no-unassigned-import": "off"
   },
-  "ignorePatterns": [".next", "out", "build", "next-env.d.ts"]
+  "ignorePatterns": [
+    "dist",
+    ".vercel",
+    ".output",
+    ".nitro",
+    ".tanstack",
+    ".content-collections",
+    "routeTree.gen.ts"
+  ]
 }

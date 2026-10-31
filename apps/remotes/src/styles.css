@@ -1,0 +1,16 @@
+/*
+ * 리모트 CSS. preflight 는 넣지 않는다 — 호스트 문서의 기본 스타일을 건드리면 안 된다.
+ * 색·반경 토큰은 호스트 :root 의 CSS 변수를 그대로 참조한다.
+ */
+@layer theme, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline {
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --radius-xl: calc(var(--radius) * 1.4);
+}

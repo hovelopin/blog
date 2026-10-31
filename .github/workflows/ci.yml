@@ -3,34 +3,44 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: npm run lint
+        run: pnpm run lint
+
+      - name: Build remotes
+        run: pnpm --filter @blog/remotes build
+
+      # 호스트 빌드는 프리렌더 중 리모트를 서버 렌더하므로 리모트가 먼저 떠 있어야 한다.
+      - name: Serve remotes
+        run: pnpm --filter @blog/remotes preview &
 
       - name: Type check
-        run: npm run typecheck
+        run: pnpm run typecheck
 
-      - name: Build
-        run: npm run build
+      - name: Build host
+        run: pnpm --filter @blog/start build

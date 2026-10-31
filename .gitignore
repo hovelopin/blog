@@ -47,3 +47,19 @@ next-env.d.ts
 
 # Local temp files
 temp/
+
+# TanStack Start / Nitro
+.tanstack/
+.output/
+.nitro/
+
+# Playwright MCP 산출물 (스냅샷·스크린샷·콘솔 로그)
+.playwright-mcp/
+
+# content-collections 생성물
+.content-collections/
+
+# Module Federation 타입 생성물
+@mf-types/
+@mf-types.d.ts
+@mf-types.zip

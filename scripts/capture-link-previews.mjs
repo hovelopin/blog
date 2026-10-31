@@ -9,8 +9,7 @@
  * 1200x750 으로 그려서 데스크톱 레이아웃을 유지하되 배율 0.5 로 내보내
  * 600x375 파일이 나온다(카드 표시 크기의 약 2.4배).
  *
- * 캐시는 .next/cache 아래 둔다. Vercel 이 이 디렉터리를 빌드 간에 보존하므로
- * 두 번째 배포부터는 새로 생긴 링크만 찍는다.
+ * 캐시는 node_modules/.cache 아래 둔다. Vercel 이 이 디렉터리를 빌드 간에 보존한다.
  *
  * 한 장이라도 실패해도 빌드를 세우지 않는다. 미리보기는 부가 기능이다.
  */
@@ -22,13 +21,16 @@ import { promisify } from "node:util";
 
 const run = promisify(execFile);
 
-const ROOT = process.cwd();
+// 저장소 루트 기준. apps/start 의 build 스크립트가 `../../scripts/…` 로 부르므로
+// cwd 가 아니라 이 파일 위치에서 루트를 잡는다.
+const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const CONTENT_DIR = path.join(ROOT, "content");
-const OUT_DIR = path.join(ROOT, "public", "images", "link-previews");
-const CACHE_DIR = path.join(ROOT, ".next", "cache", "link-previews");
+const OUT_DIR = path.join(ROOT, "apps", "start", "public", "images", "link-previews");
+// Vercel 이 빌드 사이에 보존하는 디렉터리. 두 번째 배포부터는 새로 생긴 링크만 찍는다.
+const CACHE_DIR = path.join(ROOT, "node_modules", ".cache", "link-previews");
 const MANIFEST = path.join(OUT_DIR, "manifest.json");
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://hovelopin.xyz").replace(/\/+$/, "");
+const SITE_URL = (process.env.VITE_SITE_URL ?? "https://hovelopin.xyz").replace(/\/+$/, "");
 
 /** 페이지가 그려질 논리 크기. 이 값이 커야 모바일 레이아웃으로 안 바뀐다. */
 const VIEWPORT = { width: 1200, height: 750 };

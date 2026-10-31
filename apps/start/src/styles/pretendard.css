@@ -1,0 +1,15 @@
+/*
+Pretendard v1.3.9 — SIL Open Font License 1.1
+Copyright (c) 2021 Kil Hyung-jin, with Reserved Font Name Pretendard.
+https://github.com/orioncactus/pretendard
+
+폰트 실물은 npm 패키지가 아니라 public/fonts/pretendard 에 직접 넣어 두고 참조한다.
+(라이선스 전문: public/fonts/pretendard/OFL.txt)
+*/
+@font-face {
+  font-family: "Pretendard Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 45 920;
+  src: url("/fonts/pretendard/PretendardVariable.woff2") format("woff2-variations");
+}

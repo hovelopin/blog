@@ -29,6 +29,22 @@ const themeInitScript = `
 })();
 `;
 
+/**
+ * 색 번짐 오버레이(ColorWash)를 띄울지 첫 페인트 전에 정한다.
+ * 탭에서 처음 열었거나 사용자가 새로고침했을 때만 보이고, 링크를 타고 넘어온 전체 페이지
+ * 로드나 뒤로 가기에서는 html 에 no-wash 를 붙여 CSS 가 효과를 끈다.
+ */
+const washInitScript = `
+(function(){
+  try {
+    var nav = performance.getEntriesByType('navigation')[0];
+    var reload = nav && nav.type === 'reload';
+    if (sessionStorage.getItem('wash') && !reload) document.documentElement.classList.add('no-wash');
+    sessionStorage.setItem('wash', '1');
+  } catch (e) {}
+})();
+`;
+
 export const Route = createRootRoute({
   // 커맨드 팔레트가 두 언어의 글 목록을 다 들고 있어야 /en ↔ / 를 오갈 때 다시 안 불러도 된다.
   loader: () => getPaletteData(),
@@ -65,6 +81,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       <head>
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: washInitScript }} />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ScrollProgress />

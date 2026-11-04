@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="960" viewBox="0 0 1200 960" role="img" aria-labelledby="title desc">
+  <title id="title">새로고침이 beforeunload 다이얼로그까지 가는 경로</title>
+  <desc id="desc">브라우저 새로고침 입력이 check if unloading is canceled 알고리즘을 지나 다이얼로그 또는 즉시 unload 로 갈라지는 흐름. 페이지 코드가 관여하는 지점은 preventDefault/returnValue 판단 하나뿐이다.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.14" />
+    </filter>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="10" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L12,7 L2,12 Z" fill="#64748b" />
+    </marker>
+    <marker id="arrow-amber" markerWidth="14" markerHeight="14" refX="10" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L12,7 L2,12 Z" fill="#b45309" />
+    </marker>
+  </defs>
+  <rect width="1200" height="960" fill="#f8fafc" />
+
+  <text x="600" y="58" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="32" font-weight="800" fill="#0f172a">새로고침 한 번이 다이얼로그까지 가는 경로</text>
+  <text x="600" y="94" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="17" fill="#475569">HTML 표준의 "check if unloading is canceled" — 페이지 코드가 손댈 수 있는 곳은 주황색 한 칸뿐이다</text>
+
+  <!-- 1. 입력 -->
+  <g filter="url(#shadow)">
+    <rect x="160" y="130" width="480" height="84" rx="20" fill="#ffffff" />
+    <text x="400" y="164" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="20" font-weight="800" fill="#0f172a">① 새로고침 · 탭 닫기 · 다른 URL 이동</text>
+    <text x="400" y="192" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="14" fill="#64748b">브라우저 UI 에서 시작한다. 페이지 JS 는 이 입력을 가로채지 못한다</text>
+  </g>
+  <line x1="400" y1="214" x2="400" y2="252" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)" />
+
+  <!-- 2. dispatch -->
+  <g filter="url(#shadow)">
+    <rect x="160" y="256" width="480" height="84" rx="20" fill="#ffffff" />
+    <text x="400" y="290" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="20" font-weight="800" fill="#0f172a">② beforeunload 이벤트 dispatch</text>
+    <text x="400" y="318" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="14" fill="#64748b">new BeforeUnloadEvent(cancelable: true) → window</text>
+  </g>
+  <line x1="400" y1="340" x2="400" y2="378" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)" />
+
+  <!-- 3. 페이지 판단 (유일한 개입 지점) -->
+  <g filter="url(#shadow)">
+    <rect x="160" y="382" width="480" height="104" rx="20" fill="#fff7ed" stroke="#f59e0b" stroke-width="3" />
+    <text x="400" y="416" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="20" font-weight="800" fill="#9a3412">③ 페이지 핸들러가 "막겠다"고 했나?</text>
+    <text x="400" y="444" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="14" fill="#9a3412">preventDefault()  또는  returnValue !== ''</text>
+    <text x="400" y="468" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="13" fill="#b45309">returnValue 의 문자열 내용은 여기서 버려진다. 비어 있는지만 본다</text>
+  </g>
+  <rect x="44" y="404" width="104" height="60" rx="12" fill="#f59e0b" />
+  <text x="96" y="428" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="800" fill="#ffffff">페이지가</text>
+  <text x="96" y="448" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="800" fill="#ffffff">관여하는 유일한 곳</text>
+  <line x1="148" y1="434" x2="158" y2="434" stroke="#f59e0b" stroke-width="3" />
+
+  <line x1="400" y1="486" x2="400" y2="530" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)" />
+  <text x="418" y="514" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="14" font-weight="700" fill="#334155">예</text>
+
+  <!-- 3 → 아니오 -->
+  <path d="M640,434 L700,434 L700,500 L756,500" fill="none" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)" />
+  <text x="708" y="426" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="14" font-weight="700" fill="#334155">아니오</text>
+
+  <!-- 4. sticky activation -->
+  <g filter="url(#shadow)">
+    <rect x="160" y="534" width="480" height="96" rx="20" fill="#ffffff" />
+    <text x="400" y="568" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="20" font-weight="800" fill="#0f172a">④ sticky activation 이 있나?</text>
+    <text x="400" y="594" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="14" fill="#64748b">사용자가 이 페이지와 한 번이라도 상호작용했는가</text>
+    <text x="400" y="614" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="13" fill="#94a3b8">브라우저가 판단한다 · Chrome 60+, Firefox 44+, 표준</text>
+  </g>
+  <line x1="400" y1="630" x2="400" y2="674" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)" />
+  <text x="418" y="658" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="14" font-weight="700" fill="#334155">예</text>
+
+  <!-- 4 → 아니오 -->
+  <path d="M640,582 L700,582 L700,540 L756,540" fill="none" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)" />
+  <text x="708" y="604" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="14" font-weight="700" fill="#334155">아니오</text>
+
+  <!-- 다이얼로그 없이 unload -->
+  <g filter="url(#shadow)">
+    <rect x="760" y="452" width="390" height="136" rx="20" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2" />
+    <text x="955" y="486" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="19" font-weight="800" fill="#334155">다이얼로그 없이 그대로 unload</text>
+    <text x="955" y="512" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="13" fill="#64748b">③ 아니오: 막을 의사가 없었다</text>
+    <text x="955" y="532" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="13" fill="#64748b">④ 아니오: 잃을 데이터가 있을 리 없다고 본다 (콘솔 경고)</text>
+    <text x="955" y="556" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="10.5" fill="#94a3b8">Blocked attempt to show a 'beforeunload'</text>
+    <text x="955" y="572" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="10.5" fill="#94a3b8">confirmation panel for a frame that never had a user gesture</text>
+  </g>
+
+  <!-- 5. 브라우저 다이얼로그 -->
+  <g filter="url(#shadow)">
+    <rect x="160" y="678" width="480" height="124" rx="20" fill="#e0f2fe" stroke="#0284c7" stroke-width="3" />
+    <text x="400" y="712" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="20" font-weight="800" fill="#0c4a6e">⑤ 브라우저가 묻고, 응답을 기다리며 pause</text>
+    <text x="400" y="740" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="14" fill="#075985">문구 · 버튼 · 모양은 전부 브라우저가 정한다</text>
+    <text x="400" y="762" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="14" fill="#075985">다이얼로그가 떠 있는 동안 페이지 JS 는 멈춘다 — 커스텀 모달을 띄울 틈이 없다</text>
+    <text x="400" y="786" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="13" fill="#0369a1">"변경사항이 저장되지 않을 수 있습니다"  [취소] [새로고침]</text>
+  </g>
+  <rect x="44" y="712" width="104" height="60" rx="12" fill="#0284c7" />
+  <text x="96" y="736" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="800" fill="#ffffff">브라우저가</text>
+  <text x="96" y="756" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="800" fill="#ffffff">전부 소유</text>
+  <line x1="148" y1="742" x2="158" y2="742" stroke="#0284c7" stroke-width="3" />
+
+  <!-- 6. 결과 -->
+  <path d="M300,802 L300,846" fill="none" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)" />
+  <path d="M500,802 L500,846" fill="none" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)" />
+  <text x="312" y="830" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="14" font-weight="700" fill="#334155">취소</text>
+  <text x="512" y="830" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="14" font-weight="700" fill="#334155">나가기</text>
+
+  <g filter="url(#shadow)">
+    <rect x="160" y="850" width="220" height="78" rx="20" fill="#ffffff" />
+    <text x="270" y="882" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="18" font-weight="800" fill="#0f172a">navigation 전체 취소</text>
+    <text x="270" y="908" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="13" fill="#64748b">페이지는 그대로 남는다</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="420" y="850" width="220" height="78" rx="20" fill="#ffffff" />
+    <text x="530" y="882" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="18" font-weight="800" fill="#0f172a">unload 진행</text>
+    <text x="530" y="908" text-anchor="middle" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="13" fill="#64748b">pagehide → unload → 새 문서 로드</text>
+  </g>
+
+  <!-- 범례 -->
+  <rect x="760" y="850" width="18" height="18" rx="4" fill="#fff7ed" stroke="#f59e0b" stroke-width="2" />
+  <text x="788" y="865" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="14" fill="#334155">페이지 코드가 결정하는 단계 (boolean 하나)</text>
+  <rect x="760" y="882" width="18" height="18" rx="4" fill="#e0f2fe" stroke="#0284c7" stroke-width="2" />
+  <text x="788" y="897" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="14" fill="#334155">브라우저가 단독으로 결정하는 단계</text>
+  <rect x="760" y="914" width="18" height="18" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+  <text x="788" y="929" font-family="Pretendard, Apple SD Gothic Neo, sans-serif" font-size="14" fill="#334155">표준 알고리즘이 자동으로 진행하는 단계</text>
+</svg>

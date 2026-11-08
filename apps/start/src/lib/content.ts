@@ -46,6 +46,7 @@ function toSummary(p: PostDoc): PostSummary {
     seriesOrder: p.seriesOrder,
     draft: p.draft,
     readingTimeMinutes: p.readingTimeMinutes,
+    excerpt: p.excerpt,
   };
 }
 

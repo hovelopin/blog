@@ -10,6 +10,7 @@ import type { MDXComponents } from "mdx/types";
  */
 const DEMO_TAGS: Record<string, { name: string; minHeight: number }> = {
   AutocompleteDemo: { name: "autocomplete", minHeight: 238 },
+  BeforeunloadFlowDemo: { name: "beforeunload-flow", minHeight: 386 },
   CacheHitDemo: { name: "cache-hit", minHeight: 234 },
   DelayRaceDemo: { name: "delay-race", minHeight: 216 },
   DtsBenchDemo: { name: "dts-bench", minHeight: 234 },

@@ -102,13 +102,26 @@ function resolveCover(cover?: string): string | undefined {
   return fs.existsSync(path.join(PUBLIC_DIR, cover.slice(1))) ? cover : undefined;
 }
 
-/** 마크다운 문법을 걷어낸 첫 80자. 홈의 다이어리 로그 한 줄 미리보기에 쓴다. */
+/**
+ * 본문 첫머리를 평문으로 뽑는다. 홈 목록의 요약과 다이어리 로그 한 줄 미리보기에 쓴다.
+ *
+ * 문단 단위로 훑으며 글의 "말"이 아닌 블록 — 코드, 제목, 표, 인용, 이미지, MDX import·JSX 태그,
+ * 각주 정의 — 은 건너뛴다. 인라인 문법(강조·링크·코드·하이라이트·각주 표시)은 글자만 남긴다.
+ * 자르는 길이는 넉넉히 두고, 화면에서 줄 수는 line-clamp 로 맞춘다.
+ */
 function excerpt(markdown: string, max = 80): string {
-  const text = markdown
-    .replace(/```[\s\S]*?```/g, " ")
+  const blocks = markdown
+    .replace(/```[\s\S]*?```/g, "\n\n")
+    .split(/\n\s*\n/)
+    .map((b) => b.trim())
+    .filter((b) => b && !/^(#|\||>|!\[|<|import\s|export\s|\[\^|[-*_]{3,}$)/.test(b));
+  const text = blocks
+    .join(" ")
+    .replace(/\[\^[^\]]+\]/g, "")
     .replace(/==([^=]+)==/g, "$1")
-    .replace(/[*_`>#]/g, "")
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/<[^>]+>/g, "")
+    .replace(/[*_`]/g, "")
     .replace(/\s+/g, " ")
     .trim();
   if (text.length <= max) return text;
@@ -140,6 +153,8 @@ async function transformPost(doc: PostDoc, context: CompileContext, slug: string
     slug,
     cover: resolveCover(doc.cover),
     readingTimeMinutes: Math.max(1, Math.round(readingTime(content).minutes)),
+    /** 본문 첫머리. 목록 요약은 frontmatter 의 description 이 아니라 이 값을 쓴다. */
+    excerpt: excerpt(content, 200),
     headings: extractHeadings(content),
     body,
   };

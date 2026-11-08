@@ -9,6 +9,9 @@ import { DEFAULT_LOCALE, localePath, type Locale } from "@/lib/locale";
  * default — /posts 목록 가로 카드 (모바일에서 세로로 접힘)
  * bento   — 홈 recent posts 왼쪽 큰 카드 (오른쪽 두 장과 높이를 맞춤)
  * compact — 홈 recent posts 오른쪽 작은 카드 (제목 + 날짜·읽는 시간)
+ *
+ * 요약 자리에는 frontmatter 의 description(부제) 대신 본문 첫머리(excerpt)를 둔다.
+ * 넘치는 부분은 line-clamp 가 말줄임표로 자른다.
  */
 type Variant = "feature" | "default" | "bento" | "compact";
 
@@ -29,7 +32,7 @@ const TITLE_HOVER = "tracking-tight text-foreground transition-colors group-hove
  * cover 가 없는 글은 빈 칸 대신 mono 태그를 얹은 무채색 타일로 채운다.
  * (레이아웃이 글마다 들쭉날쭉해지지 않게 비율은 항상 고정)
  */
-function Thumbnail({
+export function Thumbnail({
   post,
   sizes,
   priority = false,
@@ -104,7 +107,7 @@ export function PostCard({ post, variant = "default", className, locale = DEFAUL
             {post.title}
           </h2>
           <p className="mb-2.5 line-clamp-3 text-[13px] leading-relaxed text-muted-foreground sm:text-sm">
-            {post.description}
+            {post.excerpt}
           </p>
           <Meta post={post} />
         </div>
@@ -130,7 +133,7 @@ export function PostCard({ post, variant = "default", className, locale = DEFAUL
             {post.title}
           </h2>
           <p className="mb-3 line-clamp-5 text-[13px] leading-relaxed text-muted-foreground">
-            {post.description}
+            {post.excerpt}
           </p>
           {/* 카드 높이는 오른쪽 두 장이 정하므로, 남는 여백은 요약 아래로 몰아 날짜를 밑단에 붙인다. */}
           <div className="mt-auto">
@@ -153,7 +156,7 @@ export function PostCard({ post, variant = "default", className, locale = DEFAUL
             {post.title}
           </h3>
           <p className="mb-2.5 line-clamp-2 text-[12px] leading-relaxed text-muted-foreground">
-            {post.description}
+            {post.excerpt}
           </p>
           {/* 카드 높이가 제목 줄 수에 따라 달라지므로 메타 정보는 밑단에 붙여 둔다. */}
           <div className="mt-auto">
@@ -180,7 +183,7 @@ export function PostCard({ post, variant = "default", className, locale = DEFAUL
           {post.title}
         </h2>
         <p className="mb-2 line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">
-          {post.description}
+          {post.excerpt}
         </p>
         <Meta post={post} />
       </div>

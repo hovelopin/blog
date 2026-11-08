@@ -77,12 +77,10 @@ export function PostArticle({ post, hasOther, prev, next, related, series, local
             <PostLocaleSwitch slug={post.slug} current={locale} other={other} />
           </div>
         )}
-        <h1 className="mb-4 text-[28px] font-semibold leading-tight tracking-tight text-foreground sm:text-[32px]">
+        {/* 부제(description)는 화면에 두지 않는다. 검색·공유용 메타(description, og)에만 쓴다. */}
+        <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-foreground sm:text-[32px]">
           {post.title}
         </h1>
-        <p className="text-[12px] leading-relaxed text-muted-foreground sm:text-[13px]">
-          {post.description}
-        </p>
         {post.tags && post.tags.length > 0 && (
           <div className="mt-5 flex flex-wrap gap-2 font-mono text-xs">
             {post.tags.map((tag) => (

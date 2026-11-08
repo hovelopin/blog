@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { defineBlogDemo, registerDemo, type DemoProps, type DemoRenderer } from "@blog/ui";
 import "./styles.css";
 import { AutocompleteDemo } from "./demos/autocomplete-demo";
+import { BeforeunloadFlowDemo } from "./demos/beforeunload-flow-demo";
 import { CacheHitDemo } from "./demos/cache-hit-demo";
 import { DelayRaceDemo } from "./demos/delay-race-demo";
 import { DtsBenchDemo } from "./demos/dts-bench-demo";
@@ -49,6 +50,7 @@ function reactRenderer(Component: ComponentType<DemoProps>): DemoRenderer {
  */
 const demos: Record<string, ComponentType<DemoProps>> = {
   autocomplete: AutocompleteDemo,
+  "beforeunload-flow": BeforeunloadFlowDemo,
   "cache-hit": CacheHitDemo,
   "delay-race": DelayRaceDemo,
   "dts-bench": DtsBenchDemo,

@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@/components/link";
+import { ArticleList } from "@/components/article-list";
+import { SectionHeader } from "@/components/section-header";
 import { BookCover } from "@/components/book-cover";
 import { BusinessCard } from "@/components/business-card";
 import { DiaryLog } from "@/components/diary-log";
 import { HorizontalScroller } from "@/components/horizontal-scroller";
 import { JsonLd } from "@/components/json-ld";
-import { PostCard } from "@/components/post-card";
 import { pageHead } from "@/lib/head";
 import { getHomeData } from "@/lib/server-fns";
 import { AUTHOR, SITE_DESCRIPTION, SITE_LANG, SITE_NAME, SITE_URL } from "@/lib/site";
@@ -53,40 +54,19 @@ function Home() {
       </section>
 
       <section className="mb-14 sm:mb-20">
-        <div className="mb-6 flex items-baseline justify-between">
-          <h2 className="font-mono text-sm text-muted-foreground"># articles</h2>
-          <Link href="/articles" className="font-mono text-xs text-primary hover:underline">
-            see all ({posts.length}) →
-          </Link>
-        </div>
+        <SectionHeader title="articles" more={{ href: "/articles", label: "all articles" }} />
         {recentPosts.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             아직 글이 없습니다. <code>content/posts</code>에 마크다운 파일을 추가하세요.
           </p>
         ) : (
-          // 최신 글 하나를 왼쪽에 크게 두고, 그다음 두 편을 오른쪽에 쌓는 배치.
-          // 좁아지면 한 줄로 펴고(오른쪽 두 장은 나란히), 더 좁아지면 전부 세로로 쌓인다.
-          <div className="grid gap-4 md:grid-cols-[3fr_2fr]">
-            <PostCard post={recentPosts[0]} variant="bento" />
-            {recentPosts.length > 1 && (
-              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
-                {recentPosts.slice(1).map((post) => (
-                  <PostCard key={post.slug} post={post} variant="compact" />
-                ))}
-              </div>
-            )}
-          </div>
+          <ArticleList posts={recentPosts} />
         )}
       </section>
 
       {recentBooks.length > 0 && (
         <section className="mb-14 sm:mb-20">
-          <div className="mb-6 flex items-baseline justify-between">
-            <h2 className="font-mono text-sm text-muted-foreground"># bookshelf</h2>
-            <Link href="/research" className="font-mono text-xs text-primary hover:underline">
-              see all ({books.length}) →
-            </Link>
-          </div>
+          <SectionHeader title="bookshelf" more={{ href: "/research", label: "all books" }} />
           <div className="-mx-5 sm:-mx-6">
             <HorizontalScroller step={172}>
               {recentBooks.map((book) => (
@@ -97,10 +77,10 @@ function Home() {
                   aria-label={`${book.title} — ${book.description}`}
                 >
                   <BookCover book={book} />
-                  <p className="mt-3 truncate text-[13px] font-medium tracking-tight text-foreground transition-colors group-hover:text-primary">
+                  <p className="mt-3 truncate text-[13.6px] font-semibold leading-[1.4] text-foreground/85 transition-colors group-hover:text-primary">
                     {book.title}
                   </p>
-                  <p className="mt-0.5 truncate font-mono text-[11px] text-muted-foreground">
+                  <p className="mt-0.5 truncate text-[12px] leading-[1.5] text-muted-foreground">
                     {book.repo ?? book.description}
                   </p>
                 </Link>
@@ -111,12 +91,7 @@ function Home() {
       )}
 
       <section>
-        <div className="mb-6 flex items-baseline justify-between">
-          <h2 className="font-mono text-sm text-muted-foreground"># diary</h2>
-          <Link href="/diary" className="font-mono text-xs text-primary hover:underline">
-            see all →
-          </Link>
-        </div>
+        <SectionHeader title="diary" more={{ href: "/diary", label: "all diary" }} />
         {recentDiary.length === 0 ? (
           <p className="text-sm text-muted-foreground">다이어리가 비어 있습니다.</p>
         ) : (

@@ -34,6 +34,8 @@ export interface Heading {
 export interface PostSummary extends PostFrontmatter {
   slug: string;
   readingTimeMinutes: number;
+  /** 본문 첫머리 평문(최대 200자) */
+  excerpt: string;
 }
 
 export interface Post extends PostSummary {
